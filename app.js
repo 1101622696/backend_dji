@@ -9,9 +9,13 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.use("/api/rutas",Djiruta)
+app.get('/', (req, res) => {
+  res.send('Servidor DJI Cloud API funcionando');
+});
+
+app.use("/api/dji", Djiruta);
 
 app.listen(process.env.PORT, () => {
-  console.log(`Servidor escuchando en el puerto ${process.env.PORT}`);
-  dbConexion();
+    console.log(`Servidor escuchando en el puerto ${process.env.PORT}`);
+    dbConexion();
 });

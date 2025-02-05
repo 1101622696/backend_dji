@@ -1,18 +1,18 @@
-import {Router} from 'express'
-import httptelemetria from '../controllers/telemetria.js'
+import { Router } from 'express';
+import httptelemetria from '../controllers/telemetria.js';
 import validarApiKey from "../middlewares/validar_api.js";
 
-const router = Router()
+const router = Router();
 
-// Ruta para la verificación inicial de DJI Cloud API
+// Ruta de verificación para DJI - debe estar en la raíz
 router.get("/", (req, res) => {
     res.status(200).send("DJI Cloud API Service");
 });
 
 // Ruta para obtener datos guardados
-router.get("/listar", [validarApiKey], httptelemetria.getelemetria)
+router.get("/telemetry", [validarApiKey], httptelemetria.getelemetria);
 
-// Ruta para recibir datos del dron
-router.post("/webhook", [validarApiKey], httptelemetria.receiveTelemetry)
+// Ruta para webhook de DJI
+router.post("/webhook", [validarApiKey], httptelemetria.receiveTelemetry);
 
-export default router
+export default router;
