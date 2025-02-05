@@ -42,6 +42,28 @@ const httptelemetria = {
       res.status(500).json({ error: "Error al obtener datos del dron" });
     }
   },
+  receiveTelemetry: async (req, res) => {
+    try {
+        const telemetriaData = req.body;
+        
+        const nuevaTelemetria = new Telemetria({
+            droneId: telemetriaData.sn || 'unknown',
+            timestamp: Date.now(),
+            latitud: telemetriaData.latitude,
+            longitud: telemetriaData.longitude,
+            altitud: telemetriaData.altitude,
+            velocidad: telemetriaData.speed,
+            nivelbateria: telemetriaData.battery,
+            posicion_vuelo: telemetriaData.flightStatus
+        });
+
+        await nuevaTelemetria.save();
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error("Error al procesar telemetría:", error);
+        res.status(500).json({ error: "Error procesando datos de telemetría" });
+    }
+}
 };
 
 export default httptelemetria;
