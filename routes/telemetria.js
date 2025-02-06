@@ -42,11 +42,10 @@ router.get("/", (req, res) => {
 });
 
 // Ruta de diagnóstico
-router.get("/diagnostico", (req, res) => {  // Removido el middleware validarApiKey temporalmente
+router.get("/diagnostico", (req, res) => {
     console.log("Accediendo a ruta de diagnóstico");
     diagnostico.testConexion(req, res);
 });
-
 // Otras rutas...
 router.get("/listar", validarApiKey, async (req, res) => {
     console.log("Accediendo a ruta /listar");
