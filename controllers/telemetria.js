@@ -61,19 +61,19 @@ const httptelemetria = {
             console.log('2. Iniciando obtención de token...');
             
             const tokenUrl = `${BASE_URL}/oauth/token`;
-            const tokenResponse = await axios.get(tokenUrl, {
-                headers: {
-                    'Authorization': `Basic ${Buffer.from(`${process.env.APP_KEY}:${process.env.APP_SECRET}`).toString('base64')}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                timeout: 5000
-            });
-            // const tokenResponse = await axios.post(tokenUrl, {
-            //     grant_type: 'client_credentials',
-            //     client_id: process.env.APP_KEY,
-            //     client_secret: process.env.APP_SECRET
+            // const tokenResponse = await axios.get(tokenUrl, {
+            //     headers: {
+            //         'Authorization': `Basic ${Buffer.from(`${process.env.APP_KEY}:${process.env.APP_SECRET}`).toString('base64')}`,
+            //         'Content-Type': 'application/json',
+            //         'Accept': 'application/json'
+            //     },
+            //     timeout: 5000
             // });
+            const tokenResponse = await axios.post(tokenUrl, {
+                grant_type: 'client_credentials',
+                client_id: process.env.APP_KEY,
+                client_secret: process.env.APP_SECRET
+            });
 
             if (!tokenResponse.data || !tokenResponse.data.access_token) {
                 throw new Error('Token de acceso no recibido en la respuesta');
