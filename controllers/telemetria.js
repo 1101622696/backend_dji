@@ -1,4 +1,3 @@
-// controllers/telemetria.js
 import axios from "axios";
 import Telemetria from "../models/telemetria.js";
 
@@ -7,10 +6,15 @@ const httptelemetria = {
         try {
             console.log('1. Iniciando obtención de token...');
             
-            // URL correcta para la API de DJI
-            const tokenResponse = await axios.post("https://developer.dji.com/api/v1/auth/token", {
-                app_id: process.env.APP_KEY,
-                app_secret: process.env.APP_SECRET
+            // Correct DJI API endpoints
+            const tokenResponse = await axios.post("https://api.dji.com/oauth/api/v1/token", {
+                client_id: process.env.APP_KEY,
+                client_secret: process.env.APP_SECRET,
+                grant_type: 'client_credentials'
+            }, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
             });
 
             console.log('2. Respuesta del token:', {
@@ -19,35 +23,49 @@ const httptelemetria = {
             });
 
             const token = tokenResponse.data.access_token;
-            console.log('3. Token obtenido');
+            console.log('3. Token obtenido:', token);
 
-            // URL correcta para obtener telemetría
-            const telemetryResponse = await axios.get("https://developer.dji.com/api/v1/telemetry", {
+            // Correct telemetry endpoint and parameters
+            const telemetryResponse = await axios.get("https://api.dji.com/api/v1/telemetry/devices", {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
+                },
+                params: {
+                    // Add any required query parameters here
+                    workspace_id: process.env.CNX_MONGO
                 }
             });
 
-            console.log('4. Respuesta de telemetría recibida');
+            console.log('4. Respuesta de telemetría recibida:', telemetryResponse.data);
 
-            const telemetria = telemetryResponse.data;
+            // Assuming the response contains an array of devices
+            const devices = telemetryResponse.data.data || [];
+            const telemetriaArray = [];
 
-            const nuevaTelemetria = new Telemetria({
-                droneId: telemetria.sn || 'unknown',
-                timestamp: Date.now(),
-                latitud: telemetria.latitude,
-                longitud: telemetria.longitude,
-                altitud: telemetria.altitude,
-                velocidad: telemetria.speed,
-                nivelbateria: telemetria.battery,
-                posicion_vuelo: telemetria.flightStatus
-            });
+            for (const device of devices) {
+                const nuevaTelemetria = new Telemetria({
+                    droneId: device.sn || 'unknown',
+                    timestamp: Date.now(),
+                    latitud: device.latitude,
+                    longitud: device.longitude,
+                    altitud: device.altitude,
+                    velocidad: device.speed,
+                    nivelbateria: device.battery,
+                    posicion_vuelo: device.flightStatus
+                });
 
-            await nuevaTelemetria.save();
+                await nuevaTelemetria.save();
+                telemetriaArray.push(nuevaTelemetria);
+            }
+
             console.log('5. Datos guardados en MongoDB');
             
-            res.json(nuevaTelemetria);
+            res.json({
+                success: true,
+                count: telemetriaArray.length,
+                data: telemetriaArray
+            });
 
         } catch (error) {
             console.error('Error detallado:', {
@@ -55,10 +73,15 @@ const httptelemetria = {
                 response: error.response ? {
                     status: error.response.status,
                     data: error.response.data
-                } : 'No response data'
+                } : 'No response data',
+                config: error.config ? {
+                    url: error.config.url,
+                    method: error.config.method,
+                    headers: error.config.headers
+                } : 'No config data'
             });
 
-            res.status(500).json({ 
+            res.status(error.response?.status || 500).json({ 
                 error: "Error al obtener datos del dron",
                 details: error.message,
                 errorResponse: error.response ? error.response.data : null
@@ -72,8 +95,13 @@ const httptelemetria = {
             
             const telemetriaData = req.body;
             
+            // Validate incoming webhook data
+            if (!telemetriaData || !telemetriaData.sn) {
+                throw new Error('Datos de telemetría inválidos o incompletos');
+            }
+
             const nuevaTelemetria = new Telemetria({
-                droneId: telemetriaData.sn || 'unknown',
+                droneId: telemetriaData.sn,
                 timestamp: Date.now(),
                 latitud: telemetriaData.latitude,
                 longitud: telemetriaData.longitude,
@@ -91,7 +119,7 @@ const httptelemetria = {
             });
         } catch (error) {
             console.error("Error al procesar telemetría:", error);
-            res.status(500).json({ 
+            res.status(400).json({ 
                 error: "Error procesando datos de telemetría",
                 details: error.message
             });

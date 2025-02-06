@@ -1,4 +1,3 @@
-// middlewares/validar_api.js
 const validarApiKey = (req, res, next) => {
   console.log('Verificando API Key...');
   console.log('Headers recibidos:', req.headers);
