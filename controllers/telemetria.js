@@ -6,12 +6,13 @@ import Telemetria from "../models/telemetria.js";
 // const BASE_URL = "https://api-cloud.dji.com";
 // const BASE_URL = "https://cloud-api.dji.com";
 // const BASE_URL = "https://cloud.dji.com/api";
-// con esta arrojó algo difeente const BASE_URL = "https://developer.dji.com/api/cloud";
+// con esta arrojó algo diferente:
+ const BASE_URL = "https://developer.dji.com/api/cloud";
 // const BASE_URL = "https://api.dji.cloud/api/v1";
 // const BASE_URL = "https://dev.dji.com/api/v1";
 // const BASE_URL = "https://api.dji.com/cloud/api/v1";
 // const BASE_URL = "https://api.dji.com/iot-gateway/api/v1";
-const BASE_URL = "https://api.dji.com/iot/api/v1";
+// const BASE_URL = "https://api.dji.com/iot/api/v1";
 
 
 
@@ -85,14 +86,20 @@ const httptelemetria = {
             const telemetryUrl = `${BASE_URL}/api/v1/telemetry/devices`;
             console.log(`4. Obteniendo telemetría desde: ${telemetryUrl}`);
 
-            const telemetryResponse = await axios.get(telemetryUrl, {
+            // const telemetryResponse = await axios.get(telemetryUrl, {
+            //     headers: {
+            //         'Authorization': `Bearer ${token}`,
+            //         'Content-Type': 'application/json',
+            //         'Accept': 'application/json'
+            //     },
+            //     // Remove workspace_id for now until you have the correct one
+            //     timeout: 5000
+            // });
+            const telemetryResponse = await axios.get(`${BASE_URL}/telemetry`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                // Remove workspace_id for now until you have the correct one
-                timeout: 5000
+                    'Content-Type': 'application/json'
+                }
             });
 
             if (!telemetryResponse.data) {
