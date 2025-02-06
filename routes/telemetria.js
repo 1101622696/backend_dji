@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import httptelemetria from '../controllers/telemetria.js';
+import diagnostico from '../controllers/diagnostico.js'; 
 import validarApiKey from "../middlewares/validar_api.js";
 
 const router = Router();
@@ -20,7 +21,7 @@ router.get("/listar", validarApiKey, async (req, res) => {
         res.status(500).json({ error: "Error interno del servidor" });
     }
 });
-
+router.get("/diagnostico", validarApiKey, diagnostico.testConexion);
 router.post("/webhook", validarApiKey, httptelemetria.receiveTelemetry);
 
 export default router;
