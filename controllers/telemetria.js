@@ -6,7 +6,8 @@ import Telemetria from "../models/telemetria.js";
 // const BASE_URL = "https://api-cloud.dji.com";
 // const BASE_URL = "https://cloud-api.dji.com";
 // const BASE_URL = "https://cloud.dji.com/api";
-const BASE_URL = "https://developer.dji.com/api/cloud";
+// con esta arrojó algo difeente const BASE_URL = "https://developer.dji.com/api/cloud";
+const BASE_URL = "https://api.dji.cloud/api/v1";
 
 const httptelemetria = {
     // getelemetria: async (req, res) => {
@@ -52,14 +53,19 @@ const httptelemetria = {
 
             console.log('2. Iniciando obtención de token...');
             
-            const tokenUrl = `${BASE_URL}/auth/v1/token`;
-            const tokenResponse = await axios.get(tokenUrl, {
-                headers: {
-                    'Authorization': `Basic ${Buffer.from(`${process.env.APP_KEY}:${process.env.APP_SECRET}`).toString('base64')}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                timeout: 5000
+            const tokenUrl = `${BASE_URL}/oauth/token`;
+            // const tokenResponse = await axios.get(tokenUrl, {
+            //     headers: {
+            //         'Authorization': `Basic ${Buffer.from(`${process.env.APP_KEY}:${process.env.APP_SECRET}`).toString('base64')}`,
+            //         'Content-Type': 'application/json',
+            //         'Accept': 'application/json'
+            //     },
+            //     timeout: 5000
+            // });
+            const tokenResponse = await axios.post(tokenUrl, {
+                grant_type: 'client_credentials',
+                client_id: process.env.APP_KEY,
+                client_secret: process.env.APP_SECRET
             });
 
             if (!tokenResponse.data || !tokenResponse.data.access_token) {
