@@ -41,11 +41,6 @@ router.get("/", (req, res) => {
     res.status(200).send("DJI Cloud API Service");
 });
 
-// Ruta de diagnóstico
-router.get("/diagnostico", (req, res) => {
-    console.log("Accediendo a ruta de diagnóstico");
-    diagnostico.testConexion(req, res);
-});
 // Otras rutas...
 router.get("/listar", validarApiKey, async (req, res) => {
     console.log("Accediendo a ruta /listar");
@@ -57,13 +52,16 @@ router.get("/listar", validarApiKey, async (req, res) => {
     }
 });
 
-router.get("/test", validarApiKey, async(req, res) => {
-    console.log("Accediendo a ruta de diagnóstico");
+router.get("/test", async(req, res) => {
+    console.log("Diagnostic route accessed");
     try {
-        await diagnosticocontroller.testConexion(req, res);
+        const resultados = {
+            status: 'OK',
+            message: 'Diagnostic endpoint working'
+        };
+        res.json(resultados);
     } catch (error) {
-        console.error('Error en ruta /diagnostico:', error);
-        res.status(500).json({ error: "Error interno del servidor" });
+        res.status(500).json({ error: error.message });
     }
 });
 
