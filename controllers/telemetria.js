@@ -3,7 +3,9 @@ import Telemetria from "../models/telemetria.js";
 
 // const BASE_URL = "https://api.dji.com";
 // const BASE_URL = "https://developer.api.dji.com";
-const BASE_URL = "https://api-cloud.dji.com";
+// const BASE_URL = "https://api-cloud.dji.com";
+const BASE_URL = "https://cloud-api.dji.com";
+// const BASE_URL = "https://cloud.dji.com/api";
 
 const httptelemetria = {
     // getelemetria: async (req, res) => {
