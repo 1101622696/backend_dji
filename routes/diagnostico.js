@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import diagnostico from '../controllers/diagnostico.js';
+import diagnosticocontroller from '../controllers/diagnostico.js';
 import validarApiKey from "../middlewares/validar_api.js";
 
 const router = Router();
