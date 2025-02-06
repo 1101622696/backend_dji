@@ -7,7 +7,10 @@ import Telemetria from "../models/telemetria.js";
 // const BASE_URL = "https://cloud-api.dji.com";
 // const BASE_URL = "https://cloud.dji.com/api";
 // con esta arrojó algo difeente const BASE_URL = "https://developer.dji.com/api/cloud";
-const BASE_URL = "https://api.dji.cloud/api/v1";
+// const BASE_URL = "https://api.dji.cloud/api/v1";
+const BASE_URL = "https://dev.dji.com/api/v1";
+// const BASE_URL = "https://api.dji.com/cloud/api/v1";
+
 
 const httptelemetria = {
     // getelemetria: async (req, res) => {

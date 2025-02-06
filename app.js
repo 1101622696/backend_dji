@@ -22,9 +22,9 @@ app.get('/', (req, res) => {
 
 app.use("/api/dji", Djiruta);
 app.use("/api/diagnostico", Djirutadiag);
-console.log("Cargando rutas...");
-console.log("Djiruta:", Djiruta);
-console.log("Djirutadiag:", Djirutadiag);
+// console.log("Cargando rutas...");
+// console.log("Djiruta:", Djiruta);
+// console.log("Djirutadiag:", Djirutadiag);
 
 app.use((req, res) => {
     console.log(`Ruta no encontrada: ${req.method} ${req.path}`);
