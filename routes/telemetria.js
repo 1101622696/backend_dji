@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import httptelemetria from '../controllers/telemetria.js';
-import diagnostico from '../controllers/diagnostico.js'; 
+import diagnostico from '../controllers/diagnostico.js';  
 import validarApiKey from "../middlewares/validar_api.js";
 
 const router = Router();
