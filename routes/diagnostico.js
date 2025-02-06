@@ -3,7 +3,7 @@ import diagnostico from '../controllers/diagnostico.js';
 
 const router = Router();
 
-router.get("/diagnostico", (req, res) => {
+router.get("/", (req, res) => {
     console.log("Accediendo a ruta de diagnóstico");
     diagnostico.testConexion(req, res);
 });
