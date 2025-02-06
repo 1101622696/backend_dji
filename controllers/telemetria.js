@@ -38,12 +38,14 @@ const httptelemetria = {
             
             // First, try a DNS lookup to verify the endpoint is reachable
             try {
-                await axios.get(`${BASE_URL}/health`);
-            } catch (dnsError) {
-                if (dnsError.code === 'ENOTFOUND') {
-                    throw new Error('No se puede conectar con la API de DJI. Verifique su conexión a internet y que el endpoint sea correcto.');
-                }
-            }
+                await axios.get(`${BASE_URL}/health`, { timeout: 5000 });
+              } catch (error) {
+                console.error('Detailed Connection Error:', {
+                  message: error.message,
+                  code: error.code,
+                  stack: error.stack
+                });
+              }
 
             console.log('2. Iniciando obtención de token...');
             
