@@ -52,7 +52,7 @@ const httptelemetria = {
 
             console.log('2. Iniciando obtención de token...');
             
-            const tokenUrl = `${BASE_URL}/oauth/api/v1/token`;
+            const tokenUrl = `${BASE_URL}/auth/v1/token`;
             console.log(`Intentando conexión a: ${tokenUrl}`);
 
             const tokenResponse = await axios.post(tokenUrl, {
