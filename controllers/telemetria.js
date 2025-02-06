@@ -164,21 +164,17 @@ const httptelemetria = {
     },
     testDJIConnection: async (req, res) => {
         try {
-          const response = await axios.post('https://api.dji-platform.com/oauth/token', {
-            client_id: process.env.APP_KEY,
-            client_secret: process.env.APP_SECRET,
-            grant_type: 'client_credentials'
-          });
+          console.log('Iniciando prueba de conexión con credenciales');
           res.json({
             success: true,
-            message: 'DJI Connection Test',
-            data: response.data
+            message: 'Credenciales recibidas',
+            appKey: process.env.APP_KEY ? 'Presente' : 'Ausente',
+            appSecret: process.env.APP_SECRET ? 'Presente' : 'Ausente'
           });
         } catch (error) {
           res.status(500).json({
-            error: 'Connection Test Failed',
-            details: error.message,
-            serverResponse: error.response?.data
+            error: 'Error en prueba de conexión',
+            details: error.message
           });
         }
       }
