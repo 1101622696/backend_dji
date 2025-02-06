@@ -1,4 +1,3 @@
-// // controllers/diagnostico.js
 import axios from "axios";
 
 const diagnostico = {
@@ -6,7 +5,7 @@ const diagnostico = {
         const resultados = {
             tests: []
         };
-
+        
         try {
             // Test 1: Verificar conexión a internet
             try {
@@ -26,7 +25,7 @@ const diagnostico = {
 
             // Test 2: Intento de conexión a DJI API
             try {
-                await axios.get('https://api.dji.com', { 
+                await axios.get('https://api.dji.com', {
                     timeout: 5000,
                     validateStatus: false
                 });
@@ -68,9 +67,9 @@ const diagnostico = {
                 });
             }
 
-            res.json(resultados);
+            return res.json(resultados);
         } catch (error) {
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Error en diagnóstico',
                 mensaje: error.message
             });
@@ -79,4 +78,3 @@ const diagnostico = {
 };
 
 export default diagnostico;
-

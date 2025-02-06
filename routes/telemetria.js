@@ -41,13 +41,13 @@ router.get("/", (req, res) => {
     res.status(200).send("DJI Cloud API Service");
 });
 
-// Ruta de diagnóstico - añadimos logging
-router.get("/diagnostico", validarApiKey, (req, res) => {
+// Ruta de diagnóstico
+router.get("/diagnostico", (req, res) => {  // Removido el middleware validarApiKey temporalmente
     console.log("Accediendo a ruta de diagnóstico");
     diagnostico.testConexion(req, res);
 });
 
-// Ruta para listar telemetría
+// Otras rutas...
 router.get("/listar", validarApiKey, async (req, res) => {
     console.log("Accediendo a ruta /listar");
     try {
