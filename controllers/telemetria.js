@@ -53,18 +53,13 @@ const httptelemetria = {
             console.log('2. Iniciando obtención de token...');
             
             const tokenUrl = `${BASE_URL}/auth/v1/token`;
-            console.log(`Intentando conexión a: ${tokenUrl}`);
-
-            const tokenResponse = await axios.post(tokenUrl, {
-                client_id: process.env.APP_KEY,
-                client_secret: process.env.APP_SECRET,
-                grant_type: 'client_credentials'
-            }, {
+            const tokenResponse = await axios.get(tokenUrl, {
                 headers: {
+                    'Authorization': `Basic ${Buffer.from(`${process.env.APP_KEY}:${process.env.APP_SECRET}`).toString('base64')}`,
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
-                timeout: 5000 // 5 second timeout
+                timeout: 5000
             });
 
             if (!tokenResponse.data || !tokenResponse.data.access_token) {
