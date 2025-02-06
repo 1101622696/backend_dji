@@ -4,12 +4,15 @@ import validarApiKey from "../middlewares/validar_api.js";
 
 const router = Router();
 
+// Ruta de verificación DJI
 router.get("/", (req, res) => {
+    console.log("Accediendo a ruta de verificación DJI");
     res.status(200).send("DJI Cloud API Service");
 });
 
-// Añadimos el middleware validarApiKey y un try-catch
+// Ruta para listar telemetría
 router.get("/listar", validarApiKey, async (req, res) => {
+    console.log("Accediendo a ruta /listar");
     try {
         await httptelemetria.getelemetria(req, res);
     } catch (error) {
@@ -18,7 +21,6 @@ router.get("/listar", validarApiKey, async (req, res) => {
     }
 });
 
-
-router.post("/webhook", [validarApiKey], httptelemetria.receiveTelemetry);
+router.post("/webhook", validarApiKey, httptelemetria.receiveTelemetry);
 
 export default router;

@@ -1,6 +1,7 @@
 const validarApiKey = (req, res, next) => {
+  // Si es una solicitud de verificación DJI, permitir sin API key
   if (req.method === 'GET' && req.path === '/') {
-      return res.status(200).json({ message: "DJI Cloud API Service Running" });
+      return next();
   }
 
   const apiKey = req.header("x-api-key");
@@ -13,6 +14,4 @@ const validarApiKey = (req, res, next) => {
   next();
 };
 
-
 export default validarApiKey;
-  
