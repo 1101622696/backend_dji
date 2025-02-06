@@ -4,21 +4,26 @@ import Telemetria from "../models/telemetria.js";
 const httptelemetria = {
     getelemetria: async (req, res) => {
         try {
+            console.log('Iniciando obtención de telemetría...');
+            
             const tokenResponse = await axios.post("https://api.dji.com/oauth/api/v1/token", {
                 client_id: process.env.APP_KEY,
                 client_secret: process.env.APP_SECRET,
                 grant_type: 'client_credentials'
             });
 
+            console.log('Token obtenido correctamente');
+
             const token = tokenResponse.data.access_token;
 
-            // Llama a la API de telemetría del dron usando el endpoint correcto
             const telemetryResponse = await axios.get("https://api.dji.com/device/api/v1/telemetry", {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
+
+            console.log('Datos de telemetría recibidos:', telemetryResponse.data);
 
             const telemetria = telemetryResponse.data;
 
@@ -34,11 +39,19 @@ const httptelemetria = {
             });
 
             await nuevaTelemetria.save();
+            console.log('Datos guardados en MongoDB');
+            
             res.json(nuevaTelemetria);
 
         } catch (error) {
-            console.error("Error al obtener telemetría:", error.message);
-            res.status(500).json({ error: "Error al obtener datos del dron" });
+            console.error("Error detallado al obtener telemetría:", error);
+            if (error.response) {
+                console.error('Respuesta de error:', error.response.data);
+            }
+            res.status(500).json({ 
+                error: "Error al obtener datos del dron",
+                details: error.message 
+            });
         }
     },
 
