@@ -161,7 +161,27 @@ const httptelemetria = {
                 details: error.message
             });
         }
-    }
+    },
+    testDJIConnection: async (req, res) => {
+        try {
+          const response = await axios.post('https://api.dji-platform.com/oauth/token', {
+            client_id: process.env.APP_KEY,
+            client_secret: process.env.APP_SECRET,
+            grant_type: 'client_credentials'
+          });
+          res.json({
+            success: true,
+            message: 'DJI Connection Test',
+            data: response.data
+          });
+        } catch (error) {
+          res.status(500).json({
+            error: 'Connection Test Failed',
+            details: error.message,
+            serverResponse: error.response?.data
+          });
+        }
+      }
 };
 
 export default httptelemetria;

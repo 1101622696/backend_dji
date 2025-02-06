@@ -57,7 +57,7 @@ router.get("/listar", validarApiKey, async (req, res) => {
         res.status(500).json({ error: "Error interno del servidor" });
     }
 });
-
+router.get("/test-connection", validarApiKey, httptelemetria.testDJIConnection);
 router.post("/webhook", validarApiKey, httptelemetria.receiveTelemetry);
 
 export default router;
