@@ -22,7 +22,6 @@ app.get('/', (req, res) => {
 
 app.use("/api/dji", Djiruta);
 app.use("/api/diagnostico", Djirutadiag);
-
 app.use((req, res) => {
     console.log(`Ruta no encontrada: ${req.method} ${req.path}`);
     res.status(404).json({ error: "Ruta no encontrada" });

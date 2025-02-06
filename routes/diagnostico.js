@@ -4,7 +4,8 @@ import validarApiKey from "../middlewares/validar_api.js";
 
 const router = Router();
 
-router.get("/diagnostico", validarApiKey, async(req, res) => {
+// Change this from "/diagnostico" to "/"
+router.get("/", validarApiKey, async(req, res) => {
     console.log("Accediendo a ruta de diagnóstico");
     try {
         await diagnosticocontroller.testConexion(req, res);
