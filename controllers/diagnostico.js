@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const diagnostico = {
+const diagnosticocontroller = {
     testConexion: async (req, res) => {
         const resultados = {
             tests: []
@@ -77,4 +77,4 @@ const diagnostico = {
     }
 };
 
-export default diagnostico;
+export default diagnosticocontroller;

@@ -1,11 +1,17 @@
 import { Router } from 'express';
 import diagnostico from '../controllers/diagnostico.js';
+import validarApiKey from "../middlewares/validar_api.js";
 
 const router = Router();
 
-router.get("/", (req, res) => {
+router.get("/diagnostico", validarApiKey, async(req, res) => {
     console.log("Accediendo a ruta de diagnóstico");
-    diagnostico.testConexion(req, res);
+    try {
+        await diagnosticocontroller.testConexion(req, res);
+    } catch (error) {
+        console.error('Error en ruta /diagnostico:', error);
+        res.status(500).json({ error: "Error interno del servidor" });
+    }
 });
 
 export default router;
