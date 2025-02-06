@@ -10,8 +10,9 @@ app.use(express.json());
 app.use(cors());
 
 app.get('/', (req, res) => {
-  res.send('Servidor DJI Cloud API funcionando');
+  res.status(200).json({ message: "DJI Cloud API Service Running" });
 });
+
 
 app.use("/api/dji", Djiruta);
 

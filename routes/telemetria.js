@@ -8,9 +8,12 @@ const router = Router();
 router.get("/", (req, res) => {
     res.status(200).send("DJI Cloud API Service");
 });
+router.get("/listar", [validarApiKey], httptelemetria.getelemetria);
+router.get("/listar", httptelemetria.getelemetria);
+
 
 // Ruta para obtener datos guardados
-router.get("/telemetry", [validarApiKey], httptelemetria.getelemetria);
+// router.get("/telemetry", [validarApiKey], httptelemetria.getelemetria);
 
 // Ruta para webhook de DJI
 router.post("/webhook", [validarApiKey], httptelemetria.receiveTelemetry);
