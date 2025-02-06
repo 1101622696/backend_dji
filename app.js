@@ -20,8 +20,8 @@ app.get('/', (req, res) => {
     res.status(200).json({ message: "DJI Cloud API Service Running" });
 });
 
-app.use("/api/dji", Djirutadiag);
 app.use("/api/dji", Djiruta);
+app.use("/api/diagnostico", Djirutadiag);
 
 app.use((req, res) => {
     console.log(`Ruta no encontrada: ${req.method} ${req.path}`);
