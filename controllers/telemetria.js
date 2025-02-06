@@ -1,275 +1,120 @@
-// import axios from "axios";
-// import Telemetria from "../models/telemetria.js";
-
-// // const BASE_URL = "https://api.dji.com";
-// // const BASE_URL = "https://developer.api.dji.com";
-// // const BASE_URL = "https://api-cloud.dji.com";
-// // const BASE_URL = "https://cloud-api.dji.com";
-// // const BASE_URL = "https://cloud.dji.com/api";
-// // con esta arrojó algo diferente:
-//  const BASE_URL = "https://developer.dji.com/api/cloud";
-// // const BASE_URL = "https://api.dji.cloud/api/v1";
-// // const BASE_URL = "https://dev.dji.com/api/v1";
-// // const BASE_URL = "https://api.dji.com/cloud/api/v1";
-// // const BASE_URL = "https://api.dji.com/iot-gateway/api/v1";
-// // const BASE_URL = "https://api.dji.com/iot/api/v1";
-
-
-
-// const httptelemetria = {
-//     // getelemetria: async (req, res) => {
-//     //     try {
-//     //         // Simulate response for testing
-//     //         res.json({
-//     //             success: true,
-//     //             message: 'Simulated DJI API response',
-//     //             data: {
-//     //                 devices: [
-//     //                     {
-//     //                         sn: 'DEMO_DRONE_001',
-//     //                         latitude: 0,
-//     //                         longitude: 0,
-//     //                         altitude: 0,
-//     //                         speed: 0,
-//     //                         battery: 100
-//     //                     }
-//     //                 ]
-//     //             }
-//     //         });
-//     //     } catch (error) {
-//     //         res.status(500).json({ 
-//     //             error: "Error al obtener datos del dron",
-//     //             details: error.message
-//     //         });
-//     //     }
-//     // },
-//     getelemetria: async (req, res) => {
-//         try {
-//             console.log('1. Verificando conectividad con DJI API...');
-            
-//             // First, try a DNS lookup to verify the endpoint is reachable
-//             try {
-//                 await axios.get(`${BASE_URL}/health`, { timeout: 5000 });
-//               } catch (error) {
-//                 console.error('Detailed Connection Error:', {
-//                   message: error.message,
-//                   code: error.code,
-//                   stack: error.stack
-//                 });
-//               }
-
-//             console.log('2. Iniciando obtención de token...');
-            
-//             const tokenUrl = `${BASE_URL}/oauth/token`;
-//             // const tokenResponse = await axios.get(tokenUrl, {
-//             //     headers: {
-//             //         'Authorization': `Basic ${Buffer.from(`${process.env.APP_KEY}:${process.env.APP_SECRET}`).toString('base64')}`,
-//             //         'Content-Type': 'application/json',
-//             //         'Accept': 'application/json'
-//             //     },
-//             //     timeout: 5000
-//             // });
-//             const tokenResponse = await axios.post(tokenUrl, {
-//                 grant_type: 'client_credentials',
-//                 client_id: process.env.APP_KEY,
-//                 client_secret: process.env.APP_SECRET
-//             });
-
-//             if (!tokenResponse.data || !tokenResponse.data.access_token) {
-//                 throw new Error('Token de acceso no recibido en la respuesta');
-//             }
-
-//             const token = tokenResponse.data.access_token;
-//             console.log('3. Token obtenido correctamente');
-
-//             // Get telemetry data
-//             const telemetryUrl = `${BASE_URL}/api/v1/telemetry/devices`;
-//             console.log(`4. Obteniendo telemetría desde: ${telemetryUrl}`);
-
-//             const telemetryResponse = await axios.get(telemetryUrl, {
-//                 headers: {
-//                     'Authorization': `Bearer ${token}`,
-//                     'Content-Type': 'application/json',
-//                     'Accept': 'application/json'
-//                 },
-//                 // Remove workspace_id for now until you have the correct one
-//                 timeout: 5000
-//             });
-//             // const telemetryResponse = await axios.get(`${BASE_URL}/telemetry`, {
-//             //     headers: {
-//             //         'Authorization': `Bearer ${token}`,
-//             //         'Content-Type': 'application/json'
-//             //     }
-//             // });
-
-//             if (!telemetryResponse.data) {
-//                 throw new Error('No se recibieron datos de telemetría');
-//             }
-
-//             console.log('5. Datos de telemetría recibidos:', 
-//                 JSON.stringify(telemetryResponse.data, null, 2));
-
-//             // Process the response
-//             const devices = Array.isArray(telemetryResponse.data.data) 
-//                 ? telemetryResponse.data.data 
-//                 : [];
-
-//             if (devices.length === 0) {
-//                 return res.json({
-//                     success: true,
-//                     message: 'No se encontraron dispositivos activos',
-//                     count: 0,
-//                     data: []
-//                 });
-//             }
-
-//             const telemetriaArray = [];
-//             for (const device of devices) {
-//                 const nuevaTelemetria = new Telemetria({
-//                     droneId: device.sn || 'unknown',
-//                     timestamp: Date.now(),
-//                     latitud: device.latitude,
-//                     longitud: device.longitude,
-//                     altitud: device.altitude,
-//                     velocidad: device.speed,
-//                     nivelbateria: device.battery,
-//                     posicion_vuelo: device.flightStatus
-//                 });
-
-//                 await nuevaTelemetria.save();
-//                 telemetriaArray.push(nuevaTelemetria);
-//             }
-
-//             console.log('6. Datos guardados en MongoDB');
-            
-//             res.json({
-//                 success: true,
-//                 count: telemetriaArray.length,
-//                 data: telemetriaArray
-//             });
-
-//         } catch (error) {
-//             console.error('Error detallado:', {
-//                 message: error.message,
-//                 code: error.code,
-//                 errno: error.errno,
-//                 response: error.response ? {
-//                     status: error.response.status,
-//                     data: error.response.data
-//                 } : 'No response data',
-//                 config: error.config ? {
-//                     url: error.config.url,
-//                     method: error.config.method,
-//                     headers: error.config.headers
-//                 } : 'No config data'
-//             });
-
-//             res.status(error.response?.status || 500).json({ 
-//                 error: "Error al obtener datos del dron",
-//                 details: error.message,
-//                 code: error.code,
-//                 errorResponse: error.response ? error.response.data : null
-//             });
-//         }
-//     },
-
-//     receiveTelemetry: async (req, res) => {
-//         try {
-//             console.log('Datos recibidos del webhook:', req.body);
-            
-//             const telemetriaData = req.body;
-            
-//             // Validate incoming webhook data
-//             if (!telemetriaData || !telemetriaData.sn) {
-//                 throw new Error('Datos de telemetría inválidos o incompletos');
-//             }
-
-//             const nuevaTelemetria = new Telemetria({
-//                 droneId: telemetriaData.sn,
-//                 timestamp: Date.now(),
-//                 latitud: telemetriaData.latitude,
-//                 longitud: telemetriaData.longitude,
-//                 altitud: telemetriaData.altitude,
-//                 velocidad: telemetriaData.speed,
-//                 nivelbateria: telemetriaData.battery,
-//                 posicion_vuelo: telemetriaData.flightStatus
-//             });
-
-//             await nuevaTelemetria.save();
-//             res.status(200).json({ 
-//                 success: true, 
-//                 message: 'Datos recibidos y guardados correctamente',
-//                 data: nuevaTelemetria
-//             });
-//         } catch (error) {
-//             console.error("Error al procesar telemetría:", error);
-//             res.status(400).json({ 
-//                 error: "Error procesando datos de telemetría",
-//                 details: error.message
-//             });
-//         }
-//     },
-//     testDJIConnection: async (req, res) => {
-//         try {
-//           console.log('Iniciando prueba de conexión con credenciales');
-//           res.json({
-//             success: true,
-//             message: 'Credenciales recibidas',
-//             appKey: process.env.APP_KEY ? 'Presente' : 'Ausente',
-//             appSecret: process.env.APP_SECRET ? 'Presente' : 'Ausente'
-//           });
-//         } catch (error) {
-//           res.status(500).json({
-//             error: 'Error en prueba de conexión',
-//             details: error.message
-//           });
-//         }
-//       }
-// };
-
-// export default httptelemetria;
-
-
-
 import axios from "axios";
 import Telemetria from "../models/telemetria.js";
 
-const BASE_URL = "https://api-cloud.dji.com/api/v1";
+// const BASE_URL = "https://api.dji.com";
+// const BASE_URL = "https://developer.api.dji.com";
+// const BASE_URL = "https://api-cloud.dji.com";
+// const BASE_URL = "https://cloud-api.dji.com";
+// const BASE_URL = "https://cloud.dji.com/api";
+// con esta arrojó algo diferente:
+ const BASE_URL = "https://developer.dji.com/api/cloud";
+// const BASE_URL = "https://api.dji.cloud/api/v1";
+// const BASE_URL = "https://dev.dji.com/api/v1";
+// const BASE_URL = "https://api.dji.com/cloud/api/v1";
+// const BASE_URL = "https://api.dji.com/iot-gateway/api/v1";
+// const BASE_URL = "https://api.dji.com/iot/api/v1";
+
+
 
 const httptelemetria = {
+    // getelemetria: async (req, res) => {
+    //     try {
+    //         // Simulate response for testing
+    //         res.json({
+    //             success: true,
+    //             message: 'Simulated DJI API response',
+    //             data: {
+    //                 devices: [
+    //                     {
+    //                         sn: 'DEMO_DRONE_001',
+    //                         latitude: 0,
+    //                         longitude: 0,
+    //                         altitude: 0,
+    //                         speed: 0,
+    //                         battery: 100
+    //                     }
+    //                 ]
+    //             }
+    //         });
+    //     } catch (error) {
+    //         res.status(500).json({ 
+    //             error: "Error al obtener datos del dron",
+    //             details: error.message
+    //         });
+    //     }
+    // },
     getelemetria: async (req, res) => {
         try {
-            console.log('1. Iniciando obtención de telemetría...');
+            console.log('1. Verificando conectividad con DJI API...');
             
-            // Credenciales para Cloud API
-            const credentials = Buffer.from(`${process.env.APP_KEY}:${process.env.APP_SECRET}`).toString('base64');
-            const headers = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': `Basic ${credentials}`,
-                'X-Auth-Token': process.env.APP_KEY  // Algunas veces DJI Cloud API requiere esto
-            };
+            // First, try a DNS lookup to verify the endpoint is reachable
+            try {
+                await axios.get(`${BASE_URL}/health`, { timeout: 5000 });
+              } catch (error) {
+                console.error('Detailed Connection Error:', {
+                  message: error.message,
+                  code: error.code,
+                  stack: error.stack
+                });
+              }
 
-            console.log('2. Headers configurados:', {
-                contentType: headers['Content-Type'],
-                accept: headers['Accept'],
-                authPresent: 'PRESENTE'
+            console.log('2. Iniciando obtención de token...');
+            
+            const tokenUrl = `${BASE_URL}/oauth/token`;
+            // const tokenResponse = await axios.get(tokenUrl, {
+            //     headers: {
+            //         'Authorization': `Basic ${Buffer.from(`${process.env.APP_KEY}:${process.env.APP_SECRET}`).toString('base64')}`,
+            //         'Content-Type': 'application/json',
+            //         'Accept': 'application/json'
+            //     },
+            //     timeout: 5000
+            // });
+            const tokenResponse = await axios.post(tokenUrl, {
+                grant_type: 'client_credentials',
+                client_id: process.env.APP_KEY,
+                client_secret: process.env.APP_SECRET
             });
 
-            // Primero obtener lista de dispositivos
-            console.log('3. Intentando obtener lista de dispositivos...');
-            const devicesResponse = await axios.get(`${BASE_URL}/devices`, {
-                headers,
-                timeout: 10000
-            });
+            if (!tokenResponse.data || !tokenResponse.data.access_token) {
+                throw new Error('Token de acceso no recibido en la respuesta');
+            }
 
-            console.log('4. Respuesta de dispositivos:', {
-                status: devicesResponse.status,
-                hasData: !!devicesResponse.data
-            });
+            const token = tokenResponse.data.access_token;
+            console.log('3. Token obtenido correctamente');
 
-            // Si no hay dispositivos, retornar array vacío
-            if (!devicesResponse.data || !devicesResponse.data.data) {
+            // Get telemetry data
+            const telemetryUrl = `${BASE_URL}/api/v1/telemetry/devices`;
+            console.log(`4. Obteniendo telemetría desde: ${telemetryUrl}`);
+
+            const telemetryResponse = await axios.get(telemetryUrl, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                // Remove workspace_id for now until you have the correct one
+                timeout: 5000
+            });
+            // const telemetryResponse = await axios.get(`${BASE_URL}/telemetry`, {
+            //     headers: {
+            //         'Authorization': `Bearer ${token}`,
+            //         'Content-Type': 'application/json'
+            //     }
+            // });
+
+            if (!telemetryResponse.data) {
+                throw new Error('No se recibieron datos de telemetría');
+            }
+
+            console.log('5. Datos de telemetría recibidos:', 
+                JSON.stringify(telemetryResponse.data, null, 2));
+
+            // Process the response
+            const devices = Array.isArray(telemetryResponse.data.data) 
+                ? telemetryResponse.data.data 
+                : [];
+
+            if (devices.length === 0) {
                 return res.json({
                     success: true,
                     message: 'No se encontraron dispositivos activos',
@@ -278,34 +123,24 @@ const httptelemetria = {
                 });
             }
 
-            // Para cada dispositivo, obtener su telemetría
-            const devices = devicesResponse.data.data;
             const telemetriaArray = [];
-
             for (const device of devices) {
-                const telemetryResponse = await axios.get(`${BASE_URL}/devices/${device.sn}/telemetry`, {
-                    headers
+                const nuevaTelemetria = new Telemetria({
+                    droneId: device.sn || 'unknown',
+                    timestamp: Date.now(),
+                    latitud: device.latitude,
+                    longitud: device.longitude,
+                    altitud: device.altitude,
+                    velocidad: device.speed,
+                    nivelbateria: device.battery,
+                    posicion_vuelo: device.flightStatus
                 });
 
-                if (telemetryResponse.data && telemetryResponse.data.data) {
-                    const telemetryData = telemetryResponse.data.data;
-                    const nuevaTelemetria = new Telemetria({
-                        droneId: device.sn,
-                        timestamp: Date.now(),
-                        latitud: telemetryData.latitude || telemetryData.lat,
-                        longitud: telemetryData.longitude || telemetryData.lng,
-                        altitud: telemetryData.altitude || telemetryData.alt,
-                        velocidad: telemetryData.speed,
-                        nivelbateria: telemetryData.battery,
-                        posicion_vuelo: telemetryData.flight_status
-                    });
-
-                    await nuevaTelemetria.save();
-                    telemetriaArray.push(nuevaTelemetria);
-                }
+                await nuevaTelemetria.save();
+                telemetriaArray.push(nuevaTelemetria);
             }
 
-            console.log('5. Datos guardados en MongoDB');
+            console.log('6. Datos guardados en MongoDB');
             
             res.json({
                 success: true,
@@ -317,52 +152,217 @@ const httptelemetria = {
             console.error('Error detallado:', {
                 message: error.message,
                 code: error.code,
-                status: error.response?.status,
-                data: error.response?.data
+                errno: error.errno,
+                response: error.response ? {
+                    status: error.response.status,
+                    data: error.response.data
+                } : 'No response data',
+                config: error.config ? {
+                    url: error.config.url,
+                    method: error.config.method,
+                    headers: error.config.headers
+                } : 'No config data'
             });
 
-            res.status(error.response?.status || 500).json({
+            res.status(error.response?.status || 500).json({ 
                 error: "Error al obtener datos del dron",
                 details: error.message,
-                errorResponse: error.response?.data
+                code: error.code,
+                errorResponse: error.response ? error.response.data : null
             });
         }
     },
 
-    // Método de prueba de conexión
-    testConnection: async (req, res) => {
+    receiveTelemetry: async (req, res) => {
         try {
-            const credentials = Buffer.from(`${process.env.APP_KEY}:${process.env.APP_SECRET}`).toString('base64');
-            const headers = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': `Basic ${credentials}`,
-                'X-Auth-Token': process.env.APP_KEY
-            };
+            console.log('Datos recibidos del webhook:', req.body);
+            
+            const telemetriaData = req.body;
+            
+            // Validate incoming webhook data
+            if (!telemetriaData || !telemetriaData.sn) {
+                throw new Error('Datos de telemetría inválidos o incompletos');
+            }
 
-            // Probar endpoint de estado
-            const response = await axios.get(`${BASE_URL}/workspaces`, {
-                headers,
-                timeout: 5000
+            const nuevaTelemetria = new Telemetria({
+                droneId: telemetriaData.sn,
+                timestamp: Date.now(),
+                latitud: telemetriaData.latitude,
+                longitud: telemetriaData.longitude,
+                altitud: telemetriaData.altitude,
+                velocidad: telemetriaData.speed,
+                nivelbateria: telemetriaData.battery,
+                posicion_vuelo: telemetriaData.flightStatus
             });
 
-            res.json({
-                success: true,
-                message: 'Conexión exitosa con Cloud API',
-                status: response.status,
-                data: response.data
+            await nuevaTelemetria.save();
+            res.status(200).json({ 
+                success: true, 
+                message: 'Datos recibidos y guardados correctamente',
+                data: nuevaTelemetria
             });
-
         } catch (error) {
-            console.error('Error en test:', error);
-            res.status(500).json({
-                success: false,
-                error: "Error al conectar con Cloud API",
-                details: error.message,
-                response: error.response?.data
+            console.error("Error al procesar telemetría:", error);
+            res.status(400).json({ 
+                error: "Error procesando datos de telemetría",
+                details: error.message
             });
         }
-    }
+    },
+    testDJIConnection: async (req, res) => {
+        try {
+          console.log('Iniciando prueba de conexión con credenciales');
+          res.json({
+            success: true,
+            message: 'Credenciales recibidas',
+            appKey: process.env.APP_KEY ? 'Presente' : 'Ausente',
+            appSecret: process.env.APP_SECRET ? 'Presente' : 'Ausente'
+          });
+        } catch (error) {
+          res.status(500).json({
+            error: 'Error en prueba de conexión',
+            details: error.message
+          });
+        }
+      }
 };
 
 export default httptelemetria;
+
+
+
+// import axios from "axios";
+// import Telemetria from "../models/telemetria.js";
+
+// const BASE_URL = "https://api-cloud.dji.com/api/v1";
+
+// const httptelemetria = {
+//     getelemetria: async (req, res) => {
+//         try {
+//             console.log('1. Iniciando obtención de telemetría...');
+            
+//             // Credenciales para Cloud API
+//             const credentials = Buffer.from(`${process.env.APP_KEY}:${process.env.APP_SECRET}`).toString('base64');
+//             const headers = {
+//                 'Content-Type': 'application/json',
+//                 'Accept': 'application/json',
+//                 'Authorization': `Basic ${credentials}`,
+//                 'X-Auth-Token': process.env.APP_KEY  // Algunas veces DJI Cloud API requiere esto
+//             };
+
+//             console.log('2. Headers configurados:', {
+//                 contentType: headers['Content-Type'],
+//                 accept: headers['Accept'],
+//                 authPresent: 'PRESENTE'
+//             });
+
+//             // Primero obtener lista de dispositivos
+//             console.log('3. Intentando obtener lista de dispositivos...');
+//             const devicesResponse = await axios.get(`${BASE_URL}/devices`, {
+//                 headers,
+//                 timeout: 10000
+//             });
+
+//             console.log('4. Respuesta de dispositivos:', {
+//                 status: devicesResponse.status,
+//                 hasData: !!devicesResponse.data
+//             });
+
+//             // Si no hay dispositivos, retornar array vacío
+//             if (!devicesResponse.data || !devicesResponse.data.data) {
+//                 return res.json({
+//                     success: true,
+//                     message: 'No se encontraron dispositivos activos',
+//                     count: 0,
+//                     data: []
+//                 });
+//             }
+
+//             // Para cada dispositivo, obtener su telemetría
+//             const devices = devicesResponse.data.data;
+//             const telemetriaArray = [];
+
+//             for (const device of devices) {
+//                 const telemetryResponse = await axios.get(`${BASE_URL}/devices/${device.sn}/telemetry`, {
+//                     headers
+//                 });
+
+//                 if (telemetryResponse.data && telemetryResponse.data.data) {
+//                     const telemetryData = telemetryResponse.data.data;
+//                     const nuevaTelemetria = new Telemetria({
+//                         droneId: device.sn,
+//                         timestamp: Date.now(),
+//                         latitud: telemetryData.latitude || telemetryData.lat,
+//                         longitud: telemetryData.longitude || telemetryData.lng,
+//                         altitud: telemetryData.altitude || telemetryData.alt,
+//                         velocidad: telemetryData.speed,
+//                         nivelbateria: telemetryData.battery,
+//                         posicion_vuelo: telemetryData.flight_status
+//                     });
+
+//                     await nuevaTelemetria.save();
+//                     telemetriaArray.push(nuevaTelemetria);
+//                 }
+//             }
+
+//             console.log('5. Datos guardados en MongoDB');
+            
+//             res.json({
+//                 success: true,
+//                 count: telemetriaArray.length,
+//                 data: telemetriaArray
+//             });
+
+//         } catch (error) {
+//             console.error('Error detallado:', {
+//                 message: error.message,
+//                 code: error.code,
+//                 status: error.response?.status,
+//                 data: error.response?.data
+//             });
+
+//             res.status(error.response?.status || 500).json({
+//                 error: "Error al obtener datos del dron",
+//                 details: error.message,
+//                 errorResponse: error.response?.data
+//             });
+//         }
+//     },
+
+//     // Método de prueba de conexión
+//     testConnection: async (req, res) => {
+//         try {
+//             const credentials = Buffer.from(`${process.env.APP_KEY}:${process.env.APP_SECRET}`).toString('base64');
+//             const headers = {
+//                 'Content-Type': 'application/json',
+//                 'Accept': 'application/json',
+//                 'Authorization': `Basic ${credentials}`,
+//                 'X-Auth-Token': process.env.APP_KEY
+//             };
+
+//             // Probar endpoint de estado
+//             const response = await axios.get(`${BASE_URL}/workspaces`, {
+//                 headers,
+//                 timeout: 5000
+//             });
+
+//             res.json({
+//                 success: true,
+//                 message: 'Conexión exitosa con Cloud API',
+//                 status: response.status,
+//                 data: response.data
+//             });
+
+//         } catch (error) {
+//             console.error('Error en test:', error);
+//             res.status(500).json({
+//                 success: false,
+//                 error: "Error al conectar con Cloud API",
+//                 details: error.message,
+//                 response: error.response?.data
+//             });
+//         }
+//     }
+// };
+
+// export default httptelemetria;
