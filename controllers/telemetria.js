@@ -231,23 +231,23 @@
 
 
 
-
 import axios from "axios";
 import Telemetria from "../models/telemetria.js";
 
-const BASE_URL = "https://api.dji.com/terra/api/v1";
+const BASE_URL = "https://api-cloud.dji.com/api/v1";
 
 const httptelemetria = {
     getelemetria: async (req, res) => {
         try {
             console.log('1. Iniciando obtención de telemetría...');
             
-            // Autenticación básica para TerraAPI
+            // Credenciales para Cloud API
             const credentials = Buffer.from(`${process.env.APP_KEY}:${process.env.APP_SECRET}`).toString('base64');
             const headers = {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'Authorization': `Basic ${credentials}`
+                'Authorization': `Basic ${credentials}`,
+                'X-Auth-Token': process.env.APP_KEY  // Algunas veces DJI Cloud API requiere esto
             };
 
             console.log('2. Headers configurados:', {
@@ -256,46 +256,53 @@ const httptelemetria = {
                 authPresent: 'PRESENTE'
             });
 
-            // Primero intentamos obtener la lista de drones/misiones
-            console.log('3. Intentando obtener lista de misiones...');
-            const missionsResponse = await axios.get(`${BASE_URL}/missions`, {
+            // Primero obtener lista de dispositivos
+            console.log('3. Intentando obtener lista de dispositivos...');
+            const devicesResponse = await axios.get(`${BASE_URL}/devices`, {
                 headers,
                 timeout: 10000
             });
 
-            console.log('4. Respuesta recibida:', {
-                status: missionsResponse.status,
-                data: missionsResponse.data
+            console.log('4. Respuesta de dispositivos:', {
+                status: devicesResponse.status,
+                hasData: !!devicesResponse.data
             });
 
-            // Si no hay datos, devolvemos array vacío
-            if (!missionsResponse.data || !missionsResponse.data.data) {
+            // Si no hay dispositivos, retornar array vacío
+            if (!devicesResponse.data || !devicesResponse.data.data) {
                 return res.json({
                     success: true,
-                    message: 'No se encontraron misiones activas',
+                    message: 'No se encontraron dispositivos activos',
                     count: 0,
                     data: []
                 });
             }
 
-            // Procesamos los datos recibidos
-            const missions = missionsResponse.data.data;
+            // Para cada dispositivo, obtener su telemetría
+            const devices = devicesResponse.data.data;
             const telemetriaArray = [];
 
-            for (const mission of missions) {
-                const nuevaTelemetria = new Telemetria({
-                    droneId: mission.drone_sn || 'unknown',
-                    timestamp: Date.now(),
-                    latitud: mission.location?.latitude,
-                    longitud: mission.location?.longitude,
-                    altitud: mission.location?.altitude,
-                    velocidad: mission.speed,
-                    nivelbateria: mission.battery_level,
-                    posicion_vuelo: mission.status
+            for (const device of devices) {
+                const telemetryResponse = await axios.get(`${BASE_URL}/devices/${device.sn}/telemetry`, {
+                    headers
                 });
 
-                await nuevaTelemetria.save();
-                telemetriaArray.push(nuevaTelemetria);
+                if (telemetryResponse.data && telemetryResponse.data.data) {
+                    const telemetryData = telemetryResponse.data.data;
+                    const nuevaTelemetria = new Telemetria({
+                        droneId: device.sn,
+                        timestamp: Date.now(),
+                        latitud: telemetryData.latitude || telemetryData.lat,
+                        longitud: telemetryData.longitude || telemetryData.lng,
+                        altitud: telemetryData.altitude || telemetryData.alt,
+                        velocidad: telemetryData.speed,
+                        nivelbateria: telemetryData.battery,
+                        posicion_vuelo: telemetryData.flight_status
+                    });
+
+                    await nuevaTelemetria.save();
+                    telemetriaArray.push(nuevaTelemetria);
+                }
             }
 
             console.log('5. Datos guardados en MongoDB');
@@ -307,62 +314,50 @@ const httptelemetria = {
             });
 
         } catch (error) {
-            // Log detallado del error
             console.error('Error detallado:', {
                 message: error.message,
                 code: error.code,
                 status: error.response?.status,
-                data: error.response?.data,
-                headers: error.response?.headers
+                data: error.response?.data
             });
 
-            // Manejo específico de errores
-            let errorMessage = error.message;
-            let statusCode = error.response?.status || 500;
-
-            if (error.response?.status === 401) {
-                errorMessage = 'Error de autenticación - Verifique sus credenciales de TerraAPI';
-                statusCode = 401;
-            } else if (error.response?.status === 403) {
-                errorMessage = 'Acceso denegado - Verifique los permisos de su aplicación TerraAPI';
-                statusCode = 403;
-            }
-
-            res.status(statusCode).json({
-                error: "Error al obtener datos de TerraAPI",
-                details: errorMessage,
-                code: error.code,
-                url: BASE_URL
+            res.status(error.response?.status || 500).json({
+                error: "Error al obtener datos del dron",
+                details: error.message,
+                errorResponse: error.response?.data
             });
         }
     },
 
-    // Método de prueba para verificar conexión
+    // Método de prueba de conexión
     testConnection: async (req, res) => {
         try {
             const credentials = Buffer.from(`${process.env.APP_KEY}:${process.env.APP_SECRET}`).toString('base64');
             const headers = {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'Authorization': `Basic ${credentials}`
+                'Authorization': `Basic ${credentials}`,
+                'X-Auth-Token': process.env.APP_KEY
             };
 
-            const response = await axios.get(`${BASE_URL}/status`, {
+            // Probar endpoint de estado
+            const response = await axios.get(`${BASE_URL}/workspaces`, {
                 headers,
                 timeout: 5000
             });
 
             res.json({
                 success: true,
-                message: 'Conexión exitosa con TerraAPI',
+                message: 'Conexión exitosa con Cloud API',
                 status: response.status,
                 data: response.data
             });
 
         } catch (error) {
+            console.error('Error en test:', error);
             res.status(500).json({
                 success: false,
-                error: "Error al conectar con TerraAPI",
+                error: "Error al conectar con Cloud API",
                 details: error.message,
                 response: error.response?.data
             });
