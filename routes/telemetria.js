@@ -65,7 +65,7 @@ router.get("/test", async(req, res) => {
     }
 });
 
-router.get("/test-connection", validarApiKey, httptelemetria.testDJIConnection);
-router.post("/webhook", validarApiKey, httptelemetria.receiveTelemetry);
+// router.get("/test-connection", validarApiKey, httptelemetria.testDJIConnection);
+// router.post("/webhook", validarApiKey, httptelemetria.receiveTelemetry);
 
 export default router;
