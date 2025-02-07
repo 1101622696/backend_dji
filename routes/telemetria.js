@@ -73,18 +73,37 @@ router.get("/historico", validarApiKey, async (req, res) => {
 //         res.status(500).json({ error: "Error al obtener el token" });
 //     }
 // });
-router.all("/cloud/oauth/token", validarApiKey, async (req, res) => {
-    try {
-        const token = "TOKEN_GENERADO";  
-        res.json({
-            access_token: token,
-            token_type: "Bearer",
-            expires_in: 3600
-        });
-    } catch (error) {
-        console.error('Error obteniendo token:', error);
-        res.status(500).json({ error: "Error al obtener el token" });
+
+
+// ambos funcionan
+
+
+// router.all("/cloud/oauth/token", validarApiKey, async (req, res) => {
+//     try {
+//         const token = "TOKEN_GENERADO";  
+//         res.json({
+//             access_token: token,
+//             token_type: "Bearer",
+//             expires_in: 3600
+//         });
+//     } catch (error) {
+//         console.error('Error obteniendo token:', error);
+//         res.status(500).json({ error: "Error al obtener el token" });
+//     }
+// });
+
+
+router.post("/cloud/oauth/token", async (req, res) => {
+    const apiKey = req.headers["x-api-key"] || req.query.api_key;
+    if (apiKey !== process.env.API_KEY) {
+        return res.status(403).json({ error: "API Key inválida o no proporcionada" });
     }
+
+    res.json({
+        access_token: "TOKEN_GENERADO",
+        token_type: "Bearer",
+        expires_in: 3600
+    });
 });
 
 export default router;
