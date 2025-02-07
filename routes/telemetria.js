@@ -64,12 +64,23 @@ router.get("/historico", validarApiKey, async (req, res) => {
     }
 });
 
-// ✅ NUEVA RUTA para obtener el token de DJI
-router.post("/cloud/oauth/token", validarApiKey, async (req, res) => {
+// router.post("/cloud/oauth/token", validarApiKey, async (req, res) => {
+//     try {
+//         const token = "TOKEN_GENERADO"; 
+//               res.json({ token });
+//     } catch (error) {
+//         console.error('Error obteniendo token:', error);
+//         res.status(500).json({ error: "Error al obtener el token" });
+//     }
+// });
+router.all("/cloud/oauth/token", validarApiKey, async (req, res) => {
     try {
-        // Aquí deberías implementar la lógica real para obtener el token de DJI
-        const token = "TOKEN_GENERADO"; // ⚠️ Sustituye por la autenticación real
-        res.json({ token });
+        const token = "TOKEN_GENERADO";  
+        res.json({
+            access_token: token,
+            token_type: "Bearer",
+            expires_in: 3600
+        });
     } catch (error) {
         console.error('Error obteniendo token:', error);
         res.status(500).json({ error: "Error al obtener el token" });
