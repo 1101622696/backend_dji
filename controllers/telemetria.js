@@ -229,7 +229,14 @@
 
 // export default httptelemetria;
 
+// https://api.dji.dev/v1/oauth2/access_token
+// https://api.dji.dev/api/v1/oauth2/token
 
+// {
+//     "grant_type":"client_credentials",
+//     "app_key":"51469a0b51ab0406159ef2a6d28f011",
+//     "app_id":"157230"
+//     }
 
 import axios from "axios";
 import Telemetria from "../models/telemetria.js";
