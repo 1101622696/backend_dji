@@ -93,7 +93,11 @@ router.get("/historico", validarApiKey, async (req, res) => {
 // });
 
 
-router.post("/cloud/oauth/token", async (req, res) => {
+router.all("/cloud/oauth/token", async (req, res) => {
+    if (req.method !== "POST" && req.method !== "GET") {
+        return res.status(405).json({ error: "Método no permitido" });
+    }
+
     const apiKey = req.headers["x-api-key"] || req.query.api_key;
     if (apiKey !== process.env.API_KEY) {
         return res.status(403).json({ error: "API Key inválida o no proporcionada" });
