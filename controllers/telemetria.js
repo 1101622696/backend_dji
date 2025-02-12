@@ -4,26 +4,29 @@ import djiAuth from "../services/djiAuth.js";
 
 class TelemetriaController {
     constructor() {
-        // DJI usa diferentes endpoints dependiendo del entorno
-        this.baseURL = 'https://api.dji.com/api/v1';
+        // Updated to use DJI's cloud API endpoint
+        this.baseURL = 'https://developer.dji.com/api/v1';
     }
 
-    // Método para recibir datos vía webhook/callback de DJI
     async receiveTelemetry(req, res) {
         try {
-            console.log('Datos de telemetría recibidos:', req.body);
+            console.log('Raw webhook payload:', JSON.stringify(req.body, null, 2));
             
-            // Extraer datos relevantes del payload de DJI
+            // Extract data from DJI's webhook payload
             const {
-                sn, // Número de serie del dron
+                sn, 
                 timestamp,
-                position, // Contiene lat, lng, alt
+                position,
                 battery,
                 speed,
                 flightStatus
             } = req.body;
 
-            // Crear nuevo registro de telemetría
+            // Log extracted data
+            console.log('Extracted telemetry data:', {
+                sn, timestamp, position, battery, speed, flightStatus
+            });
+
             const telemetria = new Telemetria({
                 droneId: sn,
                 timestamp: new Date(timestamp),
@@ -36,14 +39,15 @@ class TelemetriaController {
             });
 
             await telemetria.save();
+            console.log('Telemetry saved successfully');
             
-            // DJI espera una respuesta específica
             res.status(200).json({
                 success: true,
+                message: 'Telemetry data received and stored',
                 data: telemetria
             });
         } catch (error) {
-            console.error('Error procesando datos de telemetría:', error);
+            console.error('Error processing telemetry:', error);
             res.status(500).json({ 
                 success: false,
                 error: error.message 
@@ -51,13 +55,19 @@ class TelemetriaController {
         }
     }
 
-    // Método para iniciar la conexión con el dron
     async initializeConnection(req, res) {
         try {
+            console.log('Initializing DJI connection...');
+            
             const token = await djiAuth.getAccessToken();
-            // Configurar el webhook/callback URL
-            const response = await axios.post(`${this.baseURL}/workspace/binding`, {
-                callback_url: `${process.env.BASE_URL}/api/dji/telemetry/webhook`,
+            console.log('Successfully obtained token');
+
+            // Register webhook URL with DJI
+            const webhookUrl = `${process.env.BASE_URL}/api/dji/telemetry/webhook`;
+            console.log('Registering webhook URL:', webhookUrl);
+
+            const response = await axios.post(`${this.baseURL}/workspaces/bindings`, {
+                callback_url: webhookUrl,
                 topics: ["drone_position", "battery_info", "flight_status"]
             }, {
                 headers: {
@@ -66,16 +76,23 @@ class TelemetriaController {
                 }
             });
 
+            console.log('DJI binding response:', response.data);
+
             res.json({
                 success: true,
-                message: "Conexión inicializada correctamente",
+                message: "Connection initialized successfully",
                 data: response.data
             });
         } catch (error) {
-            console.error('Error inicializando conexión:', error);
+            console.error('Detailed initialization error:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
+            
             res.status(500).json({ 
                 success: false,
-                error: error.message 
+                error: error.message
             });
         }
     }
