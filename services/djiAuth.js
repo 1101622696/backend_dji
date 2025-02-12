@@ -1,34 +1,36 @@
-// services/djiAuth.js
 import axios from 'axios';
 
 class DJIAuthService {
     constructor() {
         this.baseURL = 'https://api.dji.com/api/v1';
-        this.appId = process.env.APP_ID;
-        this.appKey = process.env.APP_KEY;
-        this.accessToken = null;
-        this.tokenExpiration = null;
+        this.token = null;
+        this.tokenExpiry = null;
     }
 
     async getAccessToken() {
-        // Si el token existe y no ha expirado, retornarlo
-        if (this.accessToken && this.tokenExpiration > Date.now()) {
-            return this.accessToken;
-        }
-
         try {
+            // Check if we have a valid token
+            if (this.token && this.tokenExpiry && new Date() < this.tokenExpiry) {
+                return this.token;
+            }
+
+            // Request new token
             const response = await axios.post(`${this.baseURL}/oauth/token`, {
-                app_id: this.appId,
-                app_key: this.appKey
+                grant_type: 'client_credentials',
+                client_id: process.env.APP_ID,
+                client_secret: process.env.APP_KEY
             });
 
-            this.accessToken = response.data.access_token;
-            // Asumiendo que el token expira en 2 horas
-            this.tokenExpiration = Date.now() + (2 * 60 * 60 * 1000);
-            
-            return this.accessToken;
+            if (response.data && response.data.access_token) {
+                this.token = response.data.access_token;
+                // Set token expiry (typically 1 hour from now)
+                this.tokenExpiry = new Date(Date.now() + (response.data.expires_in * 1000));
+                return this.token;
+            }
+
+            throw new Error('Invalid token response from DJI');
         } catch (error) {
-            console.error('Error obtaining DJI access token:', error);
+            console.error('Error obtaining DJI access token:', error.response?.data || error.message);
             throw new Error('Failed to obtain DJI access token');
         }
     }
