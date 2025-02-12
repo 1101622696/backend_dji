@@ -1,6 +1,6 @@
+// este es el local
 // import { Router } from 'express';
 // import httptelemetria from '../controllers/telemetria.js';
-// import diagnosticocontroller from '../controllers/diagnostico.js';
 // import validarApiKey from "../middlewares/validar_api.js";
 
 // const router = Router();
@@ -35,12 +35,13 @@
 //     }
 // });
 
-// router.get("/test-connection", validarApiKey, httptelemetria.testDJIConnection);
+// // router.get("/test-connection", validarApiKey, httptelemetria.testDJIConnection);
 // // router.get("/testconnection", validarApiKey, httptelemetria.testConnection);
-// router.post("/webhook", validarApiKey, httptelemetria.receiveTelemetry);
+// // router.post("/webhook", validarApiKey, httptelemetria.receiveTelemetry);
 
 // export default router;
 
+// este está bien
 import { Router } from 'express';
 import telemetriaController from '../controllers/telemetria.js';
 import Telemetria from "../models/telemetria.js";
