@@ -21,25 +21,20 @@ router.get("/historico", validarApiKey, async (req, res) => {
     }
 });
 
+// Cambia tu controlador de autenticación a esto
 router.post("/auth", async (req, res) => {
     const { app_key, app_secret } = req.body;
 
     try {
-        console.log("Datos recibidos para autenticación:", req.body); 
-
-        const response = await fetch("https://developer.dji.com/api/v1/auth/token", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ app_key, app_secret })
+        const response = await axios.post(`${process.env.BASE_URL}/api/v1/auth/token`, {
+            app_key,
+            app_secret
         });
 
-        const data = await response.json();
-        if (response.ok) {
-            res.status(200).json(data);
+        if (response.data && response.data.access_token) {
+            res.status(200).json({ token: response.data.access_token });
         } else {
-            res.status(400).json({ error: "Error de autenticación", detalle: data });
+            res.status(400).json({ error: "Error de autenticación", detalle: response.data });
         }
     } catch (error) {
         console.error("Error autenticando con DJI:", error);
