@@ -18,6 +18,7 @@ class AuthController {
             }
         } catch (error) {
             console.error("Error autenticando con DJI:");
+            console.error("Error autenticando con DJI2:");
             console.log("Respuesta completa de DJI:", error?.response?.data || error.message);
             
             res.status(500).json({ 
