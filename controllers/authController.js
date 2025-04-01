@@ -18,6 +18,8 @@ class AuthController {
             }
         } catch (error) {
             console.error("Error autenticando con DJI:", error?.response?.data || error.message);
+            console.log("Respuesta completa de DJI:", error?.response?.data || error.message);
+
             res.status(500).json({ 
                 error: "Error interno del servidor", 
                 detalle: error?.response?.data || error.message 
