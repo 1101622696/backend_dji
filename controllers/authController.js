@@ -5,8 +5,8 @@ class AuthController {
         const { app_key, app_secret } = req.body;
 
         try {
-            // Request token from DJI Cloud API
-            const { data } = await axios.post(`${process.env.BASE_URL}/api/v1/auth/token`, {
+            // Solicitar token a la API de DJI
+            const { data } = await axios.post("https://open-api.dji.com/api/v1/auth/token", {
                 app_key,
                 app_secret
             });
@@ -18,7 +18,10 @@ class AuthController {
             }
         } catch (error) {
             console.error("Error autenticando con DJI:", error?.response?.data || error.message);
-            res.status(500).json({ error: "Error interno del servidor", detalle: error?.response?.data || error.message });
+            res.status(500).json({ 
+                error: "Error interno del servidor", 
+                detalle: error?.response?.data || error.message 
+            });
         }
     }
 }
