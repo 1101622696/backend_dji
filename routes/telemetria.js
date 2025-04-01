@@ -1,4 +1,5 @@
 // este está bien
+// routes/telemetria.js
 import { Router } from 'express';
 import telemetriaController from '../controllers/telemetria.js';
 import Telemetria from "../models/telemetria.js";
@@ -19,41 +20,35 @@ router.get("/historico", validarApiKey, async (req, res) => {
         res.status(500).json({ error: "Error obteniendo histórico" });
     }
 });
-// Nueva ruta para autenticación DJI
-router.post("/dji/auth", async (req, res) => {
+
+router.post("/auth", async (req, res) => {
     const { app_key, app_secret } = req.body;
 
     try {
-        // Enviar solicitud de autenticación a DJI desde tu backend
+        console.log("Datos recibidos para autenticación:", req.body); 
+
         const response = await fetch("https://developer.dji.com/api/v1/auth/token", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                app_key,
-                app_secret
-            })
+            body: JSON.stringify({ app_key, app_secret })
         });
 
-        // Obtener el token de la respuesta
         const data = await response.json();
-
-        // Manejo de respuesta
         if (response.ok) {
-            res.status(200).json(data); // Token exitoso
+            res.status(200).json(data);
         } else {
             res.status(400).json({ error: "Error de autenticación", detalle: data });
         }
-
     } catch (error) {
         console.error("Error autenticando con DJI:", error);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 });
 
-
 export default router;
+
 
 // este es el local
 // import { Router } from 'express';
