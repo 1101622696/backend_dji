@@ -5,6 +5,7 @@ class AuthController {
         const { app_key, app_secret } = req.body;
 
         try {
+            // Request token from DJI Cloud API
             const { data } = await axios.post(`${process.env.BASE_URL}/api/v1/auth/token`, {
                 app_key,
                 app_secret
