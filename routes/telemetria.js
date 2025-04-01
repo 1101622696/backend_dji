@@ -10,7 +10,8 @@ const router = Router();
 
 // Ruta para recibir datos de telemetría
 router.post("/telemetry/webhook", telemetriaController.receiveTelemetry);
-
+router.post('/api/dji/auth', telemetriaController.authenticateDJI);
+router.post('/api/dji/telemetria', telemetriaController.receiveTelemetry);
 // Ruta para obtener histórico
 router.get("/historico", validarApiKey, async (req, res) => {
     try {
