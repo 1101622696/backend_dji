@@ -4,14 +4,12 @@ import { Router } from 'express';
 import telemetriaController from '../controllers/telemetria.js';
 import Telemetria from "../models/telemetria.js";
 import validarApiKey from "../middlewares/validar_api.js";
-import axios from "axios";
 
 const router = Router();
 
 // Ruta para recibir datos de telemetría
 router.post("/telemetry/webhook", telemetriaController.receiveTelemetry);
-router.post('/api/dji/auth', telemetriaController.authenticateDJI);
-router.post('/api/dji/telemetria', telemetriaController.receiveTelemetry);
+
 // Ruta para obtener histórico
 router.get("/historico", validarApiKey, async (req, res) => {
     try {
@@ -23,20 +21,25 @@ router.get("/historico", validarApiKey, async (req, res) => {
     }
 });
 
-// Cambia tu controlador de autenticación a esto
 router.post("/auth", async (req, res) => {
     const { app_key, app_secret } = req.body;
 
     try {
-        const response = await axios.post(`${process.env.BASE_URL}/api/v1/auth/token`, {
-            app_key,
-            app_secret
+        console.log("Datos recibidos para autenticación:", req.body); 
+
+        const response = await fetch("https://developer.dji.com/api/v1/auth/token", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ app_key, app_secret })
         });
 
-        if (response.data && response.data.access_token) {
-            res.status(200).json({ token: response.data.access_token });
+        const data = await response.json();
+        if (response.ok) {
+            res.status(200).json(data);
         } else {
-            res.status(400).json({ error: "Error de autenticación", detalle: response.data });
+            res.status(400).json({ error: "Error de autenticación", detalle: data });
         }
     } catch (error) {
         console.error("Error autenticando con DJI:", error);
