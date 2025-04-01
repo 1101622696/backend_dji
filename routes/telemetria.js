@@ -4,6 +4,7 @@ import { Router } from 'express';
 import telemetriaController from '../controllers/telemetria.js';
 import Telemetria from "../models/telemetria.js";
 import validarApiKey from "../middlewares/validar_api.js";
+import axios from "axios";
 
 const router = Router();
 
