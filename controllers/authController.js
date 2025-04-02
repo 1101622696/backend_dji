@@ -6,11 +6,17 @@ class AuthController {
 
         try {
             console.log("Enviando solicitud a DJI...");
-            const response = await axios.post("https://open-api.dji.com/api/v1/auth/token", {
+            // const response = await axios.post("https://open-api.dji.com/api/v1/auth/token", {
+            //     app_key,
+            //     app_secret
+            // });
+            const { response } = await axios.post(`https://api.dji.com/v1/auth/token`, {
                 app_key,
                 app_secret
             });
+            
 
+            console.log("Respuesta recibida:", response.data);
             console.log("Respuesta recibida:", response.data);
             
             return res.status(200).json(response.data);
