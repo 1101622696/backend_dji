@@ -12,11 +12,17 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Configure CORS to accept requests from DJI
+// app.use(cors({
+//     origin: ['https://api.dji.com', process.env.BASE_URL],
+//     methods: ['GET', 'POST'],
+//     allowedHeaders: ['Content-Type', 'Authorization']
+// }));
+
 app.use(cors({
-    origin: ['https://api.dji.com', process.env.BASE_URL],
+    origin: ['https://api.dji.com', 'https://front-apdji-dji-3.vercel.app', '*'],
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  }));
 
 // Logging middleware
 app.use((req, res, next) => {
