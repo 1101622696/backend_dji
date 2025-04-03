@@ -24,6 +24,13 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
   }));
 
+  app.use(cors({
+    origin: ["https://api.dji.com", "https://front-apji-dji-3.vercel.app"], // Asegúrate de que el dominio está correcto
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+
 // Logging middleware
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
