@@ -8,7 +8,20 @@ import validarApiKey from "../middlewares/validar_api.js";
 const router = Router();
 
 // Ruta para recibir datos de telemetría
-router.post("/telemetry/webhook", telemetriaController.receiveTelemetry);
+// si sirve pero no en el control pero si en prueba1 postman 
+// router.post("/telemetry/webhook", telemetriaController.receiveTelemetry);
+
+router.get("/telemetry/webhook", (req, res) => {
+    console.log("DJI hizo una solicitud GET a /telemetry/webhook");
+    console.log("Headers:", req.headers);
+    console.log("Body:", req.body);
+    
+    res.status(200).json({
+        success: true,
+        message: "DJI hizo una solicitud GET, pero esta ruta requiere POST."
+    });
+});
+
 
 // Ruta para obtener histórico
 router.get("/historico", validarApiKey, async (req, res) => {
