@@ -15,22 +15,10 @@ router.post("/telemetry/webhook", telemetriaController.receiveTelemetry);
 // router.get("/telemetry/webhook", (req, res) => {
 //     res.status(200).json({ message: "DJI Telemetry Webhook Ready" });
 //   });
-  router.get("/telemetry/webhook", (req, res) => {
-    res.status(200).json({
-        message: "DJI Telemetry Webhook Ready",
-        instructions: "Send POST requests with telemetry data",
-        expected_format: {
-            droneId: "string",
-            timestamp: "ISO8601",
-            latitud: "float",
-            longitud: "float",
-            altitud: "float",
-            velocidad: "float",
-            nivelbateria: "integer",
-            posicion_vuelo: "string"
-        }
-    });
+router.get("/telemetry/webhook", (req, res) => {
+    res.status(405).json({ error: "Método no permitido. Usa POST para enviar telemetría." });
 });
+
 
 
 // tambien sirve en el control 
