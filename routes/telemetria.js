@@ -9,13 +9,28 @@ const router = Router();
 
 // Ruta para recibir datos de telemetría
 // si sirve pero no en el control pero si en prueba1 postman 
-// router.post("/telemetry/webhook", telemetriaController.receiveTelemetry);
+router.post("/telemetry/webhook", telemetriaController.receiveTelemetry);
 
 // Añade esto junto a tu ruta POST existente
-router.get("/telemetry/webhook", (req, res) => {
-    res.status(200).json({ message: "DJI Telemetry Webhook Ready" });
+// router.get("/telemetry/webhook", (req, res) => {
+//     res.status(200).json({ message: "DJI Telemetry Webhook Ready" });
+//   });
+  router.get("/telemetry/webhook", (req, res) => {
+    res.status(200).json({
+        message: "DJI Telemetry Webhook Ready",
+        instructions: "Send POST requests with telemetry data",
+        expected_format: {
+            droneId: "string",
+            timestamp: "ISO8601",
+            latitud: "float",
+            longitud: "float",
+            altitud: "float",
+            velocidad: "float",
+            nivelbateria: "integer",
+            posicion_vuelo: "string"
+        }
+    });
 });
-router.post("/telemetry/webhook", telemetriaController.receiveTelemetry);
 
 
 // tambien sirve en el control 
