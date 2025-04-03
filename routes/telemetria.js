@@ -9,7 +9,7 @@ const router = Router();
 
 // Ruta para recibir datos de telemetría
 // si sirve pero no en el control pero si en prueba1 postman 
-// router.post("/telemetry/webhook", telemetriaController.receiveTelemetry);
+router.post("/telemetry/webhook", telemetriaController.receiveTelemetry);
 
 // Añade esto junto a tu ruta POST existente
 router.get("/telemetry/webhook", (req, res) => {
