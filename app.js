@@ -3,6 +3,7 @@ import 'dotenv/config';
 import dbConexion from "./database/cnxmongoose.js";
 import cors from "cors";
 import Djiruta from "./routes/telemetria.js";
+import Authruta from "./routes/auth.js";
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.get('/', (req, res) => {
 
 // Mount DJI routes - Make sure this comes BEFORE the 404 handler
 app.use("/api/dji", Djiruta);
+app.use("/api/dji", Authruta);
 
 // 404 handler
 app.use((req, res) => {
