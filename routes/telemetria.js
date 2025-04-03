@@ -65,25 +65,37 @@ router.post("/auth", async (req, res) => {
     const { app_key, app_secret } = req.body;
 
     try {
-        console.log("Datos recibidos para autenticación:", req.body); 
+        console.log("Datos recibidos para autenticación:", req.body);
 
-        const response = await fetch("https://developer.dji.com/api/v1/auth/token", {
-            method: "POST",
+        const response = await axios.post("https://api.dji.com/v1/oauth/token", {
+            app_key,
+            app_secret,
+            grant_type: "client_credentials"  // Asegura que incluyes esto
+        }, {
             headers: {
                 "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ app_key, app_secret })
+            }
         });
 
-        const data = await response.json();
-        if (response.ok) {
-            res.status(200).json(data);
-        } else {
-            res.status(400).json({ error: "Error de autenticación", detalle: data });
-        }
+        console.log("Respuesta de DJI:", response.data);
+        
+        res.status(200).json(response.data);
     } catch (error) {
-        console.error("Error autenticando con DJI:", error);
-        res.status(500).json({ error: "Error interno del servidor" });
+        console.error("Error autenticando con DJI:");
+        
+        if (error.response) {
+            console.log("Código de estado:", error.response.status);
+            console.log("Cuerpo de la respuesta:", error.response.data);
+            return res.status(error.response.status).json({ 
+                error: "Error de autenticación", 
+                detalle: error.response.data 
+            });
+        } else {
+            return res.status(500).json({ 
+                error: "Error interno del servidor", 
+                detalle: error.message 
+            });
+        }
     }
 });
 

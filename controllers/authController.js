@@ -10,10 +10,12 @@ class AuthController {
             //     app_key,
             //     app_secret
             // });
-            const { response } = await axios.post(`https://api.dji.com/v1/auth/token`, {
+            const response = await axios.post(`https://api.dji.com/oauth2/token`, {
                 app_key,
-                app_secret
+                app_secret,
+                grant_type: "client_credentials"
             });
+            
             
 
             console.log("Respuesta recibida:", response.data);
