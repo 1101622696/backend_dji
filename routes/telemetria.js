@@ -9,18 +9,18 @@ const router = Router();
 
 // Ruta para recibir datos de telemetría
 // si sirve pero no en el control pero si en prueba1 postman 
-// router.post("/telemetry/webhook", telemetriaController.receiveTelemetry);
+router.post("/telemetry/webhook", telemetriaController.receiveTelemetry);
 
-router.get("/telemetry/webhook", (req, res) => {
-    console.log("DJI hizo una solicitud GET a /telemetry/webhook");
-    console.log("Headers:", req.headers);
-    console.log("Body:", req.body);
+// router.get("/telemetry/webhook", (req, res) => {
+//     console.log("DJI hizo una solicitud GET a /telemetry/webhook");
+//     console.log("Headers:", req.headers);
+//     console.log("Body:", req.body);
     
-    res.status(200).json({
-        success: true,
-        message: "DJI hizo una solicitud GET, pero esta ruta requiere POST."
-    });
-});
+//     res.status(200).json({
+//         success: true,
+//         message: "DJI hizo una solicitud GET, pero esta ruta requiere POST."
+//     });
+// });
 
 
 // Ruta para obtener histórico
