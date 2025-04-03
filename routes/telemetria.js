@@ -23,11 +23,11 @@ router.post("/telemetry/webhook", telemetriaController.receiveTelemetry);
 //     });
 // });
 
-router.route("/telemetry/webhook")
-    .get((req, res) => {
-        res.status(200).json({ message: "Webhook activo y listo para recibir datos" });
-    })
-    .post(telemetriaController.receiveTelemetry);
+// router.route("/telemetry/webhook")
+//     .get((req, res) => {
+//         res.status(200).json({ message: "Webhook activo y listo para recibir datos" });
+//     })
+//     .post(telemetriaController.receiveTelemetry);
 
 
 
@@ -41,6 +41,25 @@ router.get("/historico", validarApiKey, async (req, res) => {
         res.status(500).json({ error: "Error obteniendo histórico" });
     }
 });
+
+router.post("/pilot-login", async (req, res) => {
+    const { username, password } = req.body;
+
+    // Credenciales esperadas (estas pueden venir de una base de datos)
+    const validUsername = "adminPC";
+    const validPassword = "adminPC";
+
+    if (username === validUsername && password === validPassword) {
+        return res.status(200).json({
+            success: true,
+            message: "Login exitoso",
+            token: "fake-jwt-token"
+        });
+    } else {
+        return res.status(401).json({ success: false, message: "Credenciales incorrectas" });
+    }
+});
+
 
 router.post("/auth", async (req, res) => {
     const { app_key, app_secret } = req.body;
