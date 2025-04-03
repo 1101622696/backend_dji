@@ -19,9 +19,19 @@ class TelemetriaController {
             } = req.body;
 
             // Crear nuevo registro de telemetría
+            // const telemetria = new Telemetria({
+            //     droneId: sn,
+            //     timestamp: new Date(timestamp),
+            //     latitud: position?.lat,
+            //     longitud: position?.lng,
+            //     altitud: position?.alt,
+            //     velocidad: speed,
+            //     nivelbateria: battery?.capacity,
+            //     posicion_vuelo: flightStatus
+            // });
             const telemetria = new Telemetria({
                 droneId: sn,
-                timestamp: new Date(timestamp),
+                timestamp: timestampValido,  // Usa el nuevo método de validación
                 latitud: position?.lat,
                 longitud: position?.lng,
                 altitud: position?.alt,
@@ -29,6 +39,7 @@ class TelemetriaController {
                 nivelbateria: battery?.capacity,
                 posicion_vuelo: flightStatus
             });
+            
 
             await telemetria.save();
             
