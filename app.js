@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // }));
 
 app.use(cors({
-    origin: ['https://api.dji.com', 'https://front-apdji-dji-3.vercel.app', '*'],
+    origin: ['https://api.dji.com', 'https://front-apji-dji-3.vercel.app'],
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization']
   }));
