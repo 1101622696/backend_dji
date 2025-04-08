@@ -78,7 +78,7 @@ export async function subscribeToTopics(callbackUrl) {
       DJI_SUBSCRIBE_URL,
       {
         topics: ["osd", "state"], // puedes añadir más topics si es necesario
-        BASE_URL: callbackUrl,
+        callback_url: callbackUrl,
       },
       {
         headers: {
