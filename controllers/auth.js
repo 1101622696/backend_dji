@@ -1,47 +1,41 @@
-import axios from "axios";
-import qs from "qs"; // Para formatear correctamente los parámetros
+// controllers/authController.js
+import { getAccessToken, subscribeToTopics } from "../services/djiAuth.js";
 
 class AuthController {
-    async authenticateDJI(req, res) {
-        const { app_key, app_secret } = req.body;
-
-        try {
-            console.log("Enviando solicitud a DJI...");
-
-            // Construir parámetros en formato x-www-form-urlencoded
-            const params = qs.stringify({
-                app_key,
-                app_secret,
-                grant_type: "client_credentials"
-            });
-
-            // Hacer la solicitud a DJI Cloud API
-            const response = await axios.post("https://api.dji.com/v1/oauth/token", params, {
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                }
-            });
-
-            console.log("Respuesta recibida:", response.data);
-
-            return res.status(200).json(response.data);
-        } catch (error) {
-            console.error("Error autenticando con DJI:");
-            if (error.response) {
-                console.log("Código de estado:", error.response.status);
-                console.log("Cuerpo de la respuesta:", error.response.data);
-                return res.status(error.response.status).json({ 
-                    error: "Error de autenticación", 
-                    detalle: error.response.data 
-                });
-            } else {
-                return res.status(500).json({ 
-                    error: "Error interno del servidor", 
-                    detalle: error.message 
-                });
-            }
-        }
+  async getAccessToken(req, res) {
+    try {
+      const token = await getAccessToken();
+      res.status(200).json({ success: true, access_token: token });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Error al obtener token",
+        error: error.message,
+      });
     }
+  }
+
+  async subscribeToTopics(req, res) {
+    try {
+      const callbackUrl = process.env.CALLBACK_URL;
+
+      if (!callbackUrl) {
+        return res.status(400).json({
+          success: false,
+          message: "Falta definir CALLBACK_URL en .env",
+        });
+      }
+
+      const result = await subscribeToTopics(callbackUrl);
+      res.status(200).json({ success: true, result });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Error al suscribirse a los topics",
+        error: error.message,
+      });
+    }
+  }
 }
 
 export default new AuthController();

@@ -1,52 +1,97 @@
 // import axios from 'axios';
+// import 'dotenv/config';
 
-// class DJIAuthService {
-//     constructor() {
-//         // Updated to use DJI's cloud API endpoint
-//         this.baseURL = 'https://developer.dji.com/api/v1';
-//     }
+// let accessToken = null;
+// let tokenExpiry = null;
 
-//     async getAccessToken() {
-//         try {
-//             console.log('Attempting to get DJI access token...');
-//             console.log('Using APP_ID:', process.env.APP_ID);
-//             // Don't log the full APP_KEY for security
-//             console.log('APP_KEY length:', process.env.APP_KEY?.length);
+// export const authenticateDJI = async () => {
+//   try {
+//     const response = await axios.post('https://open.dji.com/api/oauth/token', {
+//       app_key: process.env.DJI_APP_KEY,
+//       app_secret: process.env.DJI_APP_SECRET,
+//       grant_type: 'client_credentials'
+//     });
 
-//             const response = await axios.post(`${this.baseURL}/oauth/token`, {
-//                 grant_type: 'client_credentials',
-//                 client_id: process.env.APP_ID,
-//                 client_secret: process.env.APP_KEY
-//             }, {
-//                 headers: {
-//                     'Content-Type': 'application/json',
-//                     'Accept': 'application/json'
-//                 },
-//                 timeout: 10000 // 10 second timeout
-//             });
+//     accessToken = response.data.access_token;
+//     tokenExpiry = Date.now() + (response.data.expires_in * 1000);
+//     console.log('✅ Access token obtenido:', accessToken);
+//     return accessToken;
+//   } catch (error) {
+//     console.error('❌ Error obteniendo token DJI:', error.response?.data || error);
+//     throw error;
+//   }
+// };
 
-//             console.log('DJI token response:', JSON.stringify(response.data, null, 2));
+// export const getAccessToken = async () => {
+//   if (!accessToken || Date.now() >= tokenExpiry) {
+//     return await authenticateDJI();
+//   }
+//   return accessToken;
+// };
 
-//             if (response.data && response.data.access_token) {
-//                 return response.data.access_token;
-//             }
 
-//             throw new Error('Invalid token response from DJI');
-//         } catch (error) {
-//             console.error('Detailed error in getAccessToken:', {
-//                 message: error.message,
-//                 response: error.response?.data,
-//                 status: error.response?.status,
-//                 headers: error.response?.headers
-//             });
-            
-//             if (error.code === 'ENOTFOUND') {
-//                 throw new Error('Cannot connect to DJI API. Please check your internet connection and DNS settings.');
-//             }
-            
-//             throw new Error(`Failed to obtain DJI access token: ${error.message}`);
-//         }
-//     }
-// }
+import axios from "axios";
+import qs from "qs";
 
-// export default new DJIAuthService();
+const DJI_AUTH_URL = "https://open.dji.com/api/oauth/token";
+const DJI_SUBSCRIBE_URL = "https://open.dji.com/api/v1/cloud-api/push/subscribe";
+
+let cachedToken = null;
+let tokenExpiry = null;
+
+export async function getAccessToken() {
+  // Si ya tenemos un token y no ha expirado, lo devolvemos
+  if (cachedToken && tokenExpiry && new Date() < tokenExpiry) {
+    return cachedToken;
+  }
+
+  try {
+    const data = qs.stringify({
+      grant_type: "client_credentials",
+      client_id: process.env.APP_KEY,
+      client_secret: process.env.APP_SECRET,
+    });
+
+    const headers = {
+      "Content-Type": "application/x-www-form-urlencoded",
+    };
+
+    const response = await axios.post(DJI_AUTH_URL, data, { headers });
+
+    cachedToken = response.data.access_token;
+    const expiresIn = response.data.expires_in;
+    tokenExpiry = new Date(Date.now() + expiresIn * 1000);
+
+    console.log("✅ Nuevo token obtenido de DJI Cloud API");
+    return cachedToken;
+  } catch (error) {
+    console.error("❌ Error al obtener token DJI:", error.response?.data || error.message);
+    throw error;
+  }
+}
+
+export async function subscribeToTopics(callbackUrl) {
+  try {
+    const token = await getAccessToken();
+
+    const response = await axios.post(
+      DJI_SUBSCRIBE_URL,
+      {
+        topics: ["osd", "state"], // puedes añadir más topics si es necesario
+        BASE_URL: callbackUrl,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("✅ Suscripción exitosa a los topics de DJI:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error al suscribirse a los topics:", error.response?.data || error.message);
+    throw error;
+  }
+}
