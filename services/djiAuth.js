@@ -1,8 +1,9 @@
+// services/djiauth.js (actualizado para FlightHub)
 import axios from "axios";
 import qs from "qs";
 
-const DJI_AUTH_URL = "https://open.dji.com/api/oauth/token";
-const DJI_SUBSCRIBE_URL = "https://open.dji.com/api/v1/cloud-api/push/subscribe";
+const FH_AUTH_URL = "https://es-flight-api-us.djigate.com/api/oauth/token";
+const FH_SUBSCRIBE_URL = "https://es-flight-api-us.djigate.com/api/v1/cloud-api/push/subscribe";
 
 let cachedToken = null;
 let tokenExpiry = null;
@@ -21,15 +22,16 @@ export async function getAccessToken() {
 
     const headers = {
       "Content-Type": "application/x-www-form-urlencoded",
+      "X-Organization-Key": process.env.ORG_KEY
     };
 
-    const response = await axios.post(DJI_AUTH_URL, data, { headers });
+    const response = await axios.post(FH_AUTH_URL, data, { headers });
 
     cachedToken = response.data.access_token;
     const expiresIn = response.data.expires_in;
     tokenExpiry = new Date(Date.now() + expiresIn * 1000);
 
-    console.log("✅ Nuevo token obtenido de DJI Cloud API");
+    console.log("✅ Nuevo token obtenido de FlightHub 2");
     return cachedToken;
   } catch (error) {
     console.error("❌ Error al obtener token DJI:", error.response?.data || error.message);
@@ -42,7 +44,7 @@ export async function subscribeToTopics(callbackUrl) {
     const token = await getAccessToken();
 
     const response = await axios.post(
-      DJI_SUBSCRIBE_URL,
+      FH_SUBSCRIBE_URL,
       {
         topics: ["osd", "state"],
         callback_url: callbackUrl,
@@ -51,12 +53,12 @@ export async function subscribeToTopics(callbackUrl) {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
-          "X-Organization-Key": process.env.ORG_KEY, // 💡 NUEVO HEADER
+          "X-Organization-Key": process.env.ORG_KEY,
         },
       }
     );
 
-    console.log("✅ Suscripción exitosa a los topics de DJI:", response.data);
+    console.log("✅ Suscripción exitosa a los topics de FlightHub:", response.data);
     return response.data;
   } catch (error) {
     console.error("❌ Error al suscribirse a los topics:", error.response?.data || error.message);
