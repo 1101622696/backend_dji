@@ -2,6 +2,7 @@
 
 import axios from "axios";
 
+// ✅ Función para obtener el token
 export async function getAccessToken() {
   try {
     const response = await axios.post(
@@ -25,6 +26,34 @@ export async function getAccessToken() {
     throw new Error(`Request failed: ${error.response?.status} - ${error.response?.data?.message || error.message}`);
   }
 }
+
+// ✅ Función para suscribirse a topics
+export async function subscribeToTopics(callbackUrl) {
+  try {
+    const token = await getAccessToken();
+
+    const response = await axios.post(
+      `${process.env.BASE_URL}/api/v1/cloud-pilot/topics`,
+      {
+        topics: ["osd", "state"], // o los que necesites
+        callback_url: callbackUrl,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-Organization-Key": process.env.ORG_KEY,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error al suscribirse a topics:", error.response?.data || error.message);
+    throw new Error(`Suscripción fallida: ${error.response?.status} - ${error.response?.data?.message || error.message}`);
+  }
+}
+
 
 
 
