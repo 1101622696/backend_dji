@@ -1,35 +1,3 @@
-// import axios from 'axios';
-// import 'dotenv/config';
-
-// let accessToken = null;
-// let tokenExpiry = null;
-
-// export const authenticateDJI = async () => {
-//   try {
-//     const response = await axios.post('https://open.dji.com/api/oauth/token', {
-//       app_key: process.env.DJI_APP_KEY,
-//       app_secret: process.env.DJI_APP_SECRET,
-//       grant_type: 'client_credentials'
-//     });
-
-//     accessToken = response.data.access_token;
-//     tokenExpiry = Date.now() + (response.data.expires_in * 1000);
-//     console.log('✅ Access token obtenido:', accessToken);
-//     return accessToken;
-//   } catch (error) {
-//     console.error('❌ Error obteniendo token DJI:', error.response?.data || error);
-//     throw error;
-//   }
-// };
-
-// export const getAccessToken = async () => {
-//   if (!accessToken || Date.now() >= tokenExpiry) {
-//     return await authenticateDJI();
-//   }
-//   return accessToken;
-// };
-
-
 import axios from "axios";
 import qs from "qs";
 
@@ -40,7 +8,6 @@ let cachedToken = null;
 let tokenExpiry = null;
 
 export async function getAccessToken() {
-  // Si ya tenemos un token y no ha expirado, lo devolvemos
   if (cachedToken && tokenExpiry && new Date() < tokenExpiry) {
     return cachedToken;
   }
@@ -77,13 +44,14 @@ export async function subscribeToTopics(callbackUrl) {
     const response = await axios.post(
       DJI_SUBSCRIBE_URL,
       {
-        topics: ["osd", "state"], // puedes añadir más topics si es necesario
+        topics: ["osd", "state"],
         callback_url: callbackUrl,
       },
       {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "X-Organization-Key": process.env.ORG_KEY, // 💡 NUEVO HEADER
         },
       }
     );
