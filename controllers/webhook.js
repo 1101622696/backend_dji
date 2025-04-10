@@ -4,6 +4,7 @@ class WebhookController {
     async receiveFileNotification(req, res) {
       try {
         const data = req.body;
+        console.log("Webhook recibido:", data);
         const saved = await File.create({
           notify_type: data.notify_type,
           notify_time: data.notify_time,
