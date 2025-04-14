@@ -54,21 +54,21 @@ const getSiguienteCodigo = async () => {
   
   const numeros = mantenimientos
     .map(item => {
-      const match = item.CodigoMantenimiento?.match(/\d+/); 
+      const match = item.codigomantenimiento?.match(/\d+/); 
       return match ? parseInt(match[0], 10) : null;
     })
     .filter(n => n !== null);
   
   const max = numeros.length ? Math.max(...numeros) : 0;
-  const siguiente = (max + 1).toString().padStart(4, '0');
+  const siguiente = (max + 1).toString().padStart(1, '0');
   
   return `M-${siguiente}`;
 };
 
-const guardarMantenimiento = async ({ idDron, fechaMantenimiento, valor, empresaresponsable, idPiloto, descipcion }) => {
+const guardarMantenimiento = async ({ idDron, fechaMantenimiento, valor, empresaresponsable, idPiloto, descripcion }) => {
   const sheets = await getSheetsClient();
-  const CodigoMantenimiento = await getSiguienteCodigo();
-  const nuevaFila = [CodigoMantenimiento, idDron, fechaMantenimiento, valor, empresaresponsable, idPiloto, descipcion];
+  const codigomantenimiento = await getSiguienteCodigo();
+  const nuevaFila = [codigomantenimiento, idDron, fechaMantenimiento, valor, empresaresponsable, idPiloto, descripcion];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
@@ -78,7 +78,7 @@ const guardarMantenimiento = async ({ idDron, fechaMantenimiento, valor, empresa
     requestBody: { values: [nuevaFila] },
   });
 
-  return { codigo };
+  return { codigomantenimiento };
 };
 
 export const mantenimientoHelper = {
