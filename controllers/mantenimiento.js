@@ -1,13 +1,30 @@
-import { getMantenimientos } from '../helpers/mantenimiento.js';
+import { mantenimientoHelper } from '../helpers/mantenimiento.js';
  
 const httpMantenimiento = {
-  listarMantenimientos: async (req, res) => {
-        try {
-          const data = await getMantenimientos();
-          res.json({ data });
-        } catch (e) {
-          res.status(500).json({ error: 'Error leyendo mantenimientos' });
-        }
-      },
-};
+
+crearMantenimiento: async (req, res) => {
+  try {
+    const {idDron, fechaMantenimiento, valor, empresaresponsable, idPiloto, descipcion } = req.body;
+    const resultado = await mantenimientoHelper.guardarMantenimiento({idDron, fechaMantenimiento, valor, empresaresponsable, idPiloto, descipcion });
+
+    res.status(200).json({
+      mensaje: 'Mantenimiento guardada correctamente',
+      CodigoMantenimiento: resultado.CodigoMantenimiento
+    });
+  } catch (error) {
+    console.error('Error al guardar mantenimiento:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+},
+
+obtenerMantenimientos: async (req, res) => {
+  try {
+    const data = await mantenimientoHelper.getMantenimientos();
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener mantenimientos' });
+  }
+},
+}
 export default httpMantenimiento;
