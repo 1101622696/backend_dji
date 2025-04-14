@@ -4,8 +4,8 @@ const httpMantenimiento = {
 
 crearMantenimiento: async (req, res) => {
   try {
-    const {idDron, fechaMantenimiento, valor, empresaresponsable, idPiloto, descipcion } = req.body;
-    const resultado = await mantenimientoHelper.guardarMantenimiento({idDron, fechaMantenimiento, valor, empresaresponsable, idPiloto, descipcion });
+    const {idDron, fechaMantenimiento, valor, empresaresponsable, idPiloto, descripcion } = req.body;
+    const resultado = await mantenimientoHelper.guardarMantenimiento({idDron, fechaMantenimiento, valor, empresaresponsable, idPiloto, descripcion });
 
     res.status(200).json({
       mensaje: 'Mantenimiento guardada correctamente',

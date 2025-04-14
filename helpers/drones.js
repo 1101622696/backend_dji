@@ -52,21 +52,21 @@ const getSiguienteCodigo = async () => {
   
   const numeros = drones
     .map(item => {
-      const match = item.Codigo?.match(/\d+/); // Extrae los números de SAV-0001
+      const match = item.codigo?.match(/\d+/); // Extrae los números de SAV-0001
       return match ? parseInt(match[0], 10) : null;
     })
     .filter(n => n !== null);
   
   const max = numeros.length ? Math.max(...numeros) : 0;
-  const siguiente = (max + 1).toString().padStart(4, '0');
+  const siguiente = (max + 1).toString().padStart(1, '0');
   
   return `D-${siguiente}`;
 };
 
 const guardarDron = async ({ numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima }) => {
   const sheets = await getSheetsClient();
-  const Codigo = await getSiguienteCodigo();
-  const nuevaFila = [Codigo, numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima];
+  const codigo = await getSiguienteCodigo();
+  const nuevaFila = [codigo, numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,

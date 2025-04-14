@@ -56,13 +56,13 @@ const getSiguienteConsecutivo = async () => {
   
   const numeros = postvuelos
     .map(item => {
-      const match = item["ID - PostVuelo"]?.match(/\d+/); 
+      const match = item["id - postvuelo"]?.match(/\d+/); 
       return match ? parseInt(match[0], 10) : null;
     })
     .filter(n => n !== null);
   
   const max = numeros.length ? Math.max(...numeros) : 0;
-  const siguiente = (max + 1).toString().padStart(4, '0');
+  const siguiente = (max + 1).toString().padStart(1, '0');
   
   return `PV-${siguiente}`;
 };
