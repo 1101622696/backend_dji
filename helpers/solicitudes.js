@@ -3,10 +3,28 @@ import path from 'path';
 
 const spreadsheetId = '1sJwTVoeFelYt5QE2Pk8KSYFZ8_3wRQjWr5HlDkhhrso';
 
-const auth = new google.auth.GoogleAuth({
-  keyFile: path.resolve('./config/credenciales-sheets.json'),
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-});
+// Función para crear el cliente de autenticación
+const auth = () => {
+  // Verificar si estamos en producción (Render)
+  if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
+    // Usar variables de entorno
+    return new google.auth.GoogleAuth({
+      credentials: {
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        // Añade otras variables según sea necesario
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+  } else {
+    // Para desarrollo local, usar el archivo
+    return new google.auth.GoogleAuth({
+      keyFile: './config/credenciales-sheets.json',
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+  }
+};
+
 
 // Cliente Sheets
 const getSheetsClient = async () => {
