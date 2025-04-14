@@ -1,6 +1,6 @@
 import {Router} from 'express'
 import httpSolicitudes from '../controllers/solicitudes.js'
-import {validarJWT} from '../middlewares/validar-jwt.js'
+// import {validarJWT} from '../middlewares/validar-jwt.js'
 
 const router=Router()
 
