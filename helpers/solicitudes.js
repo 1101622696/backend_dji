@@ -4,7 +4,7 @@ import path from 'path';
 const spreadsheetId = '1sJwTVoeFelYt5QE2Pk8KSYFZ8_3wRQjWr5HlDkhhrso';
 
 // Función para crear el cliente de autenticación
-const auth = () => {
+const getAuth = () => {
   // Verificar si estamos en producción (Render)
   if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
     // Usar variables de entorno
@@ -25,14 +25,14 @@ const auth = () => {
   }
 };
 
-
 // Cliente Sheets
 const getSheetsClient = async () => {
-  const client = await auth.getClient();
+  const authClient = getAuth();
+  const client = await authClient.getClient();
   return google.sheets({ version: 'v4', auth: client });
 };
 
-// Obtener datos
+// Obtener datos 
 const obtenerDatosSolicitud = async (nombreHoja, rango = 'A1:Z1000') => {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
@@ -48,24 +48,24 @@ const obtenerDatosSolicitud = async (nombreHoja, rango = 'A1:Z1000') => {
     Object.fromEntries(row.map((val, i) => [headers[i], val]))
   );
 };
+
 const getSolicitudesVuelo = () => obtenerDatosSolicitud('SolicitudVuelo');
 
 const getSiguienteConsecutivo = async () => {
-    const solicitudes = await getSolicitudesVuelo();
+  const solicitudes = await getSolicitudesVuelo();
   
-    const numeros = solicitudes
-      .map(item => {
-        const match = item.consecutivo?.match(/\d+/); // Extrae los números de SAV-0001
-        return match ? parseInt(match[0], 10) : null;
-      })
-      .filter(n => n !== null);
+  const numeros = solicitudes
+    .map(item => {
+      const match = item.consecutivo?.match(/\d+/); // Extrae los números de SAV-0001
+      return match ? parseInt(match[0], 10) : null;
+    })
+    .filter(n => n !== null);
   
-    const max = numeros.length ? Math.max(...numeros) : 0;
-    const siguiente = (max + 1).toString().padStart(4, '0');
+  const max = numeros.length ? Math.max(...numeros) : 0;
+  const siguiente = (max + 1).toString().padStart(4, '0');
   
-    return `SAV-${siguiente}`;
-  };
-  
+  return `SAV-${siguiente}`;
+};
 
 const guardarSolicitud = async ({ ubicacion, proposito }) => {
   const sheets = await getSheetsClient();
