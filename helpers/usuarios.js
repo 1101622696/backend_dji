@@ -3,13 +3,39 @@ import { generarJWT } from './generar-jwt.js'; // Ajusta el path si lo moviste
 
 import { google } from 'googleapis';
 
-const auth = new google.auth.GoogleAuth({
-  keyFile: './config/credenciales-sheets.json',
-  scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-});
+// const spreadsheetId = '1fTu_oEvbL5RG0TSL5rIs2YKFtX8BXTymVkXVhBM0_ts';
+
+const getAuth = () => {
+  // Verificar si estamos en producción (Render)
+  if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
+    // Usar variables de entorno
+    return new google.auth.GoogleAuth({
+      credentials: {
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        // Añade otras variables según sea necesario
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+  } else {
+    // Para desarrollo local, usar el archivo
+    return new google.auth.GoogleAuth({
+      keyFile: './config/credenciales-sheets.json',
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+  }
+};
+
+// Cliente Sheets
+const getSheetsClient = async () => {
+  const authClient = getAuth();
+  const client = await authClient.getClient();
+  return google.sheets({ version: 'v4', auth: client });
+};
+
 
 const leerUsuariosDesdeSheets = async () => {
-  const client = await auth.getClient();
+  const client = await getSheetsClient();
   const sheets = google.sheets({ version: 'v4', auth: client });
 
   const spreadsheetId = '1fTu_oEvbL5RG0TSL5rIs2YKFtX8BXTymVkXVhBM0_ts'; 
@@ -25,19 +51,18 @@ const leerUsuariosDesdeSheets = async () => {
     return [];
   }
 
-  const headers = rows[0];
+  const headers = rows[0].map(h => h.trim().toLowerCase());
   const data = rows.slice(1).map((fila) => {
     const userData = Object.fromEntries(fila.map((valor, i) => [headers[i], valor]));
-    // Normaliza las propiedades para usar un formato consistente
     return {
-      id: userData.ID || userData.id || '',
-      email: userData.EMAIL || userData.Email || '',
-      nombre: userData.NOMBRE || userData.Nombre || '',
-      password: userData.PASSWORD || userData.Password || '',
-      perfil: userData.PERFIL || userData.Perfil || '',
-      estado: (userData.ESTADO || userData.Estado || '').toLowerCase()
+      id: userData.id || '',
+      email: userData.email || '',
+      nombre: userData.nombre || '',
+      password: userData.password || '',
+      perfil: userData.perfil || '',
+      estado: (userData.estado || '').toLowerCase()
     };
-  });
+  });  
 
   return data;
 };
