@@ -27,17 +27,16 @@ const getAuth = () => {
 };
 
 // Cliente Sheets
+// Client Sheets
 const getSheetsClient = async () => {
-  const authClient = getAuth();
-  const client = await authClient.getClient();
-  return google.sheets({ version: 'v4', auth: client });
+  const auth = getAuth();
+  // No need to get the client separately
+  return google.sheets({ version: 'v4', auth });
 };
 
-
 const leerUsuariosDesdeSheets = async () => {
-  const client = await getSheetsClient();
-  const sheets = google.sheets({ version: 'v4', auth: client });
-
+  const sheets = await getSheetsClient();
+  
   const spreadsheetId = '1fTu_oEvbL5RG0TSL5rIs2YKFtX8BXTymVkXVhBM0_ts'; 
   const range = 'Usuarios!A1:F1200'; 
 
