@@ -4,7 +4,8 @@ import {validarJWT} from '../middlewares/validar-jwt.js'
 
 const router=Router()
 
-router.get("/",[validarJWT],httpDrones.listarDrones)
+router.get("/",[validarJWT],httpDrones.obtenerdron)
+router.post("/crear",[validarJWT],httpDrones.crearDron)
 
 
 export default router
