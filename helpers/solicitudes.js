@@ -67,10 +67,10 @@ const getSiguienteConsecutivo = async () => {
   return `SAV-${siguiente}`;
 };
 
-const guardarSolicitud = async ({ ubicacion, proposito }) => {
+const guardarSolicitud = async ({ proposito, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial }) => {
   const sheets = await getSheetsClient();
   const consecutivo = await getSiguienteConsecutivo();
-  const nuevaFila = [consecutivo, ubicacion, proposito];
+  const nuevaFila = [consecutivo, proposito, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,

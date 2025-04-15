@@ -4,8 +4,8 @@ const httpPostvuelos = {
 
 crearPostvuelo: async (req, res) => {
   try {
-    const { consecutivo, idPiloto, idDron, idFecha } = req.body;
-    const resultado = await postvueloHelper.guardarPostvuelo({ consecutivo, idPiloto, idDron, idFecha });
+    const { horaInicio, horaFin, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo } = req.body;
+    const resultado = await postvueloHelper.guardarPostvuelo({ horaInicio, horaFin, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo });
 
     res.status(200).json({
       mensaje: 'Postvuelo guardado correctamente',
