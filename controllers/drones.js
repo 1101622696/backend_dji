@@ -4,8 +4,8 @@ const httpDrones = {
 
 crearDron: async (req, res) => {
   try {
-    const { numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima } = req.body;
-    const resultado = await dronHelper.guardarDron({ numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima });
+    const { numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima, velocidadMaxima, fechaCompra, capacidadBateria, ubicaciondron, contratodron, tipoCamarasSensores, fechapoliza } = req.body;
+    const resultado = await dronHelper.guardarDron({ numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima, velocidadMaxima, fechaCompra, capacidadBateria, ubicaciondron, contratodron, tipoCamarasSensores, fechapoliza });
 
     res.status(200).json({
       mensaje: 'dron guardado correctamente',
