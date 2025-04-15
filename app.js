@@ -4,6 +4,7 @@ import dbConexion from "./database/cnxmongoose.js";
 import cors from "cors";
 import webhookRoutes from "./routes/webhook.js";
 import fileRoutes from "./routes/file.js";
+import fileDownload from "./routes/download.js";
 import usuarios from "./routes/usuarios.js"
 import solicitudes from "./routes/solicitudes.js"
 import pilotos from "./routes/pilotos.js"
@@ -24,6 +25,7 @@ app.use(express.json());
 // Routes
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/files', fileRoutes);
+app.use('/api/fileDownload', fileDownload);
 app.use("/api/usuarios",usuarios)
 app.use("/api/mantenimiento",mantenimiento)
 app.use("/api/drones",drones)
