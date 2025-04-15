@@ -67,10 +67,10 @@ const getSiguienteConsecutivo = async () => {
   return `PV-${siguiente}`;
 };
 
-const guardarPostvuelo = async ({ consecutivo, idPiloto, idDron, idFecha }) => {
+const guardarPostvuelo = async ({ horaInicio, horaFin, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo }) => {
   const sheets = await getSheetsClient();
   const idPostvuelo = await getSiguienteConsecutivo();
-  const nuevaFila = [idPostvuelo, consecutivo, idPiloto, idDron, idFecha];
+  const nuevaFila = [idPostvuelo, horaInicio, horaFin, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
