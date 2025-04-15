@@ -68,10 +68,10 @@ const getSiguienteConsecutivoPrevuelo = async () => {
   };
   
 
-const guardarPrevuelo = async ({ useremail, solicitudesAprobadas, piloto, permiso, fecha, ubicacion, modelodron }) => {
+const guardarPrevuelo = async ({  item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item13, item14, item15, item16, item17, item18, item19, item20, item21, item22, notas }) => {
   const sheets = await getSheetsClient();
   const consecutivoprevuelo = await getSiguienteConsecutivoPrevuelo();
-  const nuevaFila = [consecutivoprevuelo, useremail, solicitudesAprobadas, piloto, permiso, fecha, ubicacion, modelodron];
+  const nuevaFila = [consecutivoprevuelo,  item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item13, item14, item15, item16, item17, item18, item19, item20, item21, item22, notas];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,

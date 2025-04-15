@@ -66,10 +66,10 @@ const getSiguienteCodigo = async () => {
   return `P-${siguiente}`;
 };
 
-const guardarPiloto = async ({ nombreCompleto, primerApellido, SegundoApellido, tipoDocumento, identificacion }) => {
+const guardarPiloto = async ({ nombreCompleto, primerApellido, SegundoApellido, tipoDocumento, identificacion, paisExpedicion, ciudadExpedicion, fechaExpedicion, paisNacimiento, ciudadNacimiento, fechaNacimiento, grupoSanguineo, factorRH, genero, contratopiloto, estadoCivil, ciudadOrigen, direccion, telefonoMovil, fechaExamen, email }) => {
   const sheets = await getSheetsClient();
   const idPiloto = await getSiguienteCodigo();
-  const nuevaFila = [idPiloto, nombreCompleto, primerApellido, SegundoApellido, tipoDocumento, identificacion];
+  const nuevaFila = [idPiloto, nombreCompleto, primerApellido, SegundoApellido, tipoDocumento, identificacion, paisExpedicion, ciudadExpedicion, fechaExpedicion, paisNacimiento, ciudadNacimiento, fechaNacimiento, grupoSanguineo, factorRH, genero, contratopiloto, estadoCivil, ciudadOrigen, direccion, telefonoMovil, fechaExamen, email];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,

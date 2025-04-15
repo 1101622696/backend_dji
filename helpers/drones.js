@@ -63,10 +63,10 @@ const getSiguienteCodigo = async () => {
   return `D-${siguiente}`;
 };
 
-const guardarDron = async ({ numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima }) => {
+const guardarDron = async ({ numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima, velocidadMaxima, fechaCompra, capacidadBateria, ubicaciondron, contratodron, tipoCamarasSensores, fechapoliza }) => {
   const sheets = await getSheetsClient();
   const codigo = await getSiguienteCodigo();
-  const nuevaFila = [codigo, numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima];
+  const nuevaFila = [codigo, numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima, velocidadMaxima, fechaCompra, capacidadBateria, ubicaciondron, contratodron, tipoCamarasSensores, fechapoliza];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
