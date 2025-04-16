@@ -81,8 +81,14 @@ const guardarPiloto = async ({ nombreCompleto, primerApellido, SegundoApellido, 
 
   return { idPiloto };
 };
-
+const getPilotoByStatus = async (status) => {
+  const pilotos = await getPilotos();
+  return pilotos.filter(prevuelo => 
+    prevuelo["estado piloto"] && prevuelo["estado piloto"].toLowerCase() === status.toLowerCase()
+  );
+};
 export const pilotoHelper = {
   getPilotos,
-  guardarPiloto
+  guardarPiloto,
+  getPilotoByStatus
 };

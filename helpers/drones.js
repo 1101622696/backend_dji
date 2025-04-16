@@ -78,8 +78,14 @@ const guardarDron = async ({ numeroSerie, marca, modelo, peso, dimensiones, altu
 
   return { codigo };
 };
-
+const getDronesByStatus = async (status) => {
+  const drones = await getDrones();
+  return drones.filter(prevuelo => 
+    prevuelo["estado-dron"] && prevuelo["estado-dron"].toLowerCase() === status.toLowerCase()
+  );
+};
 export const dronHelper = {
   getDrones,
-  guardarDron
+  guardarDron,
+  getDronesByStatus
 };

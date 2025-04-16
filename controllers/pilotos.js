@@ -28,5 +28,14 @@ const httpPilotos = {
       res.status(500).json({ mensaje: 'Error al obtener Pilotos' });
     }
   },
+  obtenerPilotosActivos: async (req, res) => {
+    try {
+      const data = await pilotoHelper.getPilotoByStatus('Activo');
+      res.json(data);
+    } catch (error) {
+      console.error('Error al obtener datos:', error);
+      res.status(500).json({ mensaje: 'Error al obtener pilotos activos' });
+    }
+  },
   }
 export default httpPilotos;

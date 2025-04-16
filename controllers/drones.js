@@ -26,6 +26,14 @@ obtenerdron: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener dron' });
   }
 },
-}
-
+  obtenerDronesActivos: async (req, res) => {
+    try {
+      const data = await dronHelper.getDronesByStatus('Activo');
+      res.json(data);
+    } catch (error) {
+      console.error('Error al obtener datos:', error);
+      res.status(500).json({ mensaje: 'Error al obtener drones activos' });
+    }
+  },
+  }
 export default httpDrones;
