@@ -33,7 +33,7 @@ const getSheetsClient = async () => {
 };
 
 // Obtener datos 
-const obtenerDatosSolicitud = async (nombreHoja, rango = 'A1:Z1000') => {
+const obtenerDatosSolicitud = async (nombreHoja, rango = 'A1:AY1000') => {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
@@ -83,7 +83,31 @@ const guardarSolicitud = async ({ proposito, fecha_inicio, hora_inicio, fecha_fi
   return { consecutivo };
 };
 
+const getSolicitudesByStatus = async (status) => {
+  const solicitudes = await getSolicitudesVuelo();
+  return solicitudes.filter(solicitud => 
+    solicitud.estado && solicitud.estado.toLowerCase() === status.toLowerCase()
+  );
+};
+const getSolicitudesByEmail = async (email) => {
+  const solicitudes = await getSolicitudesVuelo();
+  return solicitudes.filter(solicitud => 
+    solicitud.usuario && solicitud.usuario.toLowerCase() === email.toLowerCase()
+  );
+};
+const getSolicitudesByEmailAndStatus = async (email, status) => {
+  const solicitudes = await getSolicitudesVuelo();
+  return solicitudes.filter(solicitud => 
+    solicitud.usuario && 
+    solicitud.usuario.toLowerCase() === email.toLowerCase() &&
+    solicitud.estado && 
+    solicitud.estado.toLowerCase() === status.toLowerCase()
+  );
+};
 export const solicitudHelper = {
   getSolicitudesVuelo,
-  guardarSolicitud
+  guardarSolicitud,
+  getSolicitudesByStatus,
+  getSolicitudesByEmail,
+  getSolicitudesByEmailAndStatus
 };

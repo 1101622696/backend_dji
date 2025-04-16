@@ -10,7 +10,7 @@ const validarJWT = async (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.SECRETORPRIVATEKEY);
         console.log("Token decodificado:", decoded);
-        const { id, rol } = decoded;  
+        const { id, perfil } = decoded;  
       const usuarios = await usuarioHelper.getUsuarios();
       // Buscar por id o email, dependiendo de lo que hayas usado para generar el token
       const usuario = usuarios.find(u => u.id === id || u.email === id);

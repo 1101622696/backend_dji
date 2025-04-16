@@ -6,10 +6,9 @@ const fileSchema = new mongoose.Schema({
   organization_id: String,
   workspace_id: String,
   file: {
-    id: String,
-    name: String,
     object_key: String,
-    type: Number, // 5: route, 7: 3D mapping, etc.
+    file_type: String,
+    size: Number
   }
 }, { timestamps: true });
 
