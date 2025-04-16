@@ -31,7 +31,7 @@ const getSheetsClient = async () => {
   return google.sheets({ version: 'v4', auth: client });
 };
 
-const obtenerDatosPrevuelos = async (nombreHoja, rango = 'A1:Z1000') => {
+const obtenerDatosPrevuelos = async (nombreHoja, rango = 'A1:AK1000') => {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
@@ -83,9 +83,32 @@ const guardarPrevuelo = async ({  item1, item2, item3, item4, item5, item6, item
 
   return { consecutivoprevuelo };
 };
-
+const getPrevuelosByStatus = async (status) => {
+  const prevuelos = await getPrevuelos();
+  return prevuelos.filter(prevuelo => 
+    prevuelo["estado del prevuelo"] && prevuelo["estado del prevuelo"].toLowerCase() === status.toLowerCase()
+  );
+};
+const getPrevuelosByEmail = async (email) => {
+  const prevuelos = await getPrevuelos();
+  return prevuelos.filter(prevuelo => 
+    prevuelo.useremail && prevuelo.useremail.toLowerCase() === email.toLowerCase()
+  );
+};
+const getPrevuelosByEmailAndStatus = async (email, status) => {
+  const prevuelos = await getPrevuelos();
+  return prevuelos.filter(prevuelo => 
+    prevuelo.useremail && 
+    prevuelo.useremail.toLowerCase() === email.toLowerCase() &&
+    prevuelo["estado del prevuelo"] && 
+    prevuelo["estado del prevuelo"].toLowerCase() === status.toLowerCase()
+  );
+};
 export const prevueloHelper = {
   getPrevuelos,
-  guardarPrevuelo
+  guardarPrevuelo,
+  getPrevuelosByStatus,
+  getPrevuelosByEmail,
+  getPrevuelosByEmailAndStatus
 };
 

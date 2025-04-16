@@ -33,7 +33,7 @@ const getSheetsClient = async () => {
 };
 
 // Obtener datos 
-const obtenerDatosPostvuelo = async (nombreHoja, rango = 'A1:Z1000') => {
+const obtenerDatosPostvuelo = async (nombreHoja, rango = 'A1:S1000') => {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
@@ -83,7 +83,34 @@ const guardarPostvuelo = async ({ horaInicio, horaFin, distanciaRecorrida, altur
   return { idPostvuelo };
 };
 
+  const getPostvuelosByStatus = async (status) => {
+    const postvuelos = await getPostvuelos();
+    return postvuelos.filter(postvuelo => 
+      postvuelo["estado del postvuelo"] && postvuelo["estado del postvuelo"].toLowerCase() === status.toLowerCase()
+    );
+  };
+  const getPostvuelosByEmail = async (email) => {
+    const postvuelos = await getPostvuelos();
+    return postvuelos.filter(postvuelo => 
+      postvuelo.usuario && postvuelo.usuario.toLowerCase() === email.toLowerCase()
+    );
+  };
+  const getPostvuelosByEmailAndStatus = async (email, status) => {
+    const postvuelos = await getPostvuelos();
+    return postvuelos.filter(postvuelo => 
+      postvuelo.usuario && 
+      postvuelo.usuario.toLowerCase() === email.toLowerCase() &&
+      postvuelo["estado del postvuelo"] && 
+      postvuelo["estado del postvuelo"].toLowerCase() === status.toLowerCase()
+    );
+  };
+
+
 export const postvueloHelper = {
   getPostvuelos,
-  guardarPostvuelo
+  guardarPostvuelo,
+  getPostvuelosByStatus,
+  getPostvuelosByEmail,
+  getPostvuelosByEmailAndStatus
+
 };
