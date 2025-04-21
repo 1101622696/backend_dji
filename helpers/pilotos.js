@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import stream from 'stream';
 
 const spreadsheetId = '1sJwTVoeFelYt5QE2Pk8KSYFZ8_3wRQjWr5HlDkhhrso';
 
@@ -13,13 +14,19 @@ const getAuth = () => {
         private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
         // Añade otras variables según sea necesario
       },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      scopes: [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'
+      ],
     });
   } else {
     // Para desarrollo local, usar el archivo
     return new google.auth.GoogleAuth({
       keyFile: './config/credenciales-sheets.json',
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      scopes: [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'
+      ],
     });
   }
 };
@@ -30,7 +37,11 @@ const getSheetsClient = async () => {
   const client = await authClient.getClient();
   return google.sheets({ version: 'v4', auth: client });
 };
-
+const getDriveClient = async () => {
+  const authClient = getAuth();
+  const client = await authClient.getClient();
+  return google.drive({ version: 'v3', auth: client });
+};
 // Obtener datos 
 const obtenerDatosPiloto = async (nombreHoja, rango = 'A1:Z1000') => {
   const sheets = await getSheetsClient();
@@ -66,10 +77,10 @@ const getSiguienteCodigo = async () => {
   return `P-${siguiente}`;
 };
 
-const guardarPiloto = async ({ nombreCompleto, primerApellido, SegundoApellido, tipoDocumento, identificacion, paisExpedicion, ciudadExpedicion, fechaExpedicion, paisNacimiento, ciudadNacimiento, fechaNacimiento, grupoSanguineo, factorRH, genero, contratopiloto, estadoCivil, ciudadOrigen, direccion, telefonoMovil, fechaExamen, email }) => {
+const guardarPiloto = async ({ nombreCompleto, primerApellido, SegundoApellido, tipoDocumento, identificacion, paisExpedicion, ciudadExpedicion, fechaExpedicion, paisNacimiento, ciudadNacimiento, fechaNacimiento, grupoSanguineo, factorRH, genero, estadoCivil, ciudadOrigen, direccion, telefonoMovil, fechaExamen, email, contratopiloto, Link, fechadecreacion, tiempoacumulado, distanciaacumulada, vuelosrealizados, estado }) => {
   const sheets = await getSheetsClient();
   const idPiloto = await getSiguienteCodigo();
-  const nuevaFila = [idPiloto, nombreCompleto, primerApellido, SegundoApellido, tipoDocumento, identificacion, paisExpedicion, ciudadExpedicion, fechaExpedicion, paisNacimiento, ciudadNacimiento, fechaNacimiento, grupoSanguineo, factorRH, genero, contratopiloto, estadoCivil, ciudadOrigen, direccion, telefonoMovil, fechaExamen, email];
+  const nuevaFila = [idPiloto, nombreCompleto, primerApellido, SegundoApellido, tipoDocumento, identificacion, paisExpedicion, ciudadExpedicion, fechaExpedicion, paisNacimiento, ciudadNacimiento, fechaNacimiento, grupoSanguineo, factorRH, genero, estadoCivil, ciudadOrigen, direccion, telefonoMovil, fechaExamen, email, contratopiloto, Link, fechadecreacion, tiempoacumulado, distanciaacumulada, vuelosrealizados, estado];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
@@ -150,10 +161,81 @@ const editarPilotoporIdentificacion = async (identificacion, nuevosDatos) => {
   return true;
 };
 
+const crearCarpeta = async (nombreCarpeta, parentFolderId) => {
+  const drive = await getDriveClient();
+  
+  const fileMetadata = {
+    name: nombreCarpeta,
+    mimeType: 'application/vnd.google-apps.folder',
+    parents: parentFolderId ? [parentFolderId] : []
+  };
+  
+  const respuesta = await drive.files.create({
+    resource: fileMetadata,
+    fields: 'id, webViewLink'
+  });
+  
+  return respuesta.data;
+};
+
+const subirArchivo = async (archivo, carpetaId) => {
+  try {
+    const drive = await getDriveClient();
+
+    const fileMetadata = {
+      name: archivo.originalname,
+      parents: [carpetaId]
+    };
+
+    const bufferStream = new stream.PassThrough();
+    bufferStream.end(archivo.buffer);
+
+    const media = {
+      mimeType: archivo.mimetype,
+      body: bufferStream
+    };
+
+    const respuesta = await drive.files.create({
+      resource: fileMetadata,
+      media: media,
+      fields: 'id, webViewLink'
+    });
+
+    return respuesta.data.webViewLink;
+  } catch (error) {
+    console.error('Error subiendo archivo:', error.message);
+    throw error;
+  }
+};
+
+const procesarArchivos = async (archivos, identificacion) => {
+  if (!archivos || archivos.length === 0) {
+    return null;
+  }
+  
+  // ID de la carpeta padre que proporcionaste
+  const carpetaPadreId = '1Ys_okDNkr4RalNdDFLGW4jlNTmsEPAjS';
+  
+  // Crear una carpeta con la identificacion
+  const carpeta = await crearCarpeta(identificacion, carpetaPadreId);
+  
+  // Subir cada archivo a la carpeta creada
+  const enlaces = [];
+  for (const archivo of archivos) {
+    const enlace = await subirArchivo(archivo, carpeta.id);
+    enlaces.push(enlace);
+  }
+  
+  // Devolver el enlace a la carpeta
+  return carpeta.webViewLink;
+};
+
 export const pilotoHelper = {
   getPilotos,
   guardarPiloto,
   getPilotoByStatus,
   getPilotoById,
-  editarPilotoporIdentificacion
+  editarPilotoporIdentificacion,
+  getSiguienteCodigo,
+  procesarArchivos
 };
