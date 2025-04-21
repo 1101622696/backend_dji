@@ -4,8 +4,14 @@ const httpPrevuelos = {
 
 crearPrevuelo: async (req, res) => {
   try {
-    const { item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item13, item14, item15, item16, item17, item18, item19, item20, item21, item22, notas } = req.body;
-    const resultado = await prevueloHelper.guardarPrevuelo({  item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item13, item14, item15, item16, item17, item18, item19, item20, item21, item22, notas });
+    const { email, nombre } = req.usuariobdtoken;
+
+    const { consecutivo, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item13, item14, item15, item16, item17, item18, item19, item20, item21, item22, notas } = req.body;
+  
+    const estado = req.body.estado || "Pendiente";
+    const fechadeCreacion = new Date().toISOString().split('T')[0];
+
+    const resultado = await prevueloHelper.guardarPrevuelo({  useremail: email, consecutivo, username: nombre, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item13, item14, item15, item16, item17, item18, item19, item20, item21, item22, notas, estado, fechadeCreacion });
 
     res.status(200).json({
       mensaje: 'prevuelo guardado correctamente',

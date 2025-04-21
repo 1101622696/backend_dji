@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import stream from 'stream';
 
 
 const spreadsheetId = '1sJwTVoeFelYt5QE2Pk8KSYFZ8_3wRQjWr5HlDkhhrso';
@@ -14,13 +15,19 @@ const getAuth = () => {
         private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
         // Añade otras variables según sea necesario
       },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      scopes: [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'
+      ],
     });
   } else {
     // Para desarrollo local, usar el archivo
     return new google.auth.GoogleAuth({
       keyFile: './config/credenciales-sheets.json',
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      scopes: [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'
+      ],
     });
   }
 };
@@ -31,7 +38,11 @@ const getSheetsClient = async () => {
   const client = await authClient.getClient();
   return google.sheets({ version: 'v4', auth: client });
 };
-
+const getDriveClient = async () => {
+  const authClient = getAuth();
+  const client = await authClient.getClient();
+  return google.drive({ version: 'v3', auth: client });
+};
 // Obtener datos 
 const obtenerDatosPostvuelo = async (nombreHoja, rango = 'A1:S1000') => {
   const sheets = await getSheetsClient();
@@ -67,10 +78,10 @@ const getSiguienteConsecutivo = async () => {
   return `PV-${siguiente}`;
 };
 
-const guardarPostvuelo = async ({ horaInicio, horaFin, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo }) => {
+const guardarPostvuelo = async ({ consecutivo, username, dronusado, fechaInicio, horaInicio, horaFin, duracion, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail, estado, proposito, empresa }) => {
   const sheets = await getSheetsClient();
   const idPostvuelo = await getSiguienteConsecutivo();
-  const nuevaFila = [idPostvuelo, horaInicio, horaFin, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo];
+  const nuevaFila = [idPostvuelo, consecutivo, username, dronusado, fechaInicio, horaInicio, horaFin, duracion, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail, estado, proposito, empresa];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
@@ -154,6 +165,73 @@ const guardarPostvuelo = async ({ horaInicio, horaFin, distanciaRecorrida, altur
     return true;
   };
   
+
+const crearCarpeta = async (nombreCarpeta, parentFolderId) => {
+  const drive = await getDriveClient();
+  
+  const fileMetadata = {
+    name: nombreCarpeta,
+    mimeType: 'application/vnd.google-apps.folder',
+    parents: parentFolderId ? [parentFolderId] : []
+  };
+  
+  const respuesta = await drive.files.create({
+    resource: fileMetadata,
+    fields: 'id, webViewLink'
+  });
+  
+  return respuesta.data;
+};
+
+const subirArchivo = async (archivo, carpetaId) => {
+  const drive = await getDriveClient();
+  
+  // Si estamos trabajando con buffer desde multer
+  const fileMetadata = {
+    name: archivo.originalname,
+    parents: [carpetaId]
+  };
+  
+  const bufferStream = new stream.PassThrough();
+  bufferStream.end(archivo.buffer);
+  
+  const media = {
+    mimeType: archivo.mimetype,
+    body: bufferStream
+  };
+  
+  const respuesta = await drive.files.create({
+    resource: fileMetadata,
+    media: media,
+    fields: 'id, webViewLink'
+  });
+  
+  return respuesta.data.webViewLink;
+};
+
+const procesarArchivos = async (archivos, consecutivo) => {
+  if (!archivos || archivos.length === 0) {
+    return null;
+  }
+  
+  // ID de la carpeta padre que proporcionaste
+  const carpetaPadreId = '1-P0Y8rdlvgZaEsnPVN4hzf42pWhH1WY1';
+  
+  // Crear una carpeta con el nombre del consecutivo
+  const carpeta = await crearCarpeta(consecutivo, carpetaPadreId);
+  
+  // Subir cada archivo a la carpeta creada
+  const enlaces = [];
+  for (const archivo of archivos) {
+    const enlace = await subirArchivo(archivo, carpeta.id);
+    enlaces.push(enlace);
+  }
+  
+  // Devolver el enlace a la carpeta
+  return carpeta.webViewLink;
+};
+
+
 export const postvueloHelper = {
   getPostvuelos,
   guardarPostvuelo,
@@ -161,6 +239,7 @@ export const postvueloHelper = {
   getPostvuelosByEmail,
   getPostvuelosByEmailAndStatus,
   getPostvueloByConsecutivo,
-  editarPostvueloPorConsecutivo
-
+  editarPostvueloPorConsecutivo,
+  procesarArchivos,
+  getSiguienteConsecutivo
 };

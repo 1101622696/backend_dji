@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import stream from 'stream';
 
 const spreadsheetId = '1sJwTVoeFelYt5QE2Pk8KSYFZ8_3wRQjWr5HlDkhhrso';
 
@@ -12,13 +13,17 @@ const getAuth = () => {
         private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
         // Añade otras variables según sea necesario
       },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      scopes: [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'],
     });
   } else {
     // Para desarrollo local, usar el archivo
     return new google.auth.GoogleAuth({
       keyFile: './config/credenciales-sheets.json',
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      scopes: [        
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'],
     });
   }
 };
@@ -28,7 +33,11 @@ const getSheetsClient = async () => {
   const client = await authClient.getClient();
   return google.sheets({ version: 'v4', auth: client });
 };
-
+const getDriveClient = async () => {
+  const authClient = getAuth();
+  const client = await authClient.getClient();
+  return google.drive({ version: 'v3', auth: client });
+};
 const obtenerDatosDrones = async (nombreHoja, rango = 'A1:Z1000') => {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
@@ -63,10 +72,10 @@ const getSiguienteCodigo = async () => {
   return `D-${siguiente}`;
 };
 
-const guardarDron = async ({ numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima, velocidadMaxima, fechaCompra, capacidadBateria, ubicaciondron, contratodron, tipoCamarasSensores, fechapoliza }) => {
+const guardarDron = async ({ numeroSerie, marca, modelo, peso, dimensiones, autonomiavuelo, alturaMaxima, velocidadMaxima, fechaCompra, capacidadBateria, tipoCamarasSensores, Link, fechadecreacion, estado, fechapoliza, tiempoacumulado, distanciaacumulada, vuelosrealizados, contratodron, ubicaciondron, ocupadodron }) => {
   const sheets = await getSheetsClient();
   const codigo = await getSiguienteCodigo();
-  const nuevaFila = [codigo, numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima, velocidadMaxima, fechaCompra, capacidadBateria, ubicaciondron, contratodron, tipoCamarasSensores, fechapoliza];
+  const nuevaFila = [codigo, numeroSerie, marca, modelo, peso, dimensiones, autonomiavuelo, alturaMaxima, velocidadMaxima, fechaCompra, capacidadBateria, tipoCamarasSensores, Link, fechadecreacion, estado, fechapoliza, tiempoacumulado, distanciaacumulada, vuelosrealizados, contratodron, ubicaciondron, ocupadodron];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
@@ -139,10 +148,82 @@ const editarDronporNumeroserie = async (numeroserie, nuevosDatos) => {
   return true;
 };
 
+const crearCarpeta = async (nombreCarpeta, parentFolderId) => {
+  const drive = await getDriveClient();
+  
+  const fileMetadata = {
+    name: nombreCarpeta,
+    mimeType: 'application/vnd.google-apps.folder',
+    parents: parentFolderId ? [parentFolderId] : []
+  };
+  
+  const respuesta = await drive.files.create({
+    resource: fileMetadata,
+    fields: 'id, webViewLink'
+  });
+  
+  return respuesta.data;
+};
+
+const subirArchivo = async (archivo, carpetaId) => {
+  try {
+    const drive = await getDriveClient();
+
+    const fileMetadata = {
+      name: archivo.originalname,
+      parents: [carpetaId]
+    };
+
+    const bufferStream = new stream.PassThrough();
+    bufferStream.end(archivo.buffer);
+
+    const media = {
+      mimeType: archivo.mimetype,
+      body: bufferStream
+    };
+
+    const respuesta = await drive.files.create({
+      resource: fileMetadata,
+      media: media,
+      fields: 'id, webViewLink'
+    });
+
+    return respuesta.data.webViewLink;
+  } catch (error) {
+    console.error('Error subiendo archivo:', error.message);
+    throw error;
+  }
+};
+
+const procesarArchivos = async (archivos, numeroSerie) => {
+  if (!archivos || archivos.length === 0) {
+    return null;
+  }
+  
+  // ID de la carpeta padre que proporcionaste
+  const carpetaPadreId = '1LPVkbgDSu3lfv0visAqh_kVrile_Twbl';
+  
+  // Crear una carpeta con el nombre del numeroSerie
+  const carpeta = await crearCarpeta(numeroSerie, carpetaPadreId);
+  
+  // Subir cada archivo a la carpeta creada
+  const enlaces = [];
+  for (const archivo of archivos) {
+    const enlace = await subirArchivo(archivo, carpeta.id);
+    enlaces.push(enlace);
+  }
+  
+  // Devolver el enlace a la carpeta
+  return carpeta.webViewLink;
+};
+
+
 export const dronHelper = {
   getDrones,
   guardarDron,
   getDronesByStatus,
   getDronByNumeroserie,
-  editarDronporNumeroserie
+  editarDronporNumeroserie,
+  procesarArchivos,
+
 };

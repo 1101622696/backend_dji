@@ -4,13 +4,51 @@ const httpPostvuelos = {
 
 crearPostvuelo: async (req, res) => {
   try {
-    const { horaInicio, horaFin, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo } = req.body;
-    const resultado = await postvueloHelper.guardarPostvuelo({ horaInicio, horaFin, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo });
+    const { email, nombre } = req.usuariobdtoken;
+
+    const { consecutivo, dronusado, fechaInicio, horaInicio, horaFin, duracion, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, proposito, empresa } = req.body;
+   
+    const estado = req.body.estado || "Pendiente";
+    const fechadeCreacion = new Date().toISOString().split('T')[0];
+  
+    let Link = null;
+    if (req.files && req.files.length > 0) {
+        const consecutivonombre = consecutivo;
+        Link = await postvueloHelper.procesarArchivos(req.files, consecutivonombre);
+      
+    const resultado = await postvueloHelper.guardarPostvuelo({ consecutivo, username: nombre, dronusado, fechaInicio, horaInicio, horaFin, duracion, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail:email, estado, proposito, empresa  });
 
     res.status(200).json({
       mensaje: 'Postvuelo guardado correctamente',
       idPostvuelo: resultado.idPostvuelo
     });
+      } else {
+        const resultado = await postvueloHelper.guardarPostvuelo({ 
+          consecutivo, 
+          username: nombre, 
+          dronusado,
+          fechaInicio, 
+          horaInicio, 
+          horaFin, 
+          duracion, 
+          distanciaRecorrida, 
+          alturaMaxima, 
+          incidentes, 
+          propositoAlcanzado, 
+          observacionesVuelo, 
+          fechadeCreacion, 
+          Link:null, 
+          useremail:email, 
+          estado, 
+          proposito, 
+          empresa
+        });
+        
+        res.status(200).json({ 
+          mensaje: 'Postvuelo guardado correctamente', 
+          consecutivo: resultado.consecutivo, 
+        });
+      }
   } catch (error) {
     console.error('Error al guardar Postvuelo:', error);
     res.status(500).json({ mensaje: 'Error interno del servidor' });

@@ -4,16 +4,61 @@ const httpPilotos = {
 
   crearPiloto: async (req, res) => {
     try {
-      const {nombreCompleto, primerApellido, SegundoApellido, tipoDocumento, identificacion, paisExpedicion, ciudadExpedicion, fechaExpedicion, paisNacimiento, ciudadNacimiento, fechaNacimiento, grupoSanguineo, factorRH, genero, contratopiloto, estadoCivil, ciudadOrigen, direccion, telefonoMovil, fechaExamen, email} = req.body;
+      const {nombreCompleto, primerApellido, SegundoApellido, tipoDocumento, identificacion, paisExpedicion, ciudadExpedicion, fechaExpedicion, paisNacimiento, ciudadNacimiento, fechaNacimiento, grupoSanguineo, factorRH, genero, estadoCivil, ciudadOrigen, direccion, telefonoMovil, fechaExamen, email, contratopiloto, tiempoacumulado, distanciaacumulada, vuelosrealizados} = req.body;
 
-      const resultado = await pilotoHelper.guardarPiloto({ nombreCompleto, primerApellido, SegundoApellido, tipoDocumento, identificacion, paisExpedicion, ciudadExpedicion, fechaExpedicion, paisNacimiento, ciudadNacimiento, fechaNacimiento, grupoSanguineo, factorRH, genero, contratopiloto, estadoCivil, ciudadOrigen, direccion, telefonoMovil, fechaExamen, email });
+    const estado = req.body.estado || "Activo";
+    const fechadecreacion = new Date().toISOString().split('T')[0];
+
+        let Link = null;
+        if (req.files && req.files.length > 0) {
+          // Primero obtener la identificacion para usarlo como nombre de la carpeta
+          const identificacionnombre = identificacion;
+          Link = await pilotoHelper.procesarArchivos(req.files, identificacionnombre);
+      
+    const resultado = await pilotoHelper.guardarPiloto({ nombreCompleto, primerApellido, SegundoApellido, tipoDocumento, identificacion, paisExpedicion, ciudadExpedicion, fechaExpedicion, paisNacimiento, ciudadNacimiento, fechaNacimiento, grupoSanguineo, factorRH, genero, estadoCivil, ciudadOrigen, direccion, telefonoMovil, fechaExamen, email, contratopiloto, Link, fechadecreacion, tiempoacumulado, distanciaacumulada, vuelosrealizados, estado });
   
       res.status(200).json({
-        mensaje: 'piloto guardada correctamente',
+        mensaje: 'piloto guardado  con link correctamente',
         idPiloto: resultado.idPiloto,
        
       });
-    } catch (error) {
+  } else {
+    const resultado = await pilotoHelper.guardarPiloto({ 
+      nombreCompleto, 
+      primerApellido, 
+      SegundoApellido, 
+      tipoDocumento, 
+      identificacion, 
+      paisExpedicion, 
+      ciudadExpedicion, 
+      fechaExpedicion, 
+      paisNacimiento, 
+      ciudadNacimiento, 
+      fechaNacimiento, 
+      grupoSanguineo, 
+      factorRH, 
+      genero, 
+      estadoCivil, 
+      ciudadOrigen, 
+      direccion, 
+      telefonoMovil, 
+      fechaExamen, 
+      email, 
+      contratopiloto, 
+      Link:null, 
+      fechadecreacion, 
+      tiempoacumulado, 
+      distanciaacumulada, 
+      vuelosrealizados, 
+      estado
+    });
+    
+    res.status(200).json({ 
+      mensaje: 'Piloto guardado sin archivos correctamente', 
+      idPiloto: resultado.idPiloto, 
+    });
+  }
+} catch (error) { 
       console.error('Error al guardar piloto:', error);
       res.status(500).json({ mensaje: 'Error interno del servidor' });
     }

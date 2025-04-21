@@ -4,14 +4,54 @@ const httpDrones = {
 
 crearDron: async (req, res) => {
   try {
-    const { numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima, velocidadMaxima, fechaCompra, capacidadBateria, ubicaciondron, contratodron, tipoCamarasSensores, fechapoliza } = req.body;
-    const resultado = await dronHelper.guardarDron({ numeroSerie, marca, modelo, peso, dimensiones, alturaMaxima, velocidadMaxima, fechaCompra, capacidadBateria, ubicaciondron, contratodron, tipoCamarasSensores, fechapoliza });
+    const { numeroSerie, marca, modelo, peso, dimensiones, autonomiavuelo, alturaMaxima, velocidadMaxima, fechaCompra, capacidadBateria, tipoCamarasSensores, fechapoliza, tiempoacumulado, distanciaacumulada, vuelosrealizados, contratodron, ubicaciondron, ocupadodron } = req.body;
+  
+    const estado = req.body.estado || "Activo";
+    const fechadecreacion = new Date().toISOString().split('T')[0];
+    
+    let Link = null;
+          if (req.files && req.files.length > 0) {
+            // Primero obtener la numeroSerie para usarlo como nombre de la carpeta
+            const numeroserienombre = numeroSerie;
+            Link = await dronHelper.procesarArchivos(req.files, numeroserienombre);
+      
+    const resultado = await dronHelper.guardarDron({ numeroSerie, marca, modelo, peso, dimensiones, autonomiavuelo, alturaMaxima, velocidadMaxima, fechaCompra, capacidadBateria, tipoCamarasSensores, Link, fechadecreacion, estado, fechapoliza, tiempoacumulado, distanciaacumulada, vuelosrealizados, contratodron, ubicaciondron, ocupadodron});
 
     res.status(200).json({
-      mensaje: 'dron guardado correctamente',
+      mensaje: 'dron guardado con link correctamente',
       codigo: resultado.codigo
     });
-  } catch (error) {
+ } else {
+    const resultado = await dronHelper.guardarDron({ 
+      numeroSerie, 
+      marca, 
+      modelo, 
+      peso, 
+      dimensiones, 
+      autonomiavuelo,
+      alturaMaxima, 
+      velocidadMaxima, 
+      fechaCompra, 
+      capacidadBateria, 
+      tipoCamarasSensores, 
+      Link: null, 
+      fechadecreacion, 
+      estado, 
+      fechapoliza, 
+      tiempoacumulado, 
+      distanciaacumulada, 
+      vuelosrealizados, 
+      contratodron, 
+      ubicaciondron, 
+      ocupadodron
+    });
+    
+    res.status(200).json({ 
+      mensaje: 'Dron guardado sin archivos correctamente', 
+      codigo: resultado.codigo, 
+    });
+  }
+} catch (error) { 
     console.error('Error al guardar dron:', error);
     res.status(500).json({ mensaje: 'Error interno del servidor' });
   }

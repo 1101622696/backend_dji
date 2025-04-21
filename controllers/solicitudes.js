@@ -4,40 +4,71 @@ const httpSolicitudes = {
 
 crearSolicitud: async (req, res) => {
   try {
-    console.log("Usuario token:", req.usuariobdtoken);
+    // console.log("Usuario token:", req.usuariobdtoken);
     
-    // if (!req.usuariobdtoken) {
-    //   return res.status(401).json({ mensaje: 'No autorizado: información de usuario no encontrada' });
-    // }
-    
-    // Usar las propiedades correctas según tu estructura
-    // const useremail = req.usuariobdtoken.email;
-    // const username = req.usuariobdtoken.nombre;
     const { email, nombre } = req.usuariobdtoken;
-
     const {proposito, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, realizado  } = req.body;
 
-    const estado = req.body.estado || "pendiente";
+    const estado = req.body.estado || "Pendiente";
     const fechadeCreacion = new Date().toISOString().split('T')[0];
     
     let Link = null;
     if (req.files && req.files.length > 0) {
       // Primero obtener el consecutivo para usarlo como nombre de la carpeta
-      const consecutivo = await getSiguienteConsecutivo();
-      Link = await procesarArchivos(req.files, consecutivo);
+      const consecutivo = await solicitudHelper.getSiguienteConsecutivo();
+      Link = await solicitudHelper.procesarArchivos(req.files, consecutivo);
 
-    const resultado = await solicitudHelper.guardarSolicitud({  email, nombre, proposito, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado });
+    const resultado = await solicitudHelper.guardarSolicitud({  useremail: email, username: nombre, proposito, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username: nombre, useremail: email });
     res.status(200).json({ 
       mensaje: 'Solicitud guardada correctamente', 
       consecutivo: resultado.consecutivo, 
     });
   } else {
-    const resultado = await guardarSolicitud({ 
-      email, 
-      nombre, 
+    const resultado = await solicitudHelper.guardarSolicitud({ 
+      useremail: email,
+      username: nombre,
       proposito, 
-      fecha_inicio, 
-      ...otros,
+      fecha_inicio,
+      hora_inicio, 
+      fecha_fin, 
+      hora_fin, 
+      empresa, 
+      peso_maximo, 
+      detalles_cronograma, 
+      departamento, 
+      municipio, 
+      tipodecontactovisualconlaua, 
+      vueloespecial, 
+      justificacionvueloespecial, 
+      poligononombre, 
+      altura_poligono, 
+      latitud_poligono_1, 
+      longitud_poligono_1, 
+      latitud_poligono_2, 
+      longitud_poligono_2, 
+      latitud_poligono_3, 
+      longitud_poligono_3, 
+      latitud_poligono_4, 
+      longitud_poligono_4, 
+      latitud_poligono_5, 
+      longitud_poligono_5, 
+      tramolinealnombre, 
+      altura_tramo, 
+      latitud_tramo_1, 
+      longitud_tramo_1, 
+      latitud_tramo_2, 
+      longitud_tramo_2, 
+      latitud_tramo_3, 
+      longitud_tramo_3, 
+      latitud_tramo_4, 
+      longitud_tramo_4, 
+      latitud_tramo_5, 
+      longitud_tramo_5, 
+      circuferenciaencoordenadayradionombre, 
+      altura_circunferencia, 
+      latitud_circunferencia_1, 
+      longitud_circunferencia_1, 
+      check_kmz,        
       Link: null,
       estado,
       fechadeCreacion,
