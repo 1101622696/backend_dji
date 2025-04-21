@@ -10,7 +10,8 @@ const validarJWT = async (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.SECRETORPRIVATEKEY);
         console.log("Token decodificado:", decoded);
-        const { id, perfil } = decoded;  
+        // const { id, perfil } = decoded;  
+        const { id, perfil, email, nombre } = decoded;
       const usuarios = await usuarioHelper.getUsuarios();
       // Buscar por id o email, dependiendo de lo que hayas usado para generar el token
       const usuario = usuarios.find(u => u.id === id || u.email === id);
@@ -29,13 +30,19 @@ const validarJWT = async (req, res, next) => {
       //   perfil: usuario.perfil,
       //   nombre: usuario.nombre || ''
       // };
+      // req.usuariobdtoken = {
+      //   id: decoded.id,
+      //   email: decoded.email,
+      //   perfil: decoded.perfil,
+      //   nombre: decoded.nombre
+      // };
       req.usuariobdtoken = {
-        id: decoded.id,
-        email: decoded.email,
-        perfil: decoded.perfil,
-        nombre: decoded.nombre
+        id,
+        email,
+        perfil,
+        nombre
       };
-  
+      
       next();
   
     } catch (error) {
