@@ -85,8 +85,13 @@ const loginUsuario = async ({ email, password }) => {
       throw new Error('Usuario o contraseña incorrecta');
     }
     
-    const token = await generarJWT(usuario.id || usuario.email, usuario.perfil);
-  
+    const token = await generarJWT(
+      usuario.id || usuario.email, 
+      usuario.perfil,
+      usuario.email,
+      usuario.nombre
+    );
+      
     return {
       token,
       usuario: {

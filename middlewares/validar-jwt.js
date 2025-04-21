@@ -43,6 +43,7 @@ const validarJWT = async (req, res, next) => {
         nombre
       };
       
+      console.log("req.usuariobdtoken configurado:", req.usuariobdtoken);
       next();
   
     } catch (error) {
