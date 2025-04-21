@@ -23,11 +23,17 @@ const validarJWT = async (req, res, next) => {
         return res.status(401).json({ msg: "Token no válido - usuario desactivado" });
       }
   
+      // req.usuariobdtoken = {
+      //   id: usuario.id,
+      //   email: usuario.email,
+      //   perfil: usuario.perfil,
+      //   nombre: usuario.nombre || ''
+      // };
       req.usuariobdtoken = {
-        id: usuario.id,
-        email: usuario.email,
-        perfil: usuario.perfil,
-        nombre: usuario.nombre || ''
+        id: decoded.id,
+        email: decoded.email,
+        perfil: decoded.perfil,
+        nombre: decoded.nombre
       };
   
       next();
