@@ -10,7 +10,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 // router.get("/",[validarJWT],httpSolicitudes.obtenerSolicitudes)
 
 // router.post("/crear",[validarJWT],httpSolicitudes.crearSolicitud)
-router.post("/", [validarJWT, upload.array('archivos')], httpSolicitudes.crearSolicitud);
+router.post("/crear", [validarJWT, upload.array('archivos')], httpSolicitudes.crearSolicitud);
 
 router.get("/",httpSolicitudes.obtenerSolicitudes)
 router.get("/pendientes",httpSolicitudes.obtenerSolicitudesPendientes)
@@ -21,7 +21,7 @@ router.get('/filtrar-completo', httpSolicitudes.obtenerSolicitudesPorEmailYEstad
 router.get('/obtenerdatossolicitud/:consecutivo', httpSolicitudes.obtenerSolicitudPorConsecutivo);
 
 
-router.post("/crear",httpSolicitudes.crearSolicitud)
+// router.post("/crear",httpSolicitudes.crearSolicitud)
 
 router.put("/editar/:consecutivo",httpSolicitudes.editarSolicitud)
 
