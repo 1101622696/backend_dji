@@ -8,8 +8,10 @@ const router=Router()
 // router.get("/",httpPilotos.listarPilotos)
 router.get("/",httpPilotos.obtenerPilotos)
 router.get("/activos",httpPilotos.obtenerPilotosActivos)
+router.get('/obtenerdatospiloto/:identificacion', httpPilotos.obtenerPilotoporIdentificacion);
 
 router.post("/crear",httpPilotos.crearPiloto)
+router.put("/editar/:identificacion",httpPilotos.editarPiloto)
 
 
 export default router

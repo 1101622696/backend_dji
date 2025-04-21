@@ -104,13 +104,63 @@ const guardarPostvuelo = async ({ horaInicio, horaFin, distanciaRecorrida, altur
       postvuelo["estado del postvuelo"].toLowerCase() === status.toLowerCase()
     );
   };
+  const getPostvueloByConsecutivo = async (consecutivo) => {
+    const postvuelos = await getPostvuelos();
+    return postvuelos.find(postvuelo => 
+      postvuelo["consecutivo-solicitud"] && postvuelo["consecutivo-solicitud"].toLowerCase() === consecutivo.toLowerCase()
+    );
+  };
 
-
+  const editarPostvueloPorConsecutivo = async (consecutivo, nuevosDatos) => {
+    const sheets = await getSheetsClient();
+  
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'PostVuelo!A2:N', 
+    });
+  
+    const filas = response.data.values;
+    const encabezado = [
+      "idPostvuelo",
+      "consecutivo-solicitud",
+      "horaInicio", 
+      "horaFin", 
+      "distanciaRecorrida", 
+      "alturaMaxima", 
+      "incidentes", 
+      "propositoAlcanzado", 
+      "observacionesVuelo"
+    ];
+  
+    const filaIndex = filas.findIndex(fila => fila[1]?.toLowerCase() === consecutivo.toLowerCase());
+  
+    if (filaIndex === -1) {
+      return null; 
+    }
+  
+    const filaEditada = encabezado.map((campo) => nuevosDatos[campo] ?? filas[filaIndex][encabezado.indexOf(campo)]);
+  
+    const filaEnHoja = filaIndex + 2;
+  
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `PostVuelo!A${filaEnHoja}:S${filaEnHoja}`,
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [filaEditada],
+      },
+    });
+  
+    return true;
+  };
+  
 export const postvueloHelper = {
   getPostvuelos,
   guardarPostvuelo,
   getPostvuelosByStatus,
   getPostvuelosByEmail,
-  getPostvuelosByEmailAndStatus
+  getPostvuelosByEmailAndStatus,
+  getPostvueloByConsecutivo,
+  editarPostvueloPorConsecutivo
 
 };

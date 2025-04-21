@@ -85,5 +85,39 @@ obtenerPostvuelosPorEmailYEstado: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener postvuelos filtradas' });
   }
 },
+obtenerPostvueloPorConsecutivo: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const postvuelo = await postvueloHelper.getPostvueloByConsecutivo(consecutivo);
+
+    if (!postvuelo) {
+      return res.status(404).json({ mensaje: 'postvuelo no encontrado' });
+    }
+
+    res.json(postvuelo);
+  } catch (error) {
+    console.error('Error al obtener postvuelo:', error);
+    res.status(500).json({ mensaje: 'Error al obtener postvuelo' });
+  }
+},
+
+editarPostvuelo: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const nuevosDatos = req.body;
+
+    const resultado = await postvueloHelper.editarPostvueloPorConsecutivo(consecutivo, nuevosDatos);
+
+    if (!resultado) {
+      return res.status(404).json({ mensaje: 'Postvuelo no encontrado' });
+    }
+
+    res.status(200).json({ mensaje: 'Postvuelo actualizado correctamente' });
+  } catch (error) {
+    console.error('Error al editar Postvuelo:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+},
+
 }
 export default httpPostvuelos;

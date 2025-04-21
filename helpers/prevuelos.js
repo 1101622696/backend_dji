@@ -83,6 +83,12 @@ const guardarPrevuelo = async ({  item1, item2, item3, item4, item5, item6, item
 
   return { consecutivoprevuelo };
 };
+const getPrevueloByConsecutivo = async (consecutivo) => {
+  const prevuelos = await getPrevuelos();
+  return prevuelos.find(prevuelo => 
+    prevuelo.solicitudesaprobadas && prevuelo.solicitudesaprobadas.toLowerCase() === consecutivo.toLowerCase()
+  );
+};
 const getPrevuelosByStatus = async (status) => {
   const prevuelos = await getPrevuelos();
   return prevuelos.filter(prevuelo => 
@@ -104,11 +110,75 @@ const getPrevuelosByEmailAndStatus = async (email, status) => {
     prevuelo["estado del prevuelo"].toLowerCase() === status.toLowerCase()
   );
 };
+
+const editarPrevueloPorConsecutivo = async (consecutivo, nuevosDatos) => {
+  const sheets = await getSheetsClient();
+
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: 'Prevuelo!A2:N', 
+  });
+
+  const filas = response.data.values;
+  const encabezado = [
+    'consecutivoprevuelo',
+    'useremail',
+    'solicitudaprobada',
+    "item1", 
+    "item2", 
+    "item3", 
+    "item4", 
+    "item5", 
+    "item6", 
+    "item7", 
+    "item8", 
+    "item9", 
+    "item10", 
+    "item11", 
+    "item12", 
+    "item13", 
+    "item14", 
+    "item15", 
+    "item16", 
+    "item17", 
+    "item18", 
+    "item19", 
+    "item20", 
+    "item21", 
+    "item22", 
+    "notas"
+  ];
+
+  const filaIndex = filas.findIndex(fila => fila[2]?.toLowerCase() === consecutivo.toLowerCase());
+
+  if (filaIndex === -1) {
+    return null; 
+  }
+
+  const filaEditada = encabezado.map((campo) => nuevosDatos[campo] ?? filas[filaIndex][encabezado.indexOf(campo)]);
+
+  const filaEnHoja = filaIndex + 2;
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `Prevuelo!A${filaEnHoja}:AK${filaEnHoja}`,
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [filaEditada],
+    },
+  });
+
+  return true;
+};
+
+
 export const prevueloHelper = {
   getPrevuelos,
   guardarPrevuelo,
   getPrevuelosByStatus,
   getPrevuelosByEmail,
-  getPrevuelosByEmailAndStatus
+  getPrevuelosByEmailAndStatus,
+  getPrevueloByConsecutivo,
+  editarPrevueloPorConsecutivo
 };
 
