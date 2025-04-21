@@ -86,6 +86,41 @@ obtenerPrevuelosPorEmailYEstado: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener prevuelos filtradas' });
   }
 },
+obtenerPrevueloPorConsecutivo: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const prevuelo = await prevueloHelper.getPrevueloByConsecutivo(consecutivo);
+
+    if (!prevuelo) {
+      return res.status(404).json({ mensaje: 'prevuelo no encontrado' });
+    }
+
+    res.json(prevuelo);
+  } catch (error) {
+    console.error('Error al obtener prevuelo:', error);
+    res.status(500).json({ mensaje: 'Error al obtener prevuelo' });
+  }
+},
+
+editarPrevuelo: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const nuevosDatos = req.body;
+
+    const resultado = await prevueloHelper.editarPrevueloPorConsecutivo(consecutivo, nuevosDatos);
+
+    if (!resultado) {
+      return res.status(404).json({ mensaje: 'Prevuelo no encontrado' });
+    }
+
+    res.status(200).json({ mensaje: 'Prevuelo actualizado correctamente' });
+  } catch (error) {
+    console.error('Error al editar Prevuelo:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+},
+
+
 }
 
 export default httpPrevuelos;

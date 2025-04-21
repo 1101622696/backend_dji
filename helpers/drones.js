@@ -84,8 +84,65 @@ const getDronesByStatus = async (status) => {
     prevuelo["estado-dron"] && prevuelo["estado-dron"].toLowerCase() === status.toLowerCase()
   );
 };
+const getDronByNumeroserie = async (numeroserie) => {
+  const drones = await getDrones();
+  return drones.find(dron => 
+    dron.numeroserie && dron.numeroserie.toLowerCase() === numeroserie.toLowerCase()
+  );
+};
+
+const editarDronporNumeroserie = async (numeroserie, nuevosDatos) => {
+  const sheets = await getSheetsClient();
+
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: '3.Drones!A2:N', 
+  });
+
+  const filas = response.data.values;
+  const encabezado = [
+    "codigo", 
+    "numeroSerie", 
+    "marca", 
+    "modelo", 
+    "peso", 
+    "dimensiones", 
+    "alturaMaxima", 
+    "velocidadMaxima", 
+    "fechaCompra", 
+    "capacidadBateria", 
+    "ubicaciondron", 
+    "contratodron", 
+    "tipoCamarasSensores", 
+    "fechapoliza"
+  ];
+
+  const filaIndex = filas.findIndex(fila => fila[1]?.toLowerCase() === numeroserie.toLowerCase());
+
+  if (filaIndex === -1) {
+    return null; 
+  }
+
+  const filaEditada = encabezado.map((campo) => nuevosDatos[campo] ?? filas[filaIndex][encabezado.indexOf(campo)]);
+
+  const filaEnHoja = filaIndex + 2;
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `3.Drones!A${filaEnHoja}:V${filaEnHoja}`,
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [filaEditada],
+    },
+  });
+
+  return true;
+};
+
 export const dronHelper = {
   getDrones,
   guardarDron,
-  getDronesByStatus
+  getDronesByStatus,
+  getDronByNumeroserie,
+  editarDronporNumeroserie
 };

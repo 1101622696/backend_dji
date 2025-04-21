@@ -13,7 +13,9 @@ router.get("/aprobadas",httpPrevuelos.obtenerPrevuelosAprobadas)
 router.get("/enproceso",httpPrevuelos.obtenerPrevuelosEnproceso)
 router.get('/email/:email', httpPrevuelos.obtenerPrevuelosPorEmail);
 router.get('/filtrar-completo', httpPrevuelos.obtenerPrevuelosPorEmailYEstado);
+router.get('/obtenerdatosprevuelo/:consecutivo', httpPrevuelos.obtenerPrevueloPorConsecutivo);
 
 router.post("/crear",httpPrevuelos.crearPrevuelo)
+router.put("/editar/:consecutivo",httpPrevuelos.editarPrevuelo)
 
 export default router

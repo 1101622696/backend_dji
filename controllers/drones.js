@@ -35,5 +35,40 @@ obtenerdron: async (req, res) => {
       res.status(500).json({ mensaje: 'Error al obtener drones activos' });
     }
   },
+    obtenerDronporNumeroserie: async (req, res) => {
+      try {
+        const { numeroserie } = req.params;
+        const dron = await dronHelper.getDronByNumeroserie(numeroserie);
+    
+        if (!dron) {
+          return res.status(404).json({ mensaje: 'dron no encontrado' });
+        }
+    
+        res.json(dron);
+      } catch (error) {
+        console.error('Error al obtener dron:', error);
+        res.status(500).json({ mensaje: 'Error al obtener dron' });
+      }
+    },
+
+  editarDron: async (req, res) => {
+    try {
+      const { numeroserie } = req.params;
+      const nuevosDatos = req.body;
+  
+      const resultado = await dronHelper.editarDronporNumeroserie(numeroserie, nuevosDatos);
+  
+      if (!resultado) {
+        return res.status(404).json({ mensaje: 'Dron no encontrado' });
+      }
+  
+      res.status(200).json({ mensaje: 'Dron actualizado correctamente' });
+    } catch (error) {
+      console.error('Error al editar Dron:', error);
+      res.status(500).json({ mensaje: 'Error interno del servidor' });
+    }
+  },
+
+
   }
 export default httpDrones;
