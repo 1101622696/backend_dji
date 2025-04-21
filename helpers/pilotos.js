@@ -87,8 +87,73 @@ const getPilotoByStatus = async (status) => {
     prevuelo["estado piloto"] && prevuelo["estado piloto"].toLowerCase() === status.toLowerCase()
   );
 };
+const getPilotoById = async (identificacion) => {
+  const pilotos = await getPilotos();
+  return pilotos.find(piloto => 
+    piloto["identificación"] && piloto["identificación"].toLowerCase() === identificacion.toLowerCase()
+  );
+};
+
+const editarPilotoporIdentificacion = async (identificacion, nuevosDatos) => {
+  const sheets = await getSheetsClient();
+
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: '3.Pilotos!A2:N', 
+  });
+
+  const filas = response.data.values;
+  const encabezado = [
+    "idPiloto", 
+    "nombreCompleto", 
+    "primerApellido", 
+    "SegundoApellido", 
+    "tipoDocumento", 
+    "identificacion", 
+    "paisExpedicion", 
+    "ciudadExpedicion", 
+    "fechaExpedicion", 
+    "paisNacimiento", 
+    "ciudadNacimiento", 
+    "fechaNacimiento", 
+    "grupoSanguineo", 
+    "factorRH", 
+    "genero", 
+    "contratopiloto", 
+    "estadoCivil", 
+    "ciudadOrigen", 
+    "direccion", 
+    "telefonoMovil", 
+    "fechaExamen", 
+    "email"
+  ];
+
+  const filaIndex = filas.findIndex(fila => fila[5]?.toLowerCase() === identificacion.toLowerCase());
+
+  if (filaIndex === -1) {
+    return null; 
+  }
+
+  const filaEditada = encabezado.map((campo) => nuevosDatos[campo] ?? filas[filaIndex][encabezado.indexOf(campo)]);
+
+  const filaEnHoja = filaIndex + 2;
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `3.Pilotos!A${filaEnHoja}:AB${filaEnHoja}`,
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [filaEditada],
+    },
+  });
+
+  return true;
+};
+
 export const pilotoHelper = {
   getPilotos,
   guardarPiloto,
-  getPilotoByStatus
+  getPilotoByStatus,
+  getPilotoById,
+  editarPilotoporIdentificacion
 };
