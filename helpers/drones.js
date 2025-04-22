@@ -89,10 +89,19 @@ const guardarDron = async ({ numeroSerie, marca, modelo, peso, dimensiones, auto
 };
 const getDronesByStatus = async (status) => {
   const drones = await getDrones();
-  return drones.filter(prevuelo => 
-    prevuelo["estado-dron"] && prevuelo["estado-dron"].toLowerCase() === status.toLowerCase()
+  return drones.filter(dron => 
+    dron["estado-dron"] && dron["estado-dron"].toLowerCase() === status.toLowerCase()
   );
 };
+
+const getDronesByStatusyOcupado = async (status, ocupado) => {
+  const drones = await getDrones();
+  return drones.filter(dron => 
+    dron["estado-dron"] && dron["estado-dron"].toLowerCase() === status.toLowerCase()  &&
+    dron["ocupado_dron"] && dron["ocupado_dron"].toLowerCase() === ocupado.toLowerCase()
+  );
+};
+
 const getDronByNumeroserie = async (numeroserie) => {
   const drones = await getDrones();
   return drones.find(dron => 
@@ -217,13 +226,82 @@ const procesarArchivos = async (archivos, numeroSerie) => {
   return carpeta.webViewLink;
 };
 
+const actualizarEstadoEnSheets = async (numeroSerie, nuevoEstado = "activo") => {
+  try {
+    const sheets = await getSheetsClient();
+    
+    // Primero, obtener todos los datos para encontrar la fila del numeroSerie
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: '3.Drones',
+    });
+    
+    const rows = response.data.values;
+    if (!rows || rows.length === 0) {
+      throw new Error('No se encontraron datos en la hoja');
+    }
+    
+    // Determinar qué columna contiene el numeroSerie y el estado
+    const headers = rows[0];
+    const numeroSerieIndex = headers.findIndex(header => 
+      header.toLowerCase() === 'numeroserie');
+    const estadoIndex = headers.findIndex(header => 
+      header.toLowerCase() === 'estado-dron');
+    
+    if (numeroSerieIndex === -1 || estadoIndex === -1) {
+      throw new Error('No se encontraron las columnas necesarias');
+    }
+    
+    // Encontrar la fila que corresponde al numeroSerie
+    let rowIndex = -1;
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][numeroSerieIndex] && 
+          rows[i][numeroSerieIndex].toLowerCase() === numeroSerie.toLowerCase()) {
+        rowIndex = i;
+        break;
+      }
+    }
+    
+    if (rowIndex === -1) {
+      throw new Error(`No se encontró el numero de Serie ${numeroSerie}`);
+    }
+    
+    // Actualizar el estado en Google Sheets
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `3.Drones!${getColumnLetter(estadoIndex + 1)}${rowIndex + 1}`,
+      valueInputOption: 'RAW',
+      resource: {
+        values: [[nuevoEstado]]
+      }
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error al actualizar el estado en Google Sheets:', error);
+    throw error;
+  }
+};
+
+// Función auxiliar para convertir número de columna a letra
+function getColumnLetter(columnNumber) {
+  let columnLetter = '';
+  while (columnNumber > 0) {
+    const remainder = (columnNumber - 1) % 26;
+    columnLetter = String.fromCharCode(65 + remainder) + columnLetter;
+    columnNumber = Math.floor((columnNumber - 1) / 26);
+  }
+  return columnLetter;
+}
 
 export const dronHelper = {
   getDrones,
   guardarDron,
   getDronesByStatus,
+  getDronesByStatusyOcupado,
   getDronByNumeroserie,
   editarDronporNumeroserie,
   procesarArchivos,
+  actualizarEstadoEnSheets
 
 };

@@ -116,6 +116,39 @@ const httpPilotos = {
     }
   },
   
+activarPiloto: async (req, res) => {
+  try {
+    const { identificacion } = req.params;
+    const { estado } = req.body; // Opcional, puedes obtener el estado del body o usar "aprobado" por defecto
+    
+    const resultado = await pilotoHelper.actualizarEstadoEnSheets(identificacion, estado || "Activo");
+
+    res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
+  } catch (error) {
+    console.error('Error al editar estado del piloto:', error);
+    res.status(500).json({ 
+      mensaje: 'Error al actualizar estado', 
+      error: error.message 
+    });
+  }
+},
+
+desactivarPiloto: async (req, res) => {
+  try {
+    const { identificacion } = req.params;
+    const { estado } = req.body; // Opcional, puedes obtener el estado del body o usar "aprobado" por defecto
+    
+    const resultado = await pilotoHelper.actualizarEstadoEnSheets(identificacion, estado || "Inactivo");
+
+    res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
+  } catch (error) {
+    console.error('Error al editar estado del piloto:', error);
+    res.status(500).json({ 
+      mensaje: 'Error al actualizar estado', 
+      error: error.message 
+    });
+  }
+},
 
   }
 export default httpPilotos;

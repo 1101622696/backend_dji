@@ -10,6 +10,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 // router.get("/",[validarJWT],httpDrones.obtenerdron)
 router.get("/",httpDrones.obtenerdron)
 router.get("/activos",httpDrones.obtenerDronesActivos)
+router.get("/activosnoOcupados",httpDrones.obtenerDronesActivosyNoOcupados)
 router.get('/obtenerdatosdron/:numeroserie', httpDrones.obtenerDronporNumeroserie);
 
 // router.post("/crear",httpDrones.crearDron)
@@ -18,5 +19,7 @@ router.post("/crear", [validarJWT, upload.array('archivos')], httpDrones.crearDr
 
 router.put("/editar/:numeroserie",httpDrones.editarDron)
 
+router.put("/activar/:numeroserie",httpDrones.activarDron)
+router.put("/desactivar/:numeroserie",httpDrones.desactivarDron)
 
 export default router

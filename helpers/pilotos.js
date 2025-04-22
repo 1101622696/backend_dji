@@ -94,8 +94,8 @@ const guardarPiloto = async ({ nombreCompleto, primerApellido, SegundoApellido, 
 };
 const getPilotoByStatus = async (status) => {
   const pilotos = await getPilotos();
-  return pilotos.filter(prevuelo => 
-    prevuelo["estado piloto"] && prevuelo["estado piloto"].toLowerCase() === status.toLowerCase()
+  return pilotos.filter(piloto => 
+    piloto["estado piloto"] && piloto["estado piloto"].toLowerCase() === status.toLowerCase()
   );
 };
 const getPilotoById = async (identificacion) => {
@@ -230,6 +230,74 @@ const procesarArchivos = async (archivos, identificacion) => {
   return carpeta.webViewLink;
 };
 
+const actualizarEstadoEnSheets = async (identificacion, nuevoEstado = "activo") => {
+  try {
+    const sheets = await getSheetsClient();
+    
+    // Primero, obtener todos los datos para encontrar la fila del identificacion
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: '3.Pilotos',
+    });
+    
+    const rows = response.data.values;
+    if (!rows || rows.length === 0) {
+      throw new Error('No se encontraron datos en la hoja');
+    }
+    
+    // Determinar qué columna contiene el identificacion y el estado
+    const headers = rows[0];
+    const identificacionIndex = headers.findIndex(header => 
+      header.toLowerCase() === 'identificación');
+    const estadoIndex = headers.findIndex(header => 
+      header.toLowerCase() === 'estado piloto');
+    
+    if (identificacionIndex === -1 || estadoIndex === -1) {
+      throw new Error('No se encontraron las columnas necesarias');
+    }
+    
+    // Encontrar la fila que corresponde al identificacion
+    let rowIndex = -1;
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][identificacionIndex] && 
+          rows[i][identificacionIndex].toLowerCase() === identificacion.toLowerCase()) {
+        rowIndex = i;
+        break;
+      }
+    }
+    
+    if (rowIndex === -1) {
+      throw new Error(`No se encontró la identificacion ${identificacion}`);
+    }
+    
+    // Actualizar el estado en Google Sheets
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `3.Pilotos!${getColumnLetter(estadoIndex + 1)}${rowIndex + 1}`,
+      valueInputOption: 'RAW',
+      resource: {
+        values: [[nuevoEstado]]
+      }
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error al actualizar el estado en Google Sheets:', error);
+    throw error;
+  }
+};
+
+// Función auxiliar para convertir número de columna a letra
+function getColumnLetter(columnNumber) {
+  let columnLetter = '';
+  while (columnNumber > 0) {
+    const remainder = (columnNumber - 1) % 26;
+    columnLetter = String.fromCharCode(65 + remainder) + columnLetter;
+    columnNumber = Math.floor((columnNumber - 1) / 26);
+  }
+  return columnLetter;
+}
+
 export const pilotoHelper = {
   getPilotos,
   guardarPiloto,
@@ -237,5 +305,6 @@ export const pilotoHelper = {
   getPilotoById,
   editarPilotoporIdentificacion,
   getSiguienteCodigo,
-  procesarArchivos
+  procesarArchivos,
+  actualizarEstadoEnSheets
 };

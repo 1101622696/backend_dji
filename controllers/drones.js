@@ -4,10 +4,11 @@ const httpDrones = {
 
 crearDron: async (req, res) => {
   try {
-    const { numeroSerie, marca, modelo, peso, dimensiones, autonomiavuelo, alturaMaxima, velocidadMaxima, fechaCompra, capacidadBateria, tipoCamarasSensores, fechapoliza, tiempoacumulado, distanciaacumulada, vuelosrealizados, contratodron, ubicaciondron, ocupadodron } = req.body;
+    const { numeroSerie, marca, modelo, peso, dimensiones, autonomiavuelo, alturaMaxima, velocidadMaxima, fechaCompra, capacidadBateria, tipoCamarasSensores, fechapoliza, tiempoacumulado, distanciaacumulada, vuelosrealizados, contratodron, ubicaciondron } = req.body;
   
     const estado = req.body.estado || "Activo";
     const fechadecreacion = new Date().toISOString().split('T')[0];
+    const ocupadodron = req.body.estado || "No";
     
     let Link = null;
           if (req.files && req.files.length > 0) {
@@ -75,6 +76,15 @@ obtenerdron: async (req, res) => {
       res.status(500).json({ mensaje: 'Error al obtener drones activos' });
     }
   },
+  obtenerDronesActivosyNoOcupados: async (req, res) => {
+    try {
+      const data = await dronHelper.getDronesByStatusyOcupado('Activo', 'No');
+      res.json(data);
+    } catch (error) {
+      console.error('Error al obtener datos:', error);
+      res.status(500).json({ mensaje: 'Error al obtener drones activos no ocupados' });
+    }
+  },
     obtenerDronporNumeroserie: async (req, res) => {
       try {
         const { numeroserie } = req.params;
@@ -109,6 +119,39 @@ obtenerdron: async (req, res) => {
     }
   },
 
+activarDron: async (req, res) => {
+  try {
+    const { numeroSerie } = req.params;
+    const { estado } = req.body; // Opcional, puedes obtener el estado del body o usar "aprobado" por defecto
+    
+    const resultado = await dronHelper.actualizarEstadoEnSheets(numeroSerie, estado || "Activo");
+
+    res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
+  } catch (error) {
+    console.error('Error al editar estado del dron:', error);
+    res.status(500).json({ 
+      mensaje: 'Error al actualizar estado', 
+      error: error.message 
+    });
+  }
+},
+
+desactivarDron: async (req, res) => {
+  try {
+    const { numeroSerie } = req.params;
+    const { estado } = req.body; // Opcional, puedes obtener el estado del body o usar "aprobado" por defecto
+    
+    const resultado = await dronHelper.actualizarEstadoEnSheets(numeroSerie, estado || "Inactivo");
+
+    res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
+  } catch (error) {
+    console.error('Error al editar estado del dron:', error);
+    res.status(500).json({ 
+      mensaje: 'Error al actualizar estado', 
+      error: error.message 
+    });
+  }
+},
 
   }
 export default httpDrones;
