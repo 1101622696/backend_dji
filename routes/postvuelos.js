@@ -8,22 +8,22 @@ const router=Router()
 const upload = multer({ storage: multer.memoryStorage() });
 
 // router.get("/",[validarJWT],httpPostvuelos.obtenerPostvuelos)
-router.get("/",httpPostvuelos.obtenerPostvuelos)
-router.get("/pendientes",httpPostvuelos.obtenerPostvuelosPendientes)
-router.get("/aprobados",httpPostvuelos.obtenerPostvuelosAprobadas)
-router.get("/enproceso",httpPostvuelos.obtenerPostvuelosEnproceso)
-router.get("/pendientes/email/:email",httpPostvuelos.obtenerPostvuelosPendientesPorEmail)
-router.get("/aprobados/email/:email",httpPostvuelos.obtenerPostvuelosAprobadasPorEmail)
-router.get('/email/:email', httpPostvuelos.obtenerPostvuelosPorEmail);
-router.get('/filtrar-completo', httpPostvuelos.obtenerPostvuelosPorEmailYEstado);
-router.get('/obtenerdatospostvuelo/:consecutivo', httpPostvuelos.obtenerPostvueloPorConsecutivo);
+router.get("/",[validarJWT],httpPostvuelos.obtenerPostvuelos)
+router.get("/pendientes",[validarJWT],httpPostvuelos.obtenerPostvuelosPendientes)
+router.get("/aprobados",[validarJWT],httpPostvuelos.obtenerPostvuelosAprobadas)
+router.get("/enproceso",[validarJWT],httpPostvuelos.obtenerPostvuelosEnproceso)
+router.get("/pendientes/email/:email",[validarJWT],httpPostvuelos.obtenerPostvuelosPendientesPorEmail)
+router.get("/aprobados/email/:email",[validarJWT],httpPostvuelos.obtenerPostvuelosAprobadasPorEmail)
+router.get('/email/:email',[validarJWT], httpPostvuelos.obtenerPostvuelosPorEmail);
+router.get('/filtrar-completo',[validarJWT], httpPostvuelos.obtenerPostvuelosPorEmailYEstado);
+router.get('/obtenerdatospostvuelo/:consecutivo',[validarJWT], httpPostvuelos.obtenerPostvueloPorConsecutivo);
 
 // router.post("/crear",httpPostvuelos.crearPostvuelo)
 router.post("/crear", [validarJWT, upload.array('archivos')], httpPostvuelos.crearPostvuelo);
 
-router.put("/editar/:consecutivo",httpPostvuelos.editarPostvuelo)
+router.put("/editar/:consecutivo",[validarJWT],httpPostvuelos.editarPostvuelo)
 
-router.put("/aprobar/:consecutivo",httpPostvuelos.aprobarestadoPostvuelo)
-router.put("/denegar/:consecutivo",httpPostvuelos.denegarestadoPostvuelo)
+router.put("/aprobar/:consecutivo",[validarJWT],httpPostvuelos.aprobarestadoPostvuelo)
+router.put("/denegar/:consecutivo",[validarJWT],httpPostvuelos.denegarestadoPostvuelo)
 
 export default router
