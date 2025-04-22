@@ -123,6 +123,38 @@ obtenerPostvuelosPorEmailYEstado: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener postvuelos filtradas' });
   }
 },
+obtenerPostvuelosPendientesPorEmail: async (req, res) => {
+  try {
+    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await postvueloHelper.getPostvuelosByEmailAndStatus(email, 'Pendiente');
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener postvuelos pendientes por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener postvuelos pendientes por email' });
+  }
+},
+
+obtenerPostvuelosAprobadasPorEmail: async (req, res) => {
+  try {
+    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await postvueloHelper.getPostvuelosByEmailAndStatus(email, 'Aprobado');
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener postvuelos aprobados por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener postvuelos aprobadas por email' });
+  }
+},
+
 obtenerPostvueloPorConsecutivo: async (req, res) => {
   try {
     const { consecutivo } = req.params;

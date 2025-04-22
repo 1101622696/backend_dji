@@ -16,6 +16,8 @@ router.get("/",httpSolicitudes.obtenerSolicitudes)
 router.get("/pendientes",httpSolicitudes.obtenerSolicitudesPendientes)
 router.get("/aprobadas",httpSolicitudes.obtenerSolicitudesAprobadas)
 router.get("/enproceso",httpSolicitudes.obtenerSolicitudesEnproceso)
+router.get("/pendientes/email/:email",httpSolicitudes.obtenerSolicitudesPendientesPorEmail)
+router.get("/aprobadas/email/:email",httpSolicitudes.obtenerSolicitudesAprobadasPorEmail)
 router.get('/email/:email', httpSolicitudes.obtenerSolicitudesPorEmail);
 router.get('/filtrar-completo', httpSolicitudes.obtenerSolicitudesPorEmailYEstado);
 router.get('/obtenerdatossolicitud/:consecutivo', httpSolicitudes.obtenerSolicitudPorConsecutivo);

@@ -154,6 +154,38 @@ obtenerSolicitudesPorEmailYEstado: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener solicitudes filtradas' });
   }
 },
+obtenerSolicitudesPendientesPorEmail: async (req, res) => {
+  try {
+    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await solicitudHelper.getSolicitudesByEmailAndStatus(email, 'Pendiente');
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener solicitudes pendientes por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener solicitudes pendientes por email' });
+  }
+},
+
+obtenerSolicitudesAprobadasPorEmail: async (req, res) => {
+  try {
+    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await solicitudHelper.getSolicitudesByEmailAndStatus(email, 'Aprobado');
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener solicitudes aprobadas por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener solicitudes aprobadas por email' });
+  }
+},
+
 obtenerSolicitudPorConsecutivo: async (req, res) => {
   try {
     const { consecutivo } = req.params;
