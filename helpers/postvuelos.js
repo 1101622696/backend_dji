@@ -109,8 +109,8 @@ const guardarPostvuelo = async ({ consecutivo, username, dronusado, fechaInicio,
   const getPostvuelosByEmailAndStatus = async (email, status) => {
     const postvuelos = await getPostvuelos();
     return postvuelos.filter(postvuelo => 
-      postvuelo.usuario && 
-      postvuelo.usuario.toLowerCase() === email.toLowerCase() &&
+      postvuelo["correo de usuario"] && 
+      postvuelo["correo de usuario"].toLowerCase() === email.toLowerCase() &&
       postvuelo["estado del postvuelo"] && 
       postvuelo["estado del postvuelo"].toLowerCase() === status.toLowerCase()
     );

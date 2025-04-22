@@ -12,6 +12,8 @@ router.get("/",httpPostvuelos.obtenerPostvuelos)
 router.get("/pendientes",httpPostvuelos.obtenerPostvuelosPendientes)
 router.get("/aprobadas",httpPostvuelos.obtenerPostvuelosAprobadas)
 router.get("/enproceso",httpPostvuelos.obtenerPostvuelosEnproceso)
+router.get("/pendientes/email/:email",httpPostvuelos.obtenerPostvuelosPendientesPorEmail)
+router.get("/aprobados/email/:email",httpPostvuelos.obtenerPostvuelosAprobadasPorEmail)
 router.get('/email/:email', httpPostvuelos.obtenerPostvuelosPorEmail);
 router.get('/filtrar-completo', httpPostvuelos.obtenerPostvuelosPorEmailYEstado);
 router.get('/obtenerdatospostvuelo/:consecutivo', httpPostvuelos.obtenerPostvueloPorConsecutivo);

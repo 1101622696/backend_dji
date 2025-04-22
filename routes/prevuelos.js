@@ -11,6 +11,8 @@ router.get("/",httpPrevuelos.obtenerprevuelos)
 router.get("/pendientes",httpPrevuelos.obtenerPrevuelosPendientes)
 router.get("/aprobadas",httpPrevuelos.obtenerPrevuelosAprobadas)
 router.get("/enproceso",httpPrevuelos.obtenerPrevuelosEnproceso)
+router.get("/pendientes/email/:email",httpPrevuelos.obtenerPrevuelosPendientesPorEmail)
+router.get("/aprobados/email/:email",httpPrevuelos.obtenerPrevuelosAprobadosPorEmail)
 router.get('/email/:email', httpPrevuelos.obtenerPrevuelosPorEmail);
 router.get('/filtrar-completo', httpPrevuelos.obtenerPrevuelosPorEmailYEstado);
 router.get('/obtenerdatosprevuelo/:consecutivo', httpPrevuelos.obtenerPrevueloPorConsecutivo);
