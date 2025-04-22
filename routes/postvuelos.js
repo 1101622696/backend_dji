@@ -21,5 +21,7 @@ router.post("/crear", [validarJWT, upload.array('archivos')], httpPostvuelos.cre
 
 router.put("/editar/:consecutivo",httpPostvuelos.editarPostvuelo)
 
+router.put("/aprobar/:consecutivo",httpPostvuelos.aprobarestadoPostvuelo)
+router.put("/denegar/:consecutivo",httpPostvuelos.denegarestadoPostvuelo)
 
 export default router
