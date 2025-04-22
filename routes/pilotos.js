@@ -9,17 +9,17 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // router.get("/",[validarJWT],httpPilotos.obtenerPilotos)
 // router.get("/",httpPilotos.listarPilotos)
-router.get("/",httpPilotos.obtenerPilotos)
-router.get("/activos",httpPilotos.obtenerPilotosActivos)
-router.get('/obtenerdatospiloto/:identificacion', httpPilotos.obtenerPilotoporIdentificacion);
+router.get("/",[validarJWT],httpPilotos.obtenerPilotos)
+router.get("/activos",[validarJWT],httpPilotos.obtenerPilotosActivos)
+router.get('/obtenerdatospiloto/:identificacion',[validarJWT], httpPilotos.obtenerPilotoporIdentificacion);
 
 // router.post("/crear",httpPilotos.crearPiloto)
 router.post("/crear", [validarJWT, upload.array('archivos')], httpPilotos.crearPiloto);
 
-router.put("/editar/:identificacion",httpPilotos.editarPiloto)
+router.put("/editar/:identificacion",[validarJWT],httpPilotos.editarPiloto)
 
-router.put("/activar/:identificacion",httpPilotos.activarPiloto)
-router.put("/desactivar/:identificacion",httpPilotos.desactivarPiloto)
+router.put("/activar/:identificacion",[validarJWT],httpPilotos.activarPiloto)
+router.put("/desactivar/:identificacion",[validarJWT],httpPilotos.desactivarPiloto)
 
 
 export default router

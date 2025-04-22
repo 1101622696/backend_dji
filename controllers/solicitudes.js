@@ -113,15 +113,7 @@ obtenerSolicitudesAprobadas: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener solicitudes aprobadas' });
   }
 },
-obtenerSolicitudesEnproceso: async (req, res) => {
-  try {
-    const data = await solicitudHelper.getSolicitudesByStatus('en proceso');
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes en proceso' });
-  }
-},
+
 obtenerSolicitudesPorEmail: async (req, res) => {
   try {
     const { email } = req.params; // Obtiene el email desde los parámetros de la URL
@@ -183,6 +175,32 @@ obtenerSolicitudesAprobadasPorEmail: async (req, res) => {
   } catch (error) {
     console.error('Error al obtener solicitudes aprobadas por email:', error);
     res.status(500).json({ mensaje: 'Error al obtener solicitudes aprobadas por email' });
+  }
+},
+
+obtenerSolicitudesEnProceso: async (req, res) => {
+  try {
+    const data = await solicitudHelper.getSolicitudesEnProceso();
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener solicitudes en proceso' });
+  }
+},
+
+obtenerSolicitudesEnProcesoPorEmail: async (req, res) => {
+  try {
+    const { email } = req.params; 
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await solicitudHelper.getSolicitudesEnProcesoPorEmail(email);
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener solicitudes en proceso por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener solicitudes en proceso por email' });
   }
 },
 

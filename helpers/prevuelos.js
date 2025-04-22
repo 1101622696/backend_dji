@@ -95,6 +95,64 @@ const getPrevuelosByStatus = async (status) => {
     prevuelo["estado del prevuelo"] && prevuelo["estado del prevuelo"].toLowerCase() === status.toLowerCase()
   );
 };
+
+const getConsecutivosPostvuelo = async () => {
+  try {
+    const sheets = await getSheetsClient();
+    
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'PostVuelo!B:B',
+    });
+    
+    if (!response.data.values || response.data.values.length === 0) {
+      return [];
+    }
+    
+    // Usamos row[0] porque al pedir solo la columna B, esta viene como el primer elemento
+    const consecutivos = response.data.values.slice(1).map(row => row[0]?.toLowerCase());
+    return consecutivos.filter(Boolean);
+  } catch (error) {
+    console.error('Error al obtener consecutivos de PostVuelo:', error);
+    throw error;
+  }
+};
+
+const getPrevuelosEnProceso = async () => {
+  try {
+    // Obtener todas las prevuelos
+    const prevuelos = await getPrevuelos();
+    
+    // Obtener todos los consecutivos de PostVuelo (columna B)
+    const consecutivosPostvuelo = await getConsecutivosPostvuelo();
+    
+    // Filtrar las prevuelos cuyo consecutivo (columna C en Prevuelo) no esté en PostVuelo
+    return prevuelos.filter(prevuelo => 
+      prevuelo.solicitudesaprobadas && 
+      !consecutivosPostvuelo.includes(prevuelo.solicitudesaprobadas.toLowerCase())
+    );
+  } catch (error) {
+    console.error('Error al obtener prevuelos en proceso:', error);
+    throw error;
+  }
+};
+// Función para obtener prevuelos en proceso filtradas por email
+const getprevuelosEnProcesoPorEmail = async (email) => {
+  try {
+    // Obtener todas los prevuelos en proceso
+    const prevuelosEnProceso = await getPrevuelosEnProceso();
+    
+    // Filtrar por el email del usuario
+    return prevuelosEnProceso.filter(prevuelo => 
+      prevuelo.useremail && 
+      prevuelo.useremail.toLowerCase() === email.toLowerCase()
+    );
+  } catch (error) {
+    console.error('Error al obtener prevuelos en proceso por email:', error);
+    throw error;
+  }
+};
+
 const getPrevuelosByEmail = async (email) => {
   const prevuelos = await getPrevuelos();
   return prevuelos.filter(prevuelo => 
@@ -252,6 +310,8 @@ export const prevueloHelper = {
   getPrevuelosByStatus,
   getPrevuelosByEmail,
   getPrevuelosByEmailAndStatus,
+  getPrevuelosEnProceso,
+  getprevuelosEnProcesoPorEmail,
   getPrevueloByConsecutivo,
   editarPrevueloPorConsecutivo,
   actualizarEstadoEnSheets
