@@ -132,15 +132,24 @@ const guardarPostvuelo = async ({ consecutivo, username, dronusado, fechaInicio,
   
     const filas = response.data.values;
     const encabezado = [
-      "idPostvuelo",
-      "consecutivo-solicitud",
-      "horaInicio", 
-      "horaFin", 
-      "distanciaRecorrida", 
-      "alturaMaxima", 
-      "incidentes", 
-      "propositoAlcanzado", 
-      "observacionesVuelo"
+      'consecutivo', 
+      'username', 
+      'dronusado', 
+      'fechaInicio', 
+      'horaInicio', 
+      'horaFin', 
+      'duracion', 
+      'distanciaRecorrida', 
+      'alturaMaxima', 
+      'incidentes', 
+      'propositoAlcanzado', 
+      'observacionesVuelo', 
+      'fechadeCreacion', 
+      'Link', 
+      'useremail', 
+      'estado', 
+      'proposito',
+      'empresa'
     ];
   
     const filaIndex = filas.findIndex(fila => fila[1]?.toLowerCase() === consecutivo.toLowerCase());
@@ -231,6 +240,72 @@ const procesarArchivos = async (archivos, consecutivo) => {
   return carpeta.webViewLink;
 };
 
+const actualizarEstadoEnSheets = async (consecutivo, nuevoEstado = "aprobado") => {
+  try {
+    const sheets = await getSheetsClient();
+    
+    // Primero, obtener todos los datos para encontrar la fila del consecutivo
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'PostVuelo',
+    });
+    
+    const rows = response.data.values;
+    if (!rows || rows.length === 0) {
+      throw new Error('No se encontraron datos en la hoja');
+    }
+    
+    // Determinar qué columna contiene el consecutivo y el estado
+    const headers = rows[0];
+    const consecutivoIndex = headers.findIndex(header => 
+      header.toLowerCase() === 'consecutivo-solicitud');
+    const estadoIndex = headers.findIndex(header => 
+      header.toLowerCase() === 'estado del postvuelo');
+    
+    if (consecutivoIndex === -1 || estadoIndex === -1) {
+      throw new Error('No se encontraron las columnas necesarias');
+    }
+    
+    // Encontrar la fila que corresponde al consecutivo
+    let rowIndex = -1;
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][consecutivoIndex] && 
+          rows[i][consecutivoIndex].toLowerCase() === consecutivo.toLowerCase()) {
+        rowIndex = i;
+        break;
+      }
+    }
+    
+    if (rowIndex === -1) {
+      throw new Error(`No se encontró el consecutivo ${consecutivo}`);
+    }
+    
+    // Actualizar el estado en Google Sheets
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `PostVuelo!${getColumnLetter(estadoIndex + 1)}${rowIndex + 1}`,
+      valueInputOption: 'RAW',
+      resource: {
+        values: [[nuevoEstado]]
+      }
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error al actualizar el estado en Google Sheets:', error);
+    throw error;
+  }
+};
+
+function getColumnLetter(columnNumber) {
+  let columnLetter = '';
+  while (columnNumber > 0) {
+    const remainder = (columnNumber - 1) % 26;
+    columnLetter = String.fromCharCode(65 + remainder) + columnLetter;
+    columnNumber = Math.floor((columnNumber - 1) / 26);
+  }
+  return columnLetter;
+}
 
 export const postvueloHelper = {
   getPostvuelos,
@@ -241,5 +316,6 @@ export const postvueloHelper = {
   getPostvueloByConsecutivo,
   editarPostvueloPorConsecutivo,
   procesarArchivos,
-  getSiguienteConsecutivo
+  getSiguienteConsecutivo,
+  actualizarEstadoEnSheets
 };

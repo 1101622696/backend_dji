@@ -25,4 +25,7 @@ router.get('/obtenerdatossolicitud/:consecutivo', httpSolicitudes.obtenerSolicit
 
 router.put("/editar/:consecutivo",httpSolicitudes.editarSolicitud)
 
+router.put("/aprobar/:consecutivo",httpSolicitudes.aprobarestadoSolicitud)
+router.put("/denegar/:consecutivo",httpSolicitudes.denegarestadoSolicitud)
+
 export default router

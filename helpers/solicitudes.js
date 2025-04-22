@@ -44,7 +44,7 @@ const getDriveClient = async () => {
   const client = await authClient.getClient();
   return google.drive({ version: 'v3', auth: client });
 };
-// Obtener datos 
+
 const obtenerDatosSolicitud = async (nombreHoja, rango = 'A1:AY1000') => {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
@@ -134,18 +134,56 @@ const editarSolicitudPorConsecutivo = async (consecutivo, nuevosDatos) => {
   const filas = response.data.values;
   const encabezado = [
     'consecutivo',
+    'useremail',
+    'username',
     'proposito',
-    'fecha_inicio',
-    'hora_inicio',
-    'fecha_fin',
-    'hora_fin',
-    'empresa',
-    'peso_maximo',
-    'detalles_cronograma',
-    'departamento',
-    'municipio',
-    'tipodecontactovisualconlaua',
-    'vueloespecial'
+    'empresa', 
+    'fecha_inicio', 
+    'hora_inicio', 
+    'fecha_fin', 
+    'hora_fin', 
+    'detalles_cronograma', 
+    'peso_maximo', 
+    'municipio', 
+    'departamento', 
+    'tipodecontactovisualconlaua', 
+    'vueloespecial', 
+    'justificacionvueloespecial', 
+    'poligononombre', 
+    'altura_poligono', 
+    'latitud_poligono_1', 
+    'longitud_poligono_1', 
+    'latitud_poligono_2', 
+    'longitud_poligono_2', 
+    'latitud_poligono_3', 
+    'longitud_poligono_3', 
+    'latitud_poligono_4', 
+    'longitud_poligono_4', 
+    'latitud_poligono_5', 
+    'longitud_poligono_5', 
+    'tramolinealnombre', 
+    'altura_tramo', 
+    'latitud_tramo_1', 
+    'longitud_tramo_1', 
+    'latitud_tramo_2', 
+    'longitud_tramo_2', 
+    'latitud_tramo_3', 
+    'longitud_tramo_3', 
+    'latitud_tramo_4', 
+    'longitud_tramo_4', 
+    'latitud_tramo_5', 
+    'longitud_tramo_5', 
+    'circuferenciaencoordenadayradionombre', 
+    'altura_circunferencia', 
+    'latitud_circunferencia_1', 
+    'longitud_circunferencia_1', 
+    'check_kmz', 
+    'Link', 
+    'estado', 
+    'fechadeCreacion', 
+    'realizado', 
+    'username', 
+    'useremail'
   ];
 
   const filaIndex = filas.findIndex(fila => fila[0]?.toLowerCase() === consecutivo.toLowerCase());
@@ -235,6 +273,82 @@ const procesarArchivos = async (archivos, consecutivo) => {
   return carpeta.webViewLink;
 };
 
+// Función para actualizar el estado en Google Sheets
+// Función para actualizar el estado en Google Sheets
+const actualizarEstadoEnSheets = async (consecutivo, nuevoEstado = "aprobado") => {
+  try {
+    const sheets = await getSheetsClient();
+    
+    // Primero, obtener todos los datos para encontrar la fila del consecutivo
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'SolicitudVuelo',
+    });
+    
+    const rows = response.data.values;
+    if (!rows || rows.length === 0) {
+      throw new Error('No se encontraron datos en la hoja');
+    }
+    
+    // Determinar qué columna contiene el consecutivo y el estado
+    const headers = rows[0];
+    const consecutivoIndex = headers.findIndex(header => 
+      header.toLowerCase() === 'consecutivo');
+    const estadoIndex = headers.findIndex(header => 
+      header.toLowerCase() === 'estado');
+    
+    if (consecutivoIndex === -1 || estadoIndex === -1) {
+      throw new Error('No se encontraron las columnas necesarias');
+    }
+    
+    // Encontrar la fila que corresponde al consecutivo
+    let rowIndex = -1;
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][consecutivoIndex] && 
+          rows[i][consecutivoIndex].toLowerCase() === consecutivo.toLowerCase()) {
+        rowIndex = i;
+        break;
+      }
+    }
+    
+    if (rowIndex === -1) {
+      throw new Error(`No se encontró el consecutivo ${consecutivo}`);
+    }
+    
+    // Actualizar el estado en Google Sheets
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `SolicitudVuelo!${getColumnLetter(estadoIndex + 1)}${rowIndex + 1}`,
+      valueInputOption: 'RAW',
+      resource: {
+        values: [[nuevoEstado]]
+      }
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error al actualizar el estado en Google Sheets:', error);
+    throw error;
+  }
+};
+
+// Función auxiliar para convertir número de columna a letra
+function getColumnLetter(columnNumber) {
+  let columnLetter = '';
+  while (columnNumber > 0) {
+    const remainder = (columnNumber - 1) % 26;
+    columnLetter = String.fromCharCode(65 + remainder) + columnLetter;
+    columnNumber = Math.floor((columnNumber - 1) / 26);
+  }
+  return columnLetter;
+}
+
+// Reemplaza tu función actual por esta:
+const putSolicitudByStatus = async (consecutivo, nuevoEstado = "aprobado") => {
+  return await actualizarEstadoEnSheets(consecutivo, nuevoEstado);
+};
+
+
 
 export const solicitudHelper = {
   getSolicitudesVuelo,
@@ -245,5 +359,6 @@ export const solicitudHelper = {
   getSolicitudesByConsecutivo,
   editarSolicitudPorConsecutivo,
   getSiguienteConsecutivo,
-  procesarArchivos
+  procesarArchivos,
+  putSolicitudByStatus
 };
