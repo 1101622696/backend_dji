@@ -10,7 +10,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 // router.get("/",[validarJWT],httpPostvuelos.obtenerPostvuelos)
 router.get("/",httpPostvuelos.obtenerPostvuelos)
 router.get("/pendientes",httpPostvuelos.obtenerPostvuelosPendientes)
-router.get("/aprobadas",httpPostvuelos.obtenerPostvuelosAprobadas)
+router.get("/aprobados",httpPostvuelos.obtenerPostvuelosAprobadas)
 router.get("/enproceso",httpPostvuelos.obtenerPostvuelosEnproceso)
 router.get("/pendientes/email/:email",httpPostvuelos.obtenerPostvuelosPendientesPorEmail)
 router.get("/aprobados/email/:email",httpPostvuelos.obtenerPostvuelosAprobadasPorEmail)
