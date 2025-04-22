@@ -12,22 +12,23 @@ const upload = multer({ storage: multer.memoryStorage() });
 // router.post("/crear",[validarJWT],httpSolicitudes.crearSolicitud)
 router.post("/crear", [validarJWT, upload.array('archivos')], httpSolicitudes.crearSolicitud);
 
-router.get("/",httpSolicitudes.obtenerSolicitudes)
-router.get("/pendientes",httpSolicitudes.obtenerSolicitudesPendientes)
-router.get("/aprobadas",httpSolicitudes.obtenerSolicitudesAprobadas)
-router.get("/enproceso",httpSolicitudes.obtenerSolicitudesEnproceso)
-router.get("/pendientes/email/:email",httpSolicitudes.obtenerSolicitudesPendientesPorEmail)
-router.get("/aprobadas/email/:email",httpSolicitudes.obtenerSolicitudesAprobadasPorEmail)
-router.get('/email/:email', httpSolicitudes.obtenerSolicitudesPorEmail);
-router.get('/filtrar-completo', httpSolicitudes.obtenerSolicitudesPorEmailYEstado);
-router.get('/obtenerdatossolicitud/:consecutivo', httpSolicitudes.obtenerSolicitudPorConsecutivo);
+router.get("/",[validarJWT],httpSolicitudes.obtenerSolicitudes)
+router.get("/pendientes",[validarJWT],httpSolicitudes.obtenerSolicitudesPendientes)
+router.get("/aprobadas",[validarJWT],httpSolicitudes.obtenerSolicitudesAprobadas)
+router.get("/enproceso",[validarJWT],httpSolicitudes.obtenerSolicitudesEnProceso)
+router.get("/pendientes/email/:email",[validarJWT],httpSolicitudes.obtenerSolicitudesPendientesPorEmail)
+router.get("/aprobadas/email/:email",[validarJWT],httpSolicitudes.obtenerSolicitudesAprobadasPorEmail)
+router.get("/enproceso/email/:email",[validarJWT],httpSolicitudes.obtenerSolicitudesEnProcesoPorEmail)
+router.get('/email/:email',[validarJWT], httpSolicitudes.obtenerSolicitudesPorEmail);
+router.get('/filtrar-completo',[validarJWT], httpSolicitudes.obtenerSolicitudesPorEmailYEstado);
+router.get('/obtenerdatossolicitud/:consecutivo',[validarJWT], httpSolicitudes.obtenerSolicitudPorConsecutivo);
 
 
 // router.post("/crear",httpSolicitudes.crearSolicitud)
 
-router.put("/editar/:consecutivo",httpSolicitudes.editarSolicitud)
+router.put("/editar/:consecutivo",[validarJWT],httpSolicitudes.editarSolicitud)
 
-router.put("/aprobar/:consecutivo",httpSolicitudes.aprobarestadoSolicitud)
-router.put("/denegar/:consecutivo",httpSolicitudes.denegarestadoSolicitud)
+router.put("/aprobar/:consecutivo",[validarJWT],httpSolicitudes.aprobarestadoSolicitud)
+router.put("/denegar/:consecutivo",[validarJWT],httpSolicitudes.denegarestadoSolicitud)
 
 export default router

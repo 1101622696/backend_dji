@@ -6,21 +6,23 @@ const router=Router()
 
 // router.get("/",[validarJWT],httpPrevuelos.obtenerprevuelos)
 
+router.get("/",[validarJWT],httpPrevuelos.obtenerprevuelos)
+router.get("/pendientes",[validarJWT],httpPrevuelos.obtenerPrevuelosPendientes)
+router.get("/aprobados",[validarJWT],httpPrevuelos.obtenerPrevuelosAprobadas)
+router.get("/enproceso",[validarJWT],httpPrevuelos.obtenerPrevuelosEnProceso)
+router.get("/pendientes/email/:email",[validarJWT],httpPrevuelos.obtenerPrevuelosPendientesPorEmail)
+router.get("/aprobados/email/:email",[validarJWT],httpPrevuelos.obtenerPrevuelosAprobadosPorEmail)
+router.get("/enproceso/email/:email",[validarJWT],httpPrevuelos.obtenerPrevuelosEnProcesoPorEmail)
+router.get('/email/:email',[validarJWT], httpPrevuelos.obtenerPrevuelosPorEmail);
+router.get('/filtrar-completo',[validarJWT], httpPrevuelos.obtenerPrevuelosPorEmailYEstado);
+router.get('/obtenerdatosprevuelo/:consecutivo',[validarJWT], httpPrevuelos.obtenerPrevueloPorConsecutivo);
+
 router.post("/crear",[validarJWT],httpPrevuelos.crearPrevuelo)
-router.get("/",httpPrevuelos.obtenerprevuelos)
-router.get("/pendientes",httpPrevuelos.obtenerPrevuelosPendientes)
-router.get("/aprobados",httpPrevuelos.obtenerPrevuelosAprobadas)
-router.get("/enproceso",httpPrevuelos.obtenerPrevuelosEnproceso)
-router.get("/pendientes/email/:email",httpPrevuelos.obtenerPrevuelosPendientesPorEmail)
-router.get("/aprobados/email/:email",httpPrevuelos.obtenerPrevuelosAprobadosPorEmail)
-router.get('/email/:email', httpPrevuelos.obtenerPrevuelosPorEmail);
-router.get('/filtrar-completo', httpPrevuelos.obtenerPrevuelosPorEmailYEstado);
-router.get('/obtenerdatosprevuelo/:consecutivo', httpPrevuelos.obtenerPrevueloPorConsecutivo);
-
 // router.post("/crear",httpPrevuelos.crearPrevuelo)
-router.put("/editar/:consecutivo",httpPrevuelos.editarPrevuelo)
 
-router.put("/aprobar/:consecutivo",httpPrevuelos.aprobarestadoPrevuelo)
-router.put("/denegar/:consecutivo",httpPrevuelos.denegarestadoPrevuelo)
+router.put("/editar/:consecutivo",[validarJWT],httpPrevuelos.editarPrevuelo)
+
+router.put("/aprobar/:consecutivo",[validarJWT],httpPrevuelos.aprobarestadoPrevuelo)
+router.put("/denegar/:consecutivo",[validarJWT],httpPrevuelos.denegarestadoPrevuelo)
 
 export default router

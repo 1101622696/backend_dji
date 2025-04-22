@@ -51,15 +51,7 @@ obtenerPrevuelosAprobadas: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener prevuelos aprobadas' });
   }
 },
-obtenerPrevuelosEnproceso: async (req, res) => {
-  try {
-    const data = await prevueloHelper.getPrevuelosByStatus('en proceso');
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener prevuelos en proceso' });
-  }
-},
+
 obtenerPrevuelosPorEmail: async (req, res) => {
   try {
     const { email } = req.params; // Obtiene el email desde los parámetros de la URL
@@ -111,7 +103,7 @@ obtenerPrevuelosPendientesPorEmail: async (req, res) => {
 
 obtenerPrevuelosAprobadosPorEmail: async (req, res) => {
   try {
-    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    const { email } = req.params; 
     
     if (!email) {
       return res.status(400).json({ mensaje: 'El email es requerido' });
@@ -122,6 +114,32 @@ obtenerPrevuelosAprobadosPorEmail: async (req, res) => {
   } catch (error) {
     console.error('Error al obtener prevuelos aprobadas por email:', error);
     res.status(500).json({ mensaje: 'Error al obtener prevuelos aprobadas por email' });
+  }
+},
+
+obtenerPrevuelosEnProceso: async (req, res) => {
+  try {
+    const data = await prevueloHelper.getPrevuelosEnProceso();
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener Prevuelos en proceso' });
+  }
+},
+
+obtenerPrevuelosEnProcesoPorEmail: async (req, res) => {
+  try {
+    const { email } = req.params; 
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await prevueloHelper.getprevuelosEnProcesoPorEmail(email);
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener prevuelos en proceso por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener prevuelos en proceso por email' });
   }
 },
 

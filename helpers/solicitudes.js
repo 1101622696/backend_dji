@@ -107,6 +107,65 @@ const getSolicitudesByStatus = async (status) => {
     solicitud.estado && solicitud.estado.toLowerCase() === status.toLowerCase()
   );
 };
+
+const getConsecutivosPrevuelo = async () => {
+  try {
+    const sheets = await getSheetsClient();
+    
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'Prevuelo!C:C', 
+    });
+    
+    if (!response.data.values || response.data.values.length === 0) {
+      return [];
+    }
+    
+    const consecutivos = response.data.values.slice(1).map(row => row[0]?.toLowerCase());
+    return consecutivos.filter(Boolean); 
+  } catch (error) {
+    console.error('Error al obtener consecutivos de Prevuelo:', error);
+    throw error;
+  }
+};
+
+// Función para obtener solicitudes que no están en la hoja Prevuelo ("en proceso")
+const getSolicitudesEnProceso = async () => {
+  try {
+    // Obtener todas las solicitudes
+    const solicitudes = await getSolicitudesVuelo();
+    
+    // Obtener todos los consecutivos de Prevuelo
+    const consecutivosPrevuelo = await getConsecutivosPrevuelo();
+    
+    // Filtrar las solicitudes que no están en Prevuelo
+    return solicitudes.filter(solicitud => 
+      solicitud.consecutivo && 
+      !consecutivosPrevuelo.includes(solicitud.consecutivo.toLowerCase())
+    );
+  } catch (error) {
+    console.error('Error al obtener solicitudes en proceso:', error);
+    throw error;
+  }
+};
+
+// Función para obtener solicitudes en proceso filtradas por email
+const getSolicitudesEnProcesoPorEmail = async (email) => {
+  try {
+    // Obtener todas las solicitudes en proceso
+    const solicitudesEnProceso = await getSolicitudesEnProceso();
+    
+    // Filtrar por el email del usuario
+    return solicitudesEnProceso.filter(solicitud => 
+      solicitud.usuario && 
+      solicitud.usuario.toLowerCase() === email.toLowerCase()
+    );
+  } catch (error) {
+    console.error('Error al obtener solicitudes en proceso por email:', error);
+    throw error;
+  }
+};
+
 const getSolicitudesByEmail = async (email) => {
   const solicitudes = await getSolicitudesVuelo();
   return solicitudes.filter(solicitud => 
@@ -355,6 +414,8 @@ export const solicitudHelper = {
   getSolicitudesByEmail,
   getSolicitudesByEmailAndStatus,
   getSolicitudesByConsecutivo,
+  getSolicitudesEnProceso,
+  getSolicitudesEnProcesoPorEmail,
   editarSolicitudPorConsecutivo,
   getSiguienteConsecutivo,
   procesarArchivos,
