@@ -273,8 +273,6 @@ const procesarArchivos = async (archivos, consecutivo) => {
   return carpeta.webViewLink;
 };
 
-// Función para actualizar el estado en Google Sheets
-// Función para actualizar el estado en Google Sheets
 const actualizarEstadoEnSheets = async (consecutivo, nuevoEstado = "aprobado") => {
   try {
     const sheets = await getSheetsClient();

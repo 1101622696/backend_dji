@@ -92,6 +92,39 @@ obtenerPrevuelosPorEmailYEstado: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener prevuelos filtradas' });
   }
 },
+
+obtenerPrevuelosPendientesPorEmail: async (req, res) => {
+  try {
+    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await prevueloHelper.getPrevuelosByEmailAndStatus(email, 'Pendiente');
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener prevuelos pendientes por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener prevuelos pendientes por email' });
+  }
+},
+
+obtenerPrevuelosAprobadosPorEmail: async (req, res) => {
+  try {
+    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await prevueloHelper.getPrevuelosByEmailAndStatus(email, 'Aprobado');
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener prevuelos aprobadas por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener prevuelos aprobadas por email' });
+  }
+},
+
 obtenerPrevueloPorConsecutivo: async (req, res) => {
   try {
     const { consecutivo } = req.params;
