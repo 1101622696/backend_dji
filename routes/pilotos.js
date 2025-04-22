@@ -18,5 +18,8 @@ router.post("/crear", [validarJWT, upload.array('archivos')], httpPilotos.crearP
 
 router.put("/editar/:identificacion",httpPilotos.editarPiloto)
 
+router.put("/activar/:identificacion",httpPilotos.activarPiloto)
+router.put("/desactivar/:identificacion",httpPilotos.desactivarPiloto)
+
 
 export default router
