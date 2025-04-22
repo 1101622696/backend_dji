@@ -18,4 +18,7 @@ router.get('/obtenerdatosprevuelo/:consecutivo', httpPrevuelos.obtenerPrevueloPo
 // router.post("/crear",httpPrevuelos.crearPrevuelo)
 router.put("/editar/:consecutivo",httpPrevuelos.editarPrevuelo)
 
+router.put("/aprobar/:consecutivo",httpPrevuelos.aprobarestadoPrevuelo)
+router.put("/denegar/:consecutivo",httpPrevuelos.denegarestadoPrevuelo)
+
 export default router

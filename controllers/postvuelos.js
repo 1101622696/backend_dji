@@ -157,5 +157,39 @@ editarPostvuelo: async (req, res) => {
   }
 },
 
+aprobarestadoPostvuelo: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const { estado } = req.body; // Opcional, puedes obtener el estado del body o usar "aprobado" por defecto
+    
+    const resultado = await postvueloHelper.actualizarEstadoEnSheets(consecutivo, estado || "Aprobado");
+
+    res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
+  } catch (error) {
+    console.error('Error al editar estado de Postvuelo:', error);
+    res.status(500).json({ 
+      mensaje: 'Error al actualizar estado', 
+      error: error.message 
+    });
+  }
+},
+
+denegarestadoPostvuelo: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const { estado } = req.body; // Opcional, puedes obtener el estado del body o usar "aprobado" por defecto
+    
+    const resultado = await postvueloHelper.actualizarEstadoEnSheets(consecutivo, estado || "Denegado");
+
+    res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
+  } catch (error) {
+    console.error('Error al editar estado de Postvuelo:', error);
+    res.status(500).json({ 
+      mensaje: 'Error al actualizar estado', 
+      error: error.message 
+    });
+  }
+},
+
 }
 export default httpPostvuelos;
