@@ -21,7 +21,7 @@ const app = express();
 // Middlewares
 // app.use(cors());
 app.use(cors({
-    origin: ['http://localhost:9000/'],
+    origin: ['http://localhost:9000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'x-token']
   }));
