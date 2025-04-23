@@ -15,7 +15,7 @@ const httpUsuarios = {
 
   login: async (req, res) => {
     const { email, password } = req.body;
-  
+    console.log('Login desde origen:', req.headers.origin);
     try {
       const { token, usuario } = await usuarioHelper.loginUsuario({ email, password });
   
