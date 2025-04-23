@@ -44,6 +44,11 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+  console.log("Nueva solicitud de origen:", req.headers.origin);
+  next();
+});
+
 // Routes
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/files', fileRoutes);
