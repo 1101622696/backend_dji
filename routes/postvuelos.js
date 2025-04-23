@@ -9,11 +9,17 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // router.get("/",[validarJWT],httpPostvuelos.obtenerPostvuelos)
 router.get("/",[validarJWT],httpPostvuelos.obtenerPostvuelos)
+router.get("/pcantidad",[validarJWT],httpPostvuelos.obtenerPostvuelosCantidad)
 router.get("/pendientes",[validarJWT],httpPostvuelos.obtenerPostvuelosPendientes)
-router.get("/aprobados",[validarJWT],httpPostvuelos.obtenerPostvuelosAprobadas)
+router.get("/pendientes/cantidad",[validarJWT],httpPostvuelos.obtenerPostvuelosPendientesCantidad)
+router.get("/aprobados",[validarJWT],httpPostvuelos.obtenerPostvuelosAprobados)
+router.get("/aprobados/cantidad",[validarJWT],httpPostvuelos.obtenerPostvuelosAprobadosCantidad)
 router.get("/enproceso",[validarJWT],httpPostvuelos.obtenerPostvuelosEnproceso)
+router.get("/enproceso/cantidad",[validarJWT],httpPostvuelos.obtenerPostvuelosEnprocesoCantidad)
 router.get("/pendientes/email/:email",[validarJWT],httpPostvuelos.obtenerPostvuelosPendientesPorEmail)
-router.get("/aprobados/email/:email",[validarJWT],httpPostvuelos.obtenerPostvuelosAprobadasPorEmail)
+router.get("/pendientes/email/cantidad/:email",[validarJWT],httpPostvuelos.obtenerPostvuelosPendientesPorEmailCantidad)
+router.get("/aprobados/email/:email",[validarJWT],httpPostvuelos.obtenerPostvuelosAprobadosPorEmail)
+router.get("/aprobados/email/cantidad/:email",[validarJWT],httpPostvuelos.obtenerPostvuelosAprobadosPorEmailCantidad)
 router.get('/email/:email',[validarJWT], httpPostvuelos.obtenerPostvuelosPorEmail);
 router.get('/filtrar-completo',[validarJWT], httpPostvuelos.obtenerPostvuelosPorEmailYEstado);
 router.get('/obtenerdatospostvuelo/:consecutivo',[validarJWT], httpPostvuelos.obtenerPostvueloPorConsecutivo);

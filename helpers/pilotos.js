@@ -43,7 +43,7 @@ const getDriveClient = async () => {
   return google.drive({ version: 'v3', auth: client });
 };
 // Obtener datos 
-const obtenerDatosPiloto = async (nombreHoja, rango = 'A1:Z1000') => {
+const obtenerDatosPiloto = async (nombreHoja, rango = 'A1:AB1000') => {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
