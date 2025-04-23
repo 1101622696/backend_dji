@@ -20,13 +20,28 @@ const app = express();
 
 // Middlewares
 // app.use(cors());
-app.use(cors({
-    origin: ['http://localhost:9000'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'x-token']
-  }));
-app.use(express.json());
-app.options('*', cors());
+// app.use(cors({
+//     origin: ['http://localhost:9000'],
+//     methods: ['GET', 'POST', 'PUT', 'DELETE'],
+//     allowedHeaders: ['Content-Type', 'x-token']
+//   }));
+// app.use(express.json());
+// app.options('*', cors());
+
+const corsOptions = {
+  origin: [
+    'http://localhost:9000',         // Quasar dev
+    'capacitor://localhost',         // App móvil con Capacitor
+    'http://localhost',              // Android Studio emulator
+    'https://backend-dji.onrender.com' // Si necesitas aceptar desde ahí también
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'x-token'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
+
 
 // Routes
 app.use('/api/webhook', webhookRoutes);
