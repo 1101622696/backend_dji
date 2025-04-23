@@ -13,9 +13,30 @@ const httpUsuarios = {
     }
   },
 
+  // login: async (req, res) => {
+  //   const { email, password } = req.body;
+  
+  //   try {
+  //     const { token, usuario } = await usuarioHelper.loginUsuario({ email, password });
+  
+  //     return res.json({
+  //       token,
+  //       usuario
+  //     });
+  
+  //   } catch (error) {
+  //     console.error("Error en login:", error.message);
+  //     res.status(400).json({ msg: error.message });
+  //   }
+  // }
+
   login: async (req, res) => {
     const { email, password } = req.body;
+  
     console.log('Login desde origen:', req.headers.origin);
+    console.log("Headers:", req.headers);
+    console.log("Body completo:", req.body);
+    
     try {
       const { token, usuario } = await usuarioHelper.loginUsuario({ email, password });
   
@@ -29,6 +50,7 @@ const httpUsuarios = {
       res.status(400).json({ msg: error.message });
     }
   }
+  
   
 
 };
