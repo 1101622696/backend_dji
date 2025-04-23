@@ -33,6 +33,18 @@ obtenerprevuelos: async (req, res) => {
         }
       },
 
+      obtenerprevuelosCantidad: async (req, res) => {
+        try {
+          const data = await prevueloHelper.getPrevuelos();
+          res.json({ 
+            cantidad: data.length,
+          });
+        } catch (error) {
+          console.error('Error al obtener datos:', error);
+          res.status(500).json({ mensaje: 'Error al obtener prevuelos' });
+        }
+      },
+
 obtenerPrevuelosPendientes: async (req, res) => {
   try {
     const data = await prevueloHelper.getPrevuelosByStatus('Pendiente');
@@ -42,10 +54,32 @@ obtenerPrevuelosPendientes: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener prevuelos pendientes' });
   }
 },
+obtenerPrevuelosPendientesCantidad: async (req, res) => {
+  try {
+    const data = await prevueloHelper.getPrevuelosByStatus('Pendiente');
+    res.json({ 
+      cantidad: data.length,
+    });
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener prevuelos pendientes' });
+  }
+},
 obtenerPrevuelosAprobadas: async (req, res) => {
   try {
     const data = await prevueloHelper.getPrevuelosByStatus('aprobado');
     res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener prevuelos aprobadas' });
+  }
+},
+obtenerPrevuelosAprobadasCantidad: async (req, res) => {
+  try {
+    const data = await prevueloHelper.getPrevuelosByStatus('aprobado');
+    res.json({ 
+      cantidad: data.length,
+    });
   } catch (error) {
     console.error('Error al obtener datos:', error);
     res.status(500).json({ mensaje: 'Error al obtener prevuelos aprobadas' });
@@ -101,6 +135,24 @@ obtenerPrevuelosPendientesPorEmail: async (req, res) => {
   }
 },
 
+obtenerPrevuelosPendientesPorEmailCantidad: async (req, res) => {
+  try {
+    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await prevueloHelper.getPrevuelosByEmailAndStatus(email, 'Pendiente');
+    res.json({ 
+      cantidad: data.length,
+    });
+  } catch (error) {
+    console.error('Error al obtener prevuelos pendientes por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener prevuelos pendientes por email' });
+  }
+},
+
 obtenerPrevuelosAprobadosPorEmail: async (req, res) => {
   try {
     const { email } = req.params; 
@@ -116,11 +168,41 @@ obtenerPrevuelosAprobadosPorEmail: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener prevuelos aprobadas por email' });
   }
 },
+obtenerPrevuelosAprobadosPorEmailCantidad: async (req, res) => {
+  try {
+    const { email } = req.params; 
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await prevueloHelper.getPrevuelosByEmailAndStatus(email, 'Aprobado');
+    res.json({ 
+      cantidad: data.length,
+    });
+  } catch (error) {
+    console.error('Error al obtener prevuelos aprobadas por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener prevuelos aprobadas por email' });
+  }
+},
+
 
 obtenerPrevuelosEnProceso: async (req, res) => {
   try {
     const data = await prevueloHelper.getPrevuelosEnProceso();
     res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener Prevuelos en proceso' });
+  }
+},
+
+obtenerPrevuelosEnProcesoCantidad: async (req, res) => {
+  try {
+    const data = await prevueloHelper.getPrevuelosEnProceso();
+    res.json({ 
+      cantidad: data.length,
+    });
   } catch (error) {
     console.error('Error al obtener datos:', error);
     res.status(500).json({ mensaje: 'Error al obtener Prevuelos en proceso' });
@@ -137,6 +219,24 @@ obtenerPrevuelosEnProcesoPorEmail: async (req, res) => {
     
     const data = await prevueloHelper.getprevuelosEnProcesoPorEmail(email);
     res.json(data);
+  } catch (error) {
+    console.error('Error al obtener prevuelos en proceso por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener prevuelos en proceso por email' });
+  }
+},
+
+obtenerPrevuelosEnProcesoPorEmailCantidad: async (req, res) => {
+  try {
+    const { email } = req.params; 
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await prevueloHelper.getprevuelosEnProcesoPorEmail(email);
+    res.json({ 
+      cantidad: data.length,
+    });
   } catch (error) {
     console.error('Error al obtener prevuelos en proceso por email:', error);
     res.status(500).json({ mensaje: 'Error al obtener prevuelos en proceso por email' });

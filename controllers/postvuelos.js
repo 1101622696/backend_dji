@@ -64,6 +64,19 @@ obtenerPostvuelos: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener postvuelos' });
   }
 },
+
+obtenerPostvuelosCantidad: async (req, res) => {
+  try {
+    const data = await postvueloHelper.getPostvuelos();
+    res.json({ 
+      cantidad: data.length,
+    });
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener postvuelos' });
+  }
+},
+
 obtenerPostvuelosPendientes: async (req, res) => {
   try {
     const data = await postvueloHelper.getPostvuelosByStatus('Pendiente');
@@ -73,7 +86,20 @@ obtenerPostvuelosPendientes: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener postvuelos pendientes' });
   }
 },
-obtenerPostvuelosAprobadas: async (req, res) => {
+
+obtenerPostvuelosPendientesCantidad: async (req, res) => {
+  try {
+    const data = await postvueloHelper.getPostvuelosByStatus('Pendiente');
+    res.json({ 
+      cantidad: data.length,
+    });
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener postvuelos pendientes' });
+  }
+},
+
+obtenerPostvuelosAprobados: async (req, res) => {
   try {
     const data = await postvueloHelper.getPostvuelosByStatus('aprobado');
     res.json(data);
@@ -82,10 +108,34 @@ obtenerPostvuelosAprobadas: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener postvuelos aprobadas' });
   }
 },
+
+obtenerPostvuelosAprobadosCantidad: async (req, res) => {
+  try {
+    const data = await postvueloHelper.getPostvuelosByStatus('aprobado');
+    res.json({ 
+      cantidad: data.length,
+    });
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener postvuelos aprobadas' });
+  }
+},
+
 obtenerPostvuelosEnproceso: async (req, res) => {
   try {
     const data = await postvueloHelper.getPostvuelosByStatus('en proceso');
     res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener postvuelos en proceso' });
+  }
+},
+obtenerPostvuelosEnprocesoCantidad: async (req, res) => {
+  try {
+    const data = await postvueloHelper.getPostvuelosByStatus('en proceso');
+    res.json({ 
+      cantidad: data.length,
+    });
   } catch (error) {
     console.error('Error al obtener datos:', error);
     res.status(500).json({ mensaje: 'Error al obtener postvuelos en proceso' });
@@ -139,7 +189,7 @@ obtenerPostvuelosPendientesPorEmail: async (req, res) => {
   }
 },
 
-obtenerPostvuelosAprobadasPorEmail: async (req, res) => {
+obtenerPostvuelosAprobadosPorEmail: async (req, res) => {
   try {
     const { email } = req.params; // Obtiene el email desde los parámetros de la URL
     
@@ -149,6 +199,42 @@ obtenerPostvuelosAprobadasPorEmail: async (req, res) => {
     
     const data = await postvueloHelper.getPostvuelosByEmailAndStatus(email, 'Aprobado');
     res.json(data);
+  } catch (error) {
+    console.error('Error al obtener postvuelos aprobados por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener postvuelos aprobadas por email' });
+  }
+},
+
+obtenerPostvuelosPendientesPorEmailCantidad: async (req, res) => {
+  try {
+    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await postvueloHelper.getPostvuelosByEmailAndStatus(email, 'Pendiente');
+        res.json({ 
+      cantidad: data.length,
+    });
+  } catch (error) {
+    console.error('Error al obtener postvuelos pendientes por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener postvuelos pendientes por email' });
+  }
+},
+
+obtenerPostvuelosAprobadosPorEmailCantidad: async (req, res) => {
+  try {
+    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await postvueloHelper.getPostvuelosByEmailAndStatus(email, 'Aprobado');
+        res.json({ 
+      cantidad: data.length,
+    });
   } catch (error) {
     console.error('Error al obtener postvuelos aprobados por email:', error);
     res.status(500).json({ mensaje: 'Error al obtener postvuelos aprobadas por email' });
