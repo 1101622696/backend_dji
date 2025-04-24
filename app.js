@@ -19,16 +19,22 @@ import validacionprevuelo from "./routes/validarprevuelo.js"
 const app = express();
 
 const corsOptions = {
-  origin: [
-    'http://localhost:9000',
-    'capacitor://localhost',
-    'http://localhost',
-    'https://backend-dji.onrender.com',
-    'capacitor://localhost:8080',
-    'file://',        // Para aplicaciones instaladas
-    'android-app://', // Para aplicaciones Android
-    '*'               // Temporalmente para debugging
-  ],
+  origin: function (origin, callback) {
+    const whitelist = [
+      'http://localhost:9000',
+      'capacitor://localhost',
+      'http://localhost',
+      'https://backend-dji.onrender.com',
+      'capacitor://localhost:8080',
+      'file://',
+      'android-app://'
+    ];
+    if (!origin || whitelist.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'x-token'],
   credentials: true
@@ -69,10 +75,6 @@ app.listen(PORT, () => {
     console.log(`Servidor escuchando en el puerto ${PORT}`);
     dbConexion();
 });
-// app.listen(PORT, '0.0.0.0', () => {
-//   console.log(`Servidor escuchando en el puerto ${PORT}`);
-// });
-
 
 export default app;
 
