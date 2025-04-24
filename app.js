@@ -28,20 +28,30 @@ const app = express();
 // app.use(express.json());
 // app.options('*', cors());
 
-app.use(
-cors: {
+//app.use(
+//cors: {
+//
+//                handlePreflightRequest: (req, res) => {
+//                    const headers = {
+//                        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+//                        "Access-Control-Allow-Origin": req.headers.origin, //or the specific origin you want to give access to,
+//                        "Access-Control-Allow-Credentials": true
+//                    };
+//                    res.writeHead(200, headers);
+//                    res.end();
+//                }
+//}
+//)
 
-                handlePreflightRequest: (req, res) => {
-                    const headers = {
-                        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-                        "Access-Control-Allow-Origin": req.headers.origin, //or the specific origin you want to give access to,
-                        "Access-Control-Allow-Credentials": true
-                    };
-                    res.writeHead(200, headers);
-                    res.end();
-                }
-}
-)
+app.options('*', (req, res) => {
+  res.set({
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
+    'Access-Control-Allow-Headers': 'Content-Type, x-token',
+  });
+  res.status(200).end();
+});
+
 //const corsOptions = {
 //  origin: [
 //    'http://localhost:9000',         // Quasar dev
