@@ -18,29 +18,45 @@ import validacionprevuelo from "./routes/validarprevuelo.js"
 
 const app = express();
 
+// con esto al menos me salio algo en render 
+// const corsOptions = {
+//   origin: function (origin, callback) {
+//     const whitelist = [
+//       'http://localhost:9000',
+//       'capacitor://localhost',
+//       'http://localhost',
+//       'https://backend-dji.onrender.com',
+//       'capacitor://localhost:8080',
+//       'file://',
+//       'android-app://'
+//     ];
+//     if (!origin || whitelist.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+//   allowedHeaders: ['Content-Type', 'x-token'],
+//   credentials: true
+// };
+
+// app.use(cors(corsOptions));
+
+const whitelist = ['https://localhost', 'http://localhost', 'http://localhost:3000', 'capacitor://localhost', 'ionic://localhost'];
 const corsOptions = {
   origin: function (origin, callback) {
-    const whitelist = [
-      'http://localhost:9000',
-      'capacitor://localhost',
-      'http://localhost',
-      'https://backend-dji.onrender.com',
-      'capacitor://localhost:8080',
-      'file://',
-      'android-app://'
-    ];
     if (!origin || whitelist.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'x-token'],
-  credentials: true
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
+// app.use(cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
