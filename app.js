@@ -18,7 +18,20 @@ import validacionprevuelo from "./routes/validarprevuelo.js"
 
 const app = express();
 
-// Middlewares
+const corsOptions = {
+  origin: [
+    'http://localhost:9000',
+    'capacitor://localhost',
+    'http://localhost',
+    'https://backend-dji.onrender.com'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'x-token'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
+
 // app.use(cors());
 // app.use(cors({
 //     origin: ['http://localhost:9000'],
@@ -28,19 +41,43 @@ const app = express();
 // app.use(express.json());
 // app.options('*', cors());
 
-const corsOptions = {
-  origin: [
-    'http://localhost:9000',         // Quasar dev
-    'capacitor://localhost',         // App móvil con Capacitor
-    'http://localhost',              // Android Studio emulator
-    'https://backend-dji.onrender.com' // Si necesitas aceptar desde ahí también
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'x-token'],
-  credentials: true
-};
+//app.use(
+//cors: {
+//
+//                handlePreflightRequest: (req, res) => {
+//                    const headers = {
+//                        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+//                        "Access-Control-Allow-Origin": req.headers.origin, //or the specific origin you want to give access to,
+//                        "Access-Control-Allow-Credentials": true
+//                    };
+//                    res.writeHead(200, headers);
+//                    res.end();
+//                }
+//}
+//)
 
-app.use(cors(corsOptions));
+app.options('*', (req, res) => {
+  res.set({
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
+    'Access-Control-Allow-Headers': 'Content-Type, x-token',
+  });
+  res.status(200).end();
+});
+
+//const corsOptions = {
+//  origin: [
+//    'http://localhost:9000',         // Quasar dev
+//    'capacitor://localhost',         // App móvil con Capacitor
+//    'http://localhost',              // Android Studio emulator
+//    'https://backend-dji.onrender.com' // Si necesitas aceptar desde ahí también
+//  ],
+//  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+//  allowedHeaders: ['Content-Type', 'x-token'],
+//  credentials: true
+//};
+
+//app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -48,6 +85,7 @@ app.use((req, res, next) => {
   console.log("Nueva solicitud de origen:", req.headers.origin);
   next();
 });
+
 
 // Routes
 app.use('/api/webhook', webhookRoutes);
@@ -69,6 +107,10 @@ app.listen(PORT, () => {
     console.log(`Servidor escuchando en el puerto ${PORT}`);
     dbConexion();
 });
+// app.listen(PORT, '0.0.0.0', () => {
+//   console.log(`Servidor escuchando en el puerto ${PORT}`);
+// });
+
 
 export default app;
 
