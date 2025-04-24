@@ -23,7 +23,11 @@ const corsOptions = {
     'http://localhost:9000',
     'capacitor://localhost',
     'http://localhost',
-    'https://backend-dji.onrender.com'
+    'https://backend-dji.onrender.com',
+    'capacitor://localhost:8080',
+    'file://',        // Para aplicaciones instaladas
+    'android-app://', // Para aplicaciones Android
+    '*'               // Temporalmente para debugging
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'x-token'],
@@ -32,60 +36,18 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// app.use(cors());
-// app.use(cors({
-//     origin: ['http://localhost:9000'],
-//     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-//     allowedHeaders: ['Content-Type', 'x-token']
-//   }));
-// app.use(express.json());
-// app.options('*', cors());
-
-//app.use(
-//cors: {
-//
-//                handlePreflightRequest: (req, res) => {
-//                    const headers = {
-//                        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-//                        "Access-Control-Allow-Origin": req.headers.origin, //or the specific origin you want to give access to,
-//                        "Access-Control-Allow-Credentials": true
-//                    };
-//                    res.writeHead(200, headers);
-//                    res.end();
-//                }
-//}
-//)
-
-app.options('*', (req, res) => {
-  res.set({
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
-    'Access-Control-Allow-Headers': 'Content-Type, x-token',
-  });
-  res.status(200).end();
-});
-
-//const corsOptions = {
-//  origin: [
-//    'http://localhost:9000',         // Quasar dev
-//    'capacitor://localhost',         // App móvil con Capacitor
-//    'http://localhost',              // Android Studio emulator
-//    'https://backend-dji.onrender.com' // Si necesitas aceptar desde ahí también
-//  ],
-//  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-//  allowedHeaders: ['Content-Type', 'x-token'],
-//  credentials: true
-//};
-
-//app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
-  console.log("Nueva solicitud de origen:", req.headers.origin);
+  console.log("Nueva solicitud:");
+  console.log("Origen:", req.headers.origin);
+  console.log("Método:", req.method);
+  console.log("Ruta:", req.path);
+  console.log("Headers:", req.headers);
+  console.log("Body:", req.body);
   next();
 });
-
 
 // Routes
 app.use('/api/webhook', webhookRoutes);
