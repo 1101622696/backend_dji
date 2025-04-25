@@ -16,8 +16,7 @@ router.get('/obtenerdatosdron/:numeroserie',[validarJWT], httpDrones.obtenerDron
 // router.post("/crear",httpDrones.crearDron)
 router.post("/crear", [validarJWT, upload.array('archivos')], httpDrones.crearDron);
 
-
-router.put("/editar/:numeroserie",[validarJWT],httpDrones.editarDron)
+router.put("/editar/:numeroserie",[validarJWT, upload.array('archivos')], httpDrones.editarDron)
 
 router.put("/activar/:numeroserie",[validarJWT],httpDrones.activarDron)
 router.put("/desactivar/:numeroserie",[validarJWT],httpDrones.desactivarDron)

@@ -114,40 +114,47 @@ const editarPilotoporIdentificacion = async (identificacion, nuevosDatos) => {
   });
 
   const filas = response.data.values;
-  const encabezado = [
-    "idPiloto", 
-    "nombreCompleto", 
-    "primerApellido", 
-    "SegundoApellido", 
-    "tipoDocumento", 
-    "identificacion", 
-    "paisExpedicion", 
-    "ciudadExpedicion", 
-    "fechaExpedicion", 
-    "paisNacimiento", 
-    "ciudadNacimiento", 
-    "fechaNacimiento", 
-    "grupoSanguineo", 
-    "factorRH", 
-    "genero", 
-    "contratopiloto", 
-    "estadoCivil", 
-    "ciudadOrigen", 
-    "direccion", 
-    "telefonoMovil", 
-    "fechaExamen", 
-    "email"
-  ];
-
-  const filaIndex = filas.findIndex(fila => fila[5]?.toLowerCase() === identificacion.toLowerCase());
+  const filaIndex = filas.findIndex(fila => fila[0]?.toLowerCase() === identificacion.toLowerCase());
 
   if (filaIndex === -1) {
     return null; 
   }
 
-  const filaEditada = encabezado.map((campo) => nuevosDatos[campo] ?? filas[filaIndex][encabezado.indexOf(campo)]);
+  // teer los datos actuales
+  const filaActual = filas[filaIndex];
+  
+  const filaEditada = [
+    filaActual[0], 
+    nuevosDatos.nombreCompleto || filaActual[1],
+    nuevosDatos.primerApellido || filaActual[2],
+    nuevosDatos.SegundoApellido || filaActual[3],
+    nuevosDatos.tipoDocumento || filaActual[4],
+    nuevosDatos.identificacion || filaActual[5],
+    nuevosDatos.paisExpedicion || filaActual[6],
+    nuevosDatos.ciudadExpedicion || filaActual[7],
+    nuevosDatos.fechaExpedicion || filaActual[8],
+    nuevosDatos.paisNacimiento || filaActual[9],
+    nuevosDatos.ciudadNacimiento || filaActual[10],
+    nuevosDatos.fechaNacimiento || filaActual[11],
+    nuevosDatos.grupoSanguineo || filaActual[12],
+    nuevosDatos.factorRH || filaActual[13],
+    nuevosDatos.genero || filaActual[14],
+    nuevosDatos.estadoCivil || filaActual[15],
+    nuevosDatos.ciudadOrigen || filaActual[16],
+    nuevosDatos.direccion || filaActual[17],
+    nuevosDatos.telefonoMovil || filaActual[18],
+    nuevosDatos.fechaExamen || filaActual[19],
+    nuevosDatos.email || filaActual[20],
+    nuevosDatos.contratopiloto || filaActual[21],
+    nuevosDatos.Link || filaActual[22],
+    filaActual[23], 
+    filaActual[24], 
+    filaActual[25], 
+    filaActual[26], 
+    filaActual[27], 
+  ];
 
-  const filaEnHoja = filaIndex + 2;
+  const filaEnHoja = filaIndex + 2; 
 
   await sheets.spreadsheets.values.update({
     spreadsheetId,
@@ -217,8 +224,13 @@ const procesarArchivos = async (archivos, identificacion) => {
   const carpetaPadreId = '1Ys_okDNkr4RalNdDFLGW4jlNTmsEPAjS';
   
   // Crear una carpeta con la identificacion
-  const carpeta = await crearCarpeta(identificacion, carpetaPadreId);
+  const carpeta = await buscarCarpetaPorNombre(identificacion, carpetaPadreId);
   
+    // Si no existe, crearla
+    if (!carpeta) {
+      carpeta = await crearCarpeta(identificacion, carpetaPadreId);
+    }
+
   // Subir cada archivo a la carpeta creada
   const enlaces = [];
   for (const archivo of archivos) {
@@ -297,6 +309,45 @@ function getColumnLetter(columnNumber) {
   }
   return columnLetter;
 }
+const subirArchivosACarpetaExistente = async (archivos, carpetaId) => {
+  if (!archivos || archivos.length === 0) {
+    return null;
+  }
+  
+  // Subir cada archivo a la carpeta existente
+  const enlaces = [];
+  for (const archivo of archivos) {
+    const enlace = await subirArchivo(archivo, carpetaId);
+    enlaces.push(enlace);
+  }
+  
+  // Devolver el enlace a la carpeta (necesitamos obtenerlo)
+  const drive = await getDriveClient();
+  const carpeta = await drive.files.get({
+    fileId: carpetaId,
+    fields: 'webViewLink'
+  });
+  
+  return carpeta.data.webViewLink;
+};
+
+const buscarCarpetaPorNombre = async (nombreCarpeta, parentFolderId) => {
+  const drive = await getDriveClient();
+  
+  // Crear consulta para buscar por nombre exacto dentro de la carpeta padre
+  let query = `name = '${nombreCarpeta}' and mimeType = 'application/vnd.google-apps.folder'`;
+  if (parentFolderId) {
+    query += ` and '${parentFolderId}' in parents`;
+  }
+  
+  const response = await drive.files.list({
+    q: query,
+    fields: 'files(id, name, webViewLink)',
+    spaces: 'drive'
+  });
+  
+  return response.data.files.length > 0 ? response.data.files[0] : null;
+};
 
 export const pilotoHelper = {
   getPilotos,
@@ -306,5 +357,7 @@ export const pilotoHelper = {
   editarPilotoporIdentificacion,
   getSiguienteCodigo,
   procesarArchivos,
-  actualizarEstadoEnSheets
+  actualizarEstadoEnSheets,
+  subirArchivosACarpetaExistente,
+  buscarCarpetaPorNombre
 };

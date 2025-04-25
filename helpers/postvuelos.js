@@ -1,7 +1,6 @@
 import { google } from 'googleapis';
 import stream from 'stream';
 
-
 const spreadsheetId = '1sJwTVoeFelYt5QE2Pk8KSYFZ8_3wRQjWr5HlDkhhrso';
 
 // Función para crear el cliente de autenticación
@@ -100,6 +99,10 @@ const guardarPostvuelo = async ({ consecutivo, username, dronusado, fechaInicio,
       postvuelo["estado del postvuelo"] && postvuelo["estado del postvuelo"].toLowerCase() === status.toLowerCase()
     );
   };
+  const getEsPostvueloPendiente = async (consecutivo) => {
+    const postvuelo = await getPostvueloByConsecutivo(consecutivo);
+    return postvuelo && postvuelo["estado del postvuelo"] && postvuelo["estado del postvuelo"].toLowerCase() === 'pendiente';
+  };
   const getPostvuelosByEmail = async (email) => {
     const postvuelos = await getPostvuelos();
     return postvuelos.filter(postvuelo => 
@@ -122,6 +125,57 @@ const guardarPostvuelo = async ({ consecutivo, username, dronusado, fechaInicio,
     );
   };
 
+const getPostvuelosConEtapas = async () => {
+  try {
+    const postvuelos = await getPostvuelos();
+    
+    return postvuelos.map(postvuelo => {
+      return {
+        ...postvuelo,
+        solicitudExiste: true, // Si hay postvuelo, la solicitud debe existir
+        solicitudAprobada: true, // Si hay postvuelo, la solicitud debe estar aprobada
+        prevueloExiste: true, // Si hay postvuelo, el prevuelo debe existir
+        prevueloAprobado: true, // Si hay postvuelo, el prevuelo debe estar aprobado
+        postvueloExiste: true, // El postvuelo obviamente existe
+        postvueloAprobado: postvuelo["estado del postvuelo"] === "Aprobado",
+        estadoProceso: postvuelo["estado del postvuelo"] === "Aprobado" 
+          ? 'Proceso Completado' 
+          : 'Postvuelo pendiente de aprobación'
+      };
+    });
+  } catch (error) {
+    console.error('Error al obtener postvuelos con etapas:', error);
+    throw error;
+  }
+};
+
+const getPostvueloConEtapas = async (consecutivo) => {
+  try {
+    const postvuelos = await getPostvuelos();
+    const postvuelo = postvuelos.find(p => p['consecutivo-solicitud'] === consecutivo);
+    
+    if (!postvuelo) {
+      return null;
+    }
+    
+    return {
+      ...postvuelo,
+      solicitudExiste: true,
+      solicitudAprobada: true,
+      prevueloExiste: true,
+      prevueloAprobado: true,
+      postvueloExiste: true,
+      postvueloAprobado: postvuelo["estado del postvuelo"] === "Aprobado",
+      estadoProceso: postvuelo["estado del postvuelo"] === "Aprobado" 
+        ? 'Proceso Completado' 
+        : 'Postvuelo pendiente de aprobación'
+    };
+  } catch (error) {
+    console.error('Error al obtener postvuelo con etapas:', error);
+    throw error;
+  }
+};
+
   const editarPostvueloPorConsecutivo = async (consecutivo, nuevosDatos) => {
     const sheets = await getSheetsClient();
   
@@ -131,34 +185,36 @@ const guardarPostvuelo = async ({ consecutivo, username, dronusado, fechaInicio,
     });
   
     const filas = response.data.values;
-    const encabezado = [
-      'consecutivo', 
-      'username', 
-      'dronusado', 
-      'fechaInicio', 
-      'horaInicio', 
-      'horaFin', 
-      'duracion', 
-      'distanciaRecorrida', 
-      'alturaMaxima', 
-      'incidentes', 
-      'propositoAlcanzado', 
-      'observacionesVuelo', 
-      'fechadeCreacion', 
-      'Link', 
-      'useremail', 
-      'estado', 
-      'proposito',
-      'empresa'
-    ];
-  
-    const filaIndex = filas.findIndex(fila => fila[1]?.toLowerCase() === consecutivo.toLowerCase());
+    const filaIndex = filas.findIndex(fila => fila[0]?.toLowerCase() === consecutivo.toLowerCase());
   
     if (filaIndex === -1) {
       return null; 
     }
   
-    const filaEditada = encabezado.map((campo) => nuevosDatos[campo] ?? filas[filaIndex][encabezado.indexOf(campo)]);
+    // teer los datos actuales
+    const filaActual = filas[filaIndex];  
+
+      const filaEditada = [
+        filaActual[0], 
+        filaActual[1], 
+        filaActual[2], 
+        filaActual[3], 
+        filaActual[4], 
+    nuevosDatos.horaInicio || filaActual[5],
+    nuevosDatos.horaFin || filaActual[6],
+    nuevosDatos.duracion || filaActual[7],
+    nuevosDatos.distanciaRecorrida || filaActual[8],
+    nuevosDatos.alturaMaxima || filaActual[9],
+    nuevosDatos.incidentes || filaActual[10],
+    nuevosDatos.propositoAlcanzado || filaActual[11],
+    nuevosDatos.observacionesVuelo || filaActual[12],
+    filaActual[13], 
+    nuevosDatos.Link || filaActual[14],
+    filaActual[15], 
+    filaActual[16], 
+    filaActual[17], 
+    filaActual[18], 
+    ];
   
     const filaEnHoja = filaIndex + 2;
   
@@ -227,9 +283,14 @@ const procesarArchivos = async (archivos, consecutivo) => {
   const carpetaPadreId = '1-P0Y8rdlvgZaEsnPVN4hzf42pWhH1WY1';
   
   // Crear una carpeta con el nombre del consecutivo
-  const carpeta = await crearCarpeta(consecutivo, carpetaPadreId);
+  const carpeta = await buscarCarpetaPorNombre(consecutivo, carpetaPadreId);
   
-  // Subir cada archivo a la carpeta creada
+  // Buscar si ya existe una carpeta con el nombre del consecutivo
+  if (!carpeta) {
+    carpeta = await crearCarpeta(consecutivo, carpetaPadreId);
+  }
+  
+  // Si no existe, crearla
   const enlaces = [];
   for (const archivo of archivos) {
     const enlace = await subirArchivo(archivo, carpeta.id);
@@ -307,15 +368,61 @@ function getColumnLetter(columnNumber) {
   return columnLetter;
 }
 
+const subirArchivosACarpetaExistente = async (archivos, carpetaId) => {
+  if (!archivos || archivos.length === 0) {
+    return null;
+  }
+  
+  // Subir cada archivo a la carpeta existente
+  const enlaces = [];
+  for (const archivo of archivos) {
+    const enlace = await subirArchivo(archivo, carpetaId);
+    enlaces.push(enlace);
+  }
+  
+  // Devolver el enlace a la carpeta (necesitamos obtenerlo)
+  const drive = await getDriveClient();
+  const carpeta = await drive.files.get({
+    fileId: carpetaId,
+    fields: 'webViewLink'
+  });
+  
+  return carpeta.data.webViewLink;
+};
+
+const buscarCarpetaPorNombre = async (nombreCarpeta, parentFolderId) => {
+  const drive = await getDriveClient();
+  
+  // Crear consulta para buscar por nombre exacto dentro de la carpeta padre
+  let query = `name = '${nombreCarpeta}' and mimeType = 'application/vnd.google-apps.folder'`;
+  if (parentFolderId) {
+    query += ` and '${parentFolderId}' in parents`;
+  }
+  
+  const response = await drive.files.list({
+    q: query,
+    fields: 'files(id, name, webViewLink)',
+    spaces: 'drive'
+  });
+  
+  return response.data.files.length > 0 ? response.data.files[0] : null;
+};
+
 export const postvueloHelper = {
   getPostvuelos,
   guardarPostvuelo,
   getPostvuelosByStatus,
+  getEsPostvueloPendiente,
   getPostvuelosByEmail,
   getPostvuelosByEmailAndStatus,
   getPostvueloByConsecutivo,
+  getPostvuelosConEtapas,
+  getPostvueloConEtapas,
   editarPostvueloPorConsecutivo,
   procesarArchivos,
   getSiguienteConsecutivo,
-  actualizarEstadoEnSheets
+  actualizarEstadoEnSheets,
+  buscarCarpetaPorNombre,
+  subirArchivosACarpetaExistente
+
 };

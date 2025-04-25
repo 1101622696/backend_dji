@@ -18,32 +18,22 @@ import validacionprevuelo from "./routes/validarprevuelo.js"
 
 const app = express();
 
-// con esto al menos me salio algo en render 
+// con esto funciona todo menos desde localhost9000 entocnes agregaré el 9000 pero dejar esto quieto 
+// const whitelist = ['https://localhost', 'http://localhost', 'http://localhost:3000', 'capacitor://localhost', 'ionic://localhost'];
 // const corsOptions = {
 //   origin: function (origin, callback) {
-//     const whitelist = [
-//       'http://localhost:9000',
-//       'capacitor://localhost',
-//       'http://localhost',
-//       'https://backend-dji.onrender.com',
-//       'capacitor://localhost:8080',
-//       'file://',
-//       'android-app://'
-//     ];
 //     if (!origin || whitelist.includes(origin)) {
 //       callback(null, true);
 //     } else {
 //       callback(new Error('Not allowed by CORS'));
 //     }
 //   },
-//   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-//   allowedHeaders: ['Content-Type', 'x-token'],
-//   credentials: true
+//   credentials: true,
 // };
 
 // app.use(cors(corsOptions));
 
-const whitelist = ['https://localhost', 'http://localhost', 'http://localhost:3000', 'capacitor://localhost', 'ionic://localhost'];
+const whitelist = ['https://localhost','http://localhost:9000', 'http://localhost', 'http://localhost:3000', 'capacitor://localhost', 'ionic://localhost'];
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || whitelist.includes(origin)) {
@@ -56,20 +46,23 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// app.use(cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-  console.log("Nueva solicitud:");
-  console.log("Origen:", req.headers.origin);
-  console.log("Método:", req.method);
-  console.log("Ruta:", req.path);
-  console.log("Headers:", req.headers);
-  console.log("Body:", req.body);
-  next();
-});
+// esto lo comenté para no tener tantos console pero con esto funcionó en la app
+// el commit de que funcionó la app fue la 42
+// app.use((req, res, next) => {
+//   console.log("Nueva solicitud:");
+//   console.log("Origen:", req.headers.origin);
+//   console.log("Método:", req.method);
+//   console.log("Ruta:", req.path);
+//   console.log("Headers:", req.headers);
+//   console.log("Body:", req.body);
+//   next();
+// });
+
+
 
 // Routes
 app.use('/api/webhook', webhookRoutes);

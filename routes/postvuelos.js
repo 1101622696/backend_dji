@@ -12,6 +12,7 @@ router.get("/",[validarJWT],httpPostvuelos.obtenerPostvuelos)
 router.get("/pcantidad",[validarJWT],httpPostvuelos.obtenerPostvuelosCantidad)
 router.get("/pendientes",[validarJWT],httpPostvuelos.obtenerPostvuelosPendientes)
 router.get("/pendientes/cantidad",[validarJWT],httpPostvuelos.obtenerPostvuelosPendientesCantidad)
+router.get("/pendientes/verificar/:consecutivo",[validarJWT],httpPostvuelos.verificarPostvueloPendiente)
 router.get("/aprobados",[validarJWT],httpPostvuelos.obtenerPostvuelosAprobados)
 router.get("/aprobados/cantidad",[validarJWT],httpPostvuelos.obtenerPostvuelosAprobadosCantidad)
 router.get("/enproceso",[validarJWT],httpPostvuelos.obtenerPostvuelosEnproceso)
@@ -23,11 +24,14 @@ router.get("/aprobados/email/cantidad/:email",[validarJWT],httpPostvuelos.obtene
 router.get('/email/:email',[validarJWT], httpPostvuelos.obtenerPostvuelosPorEmail);
 router.get('/filtrar-completo',[validarJWT], httpPostvuelos.obtenerPostvuelosPorEmailYEstado);
 router.get('/obtenerdatospostvuelo/:consecutivo',[validarJWT], httpPostvuelos.obtenerPostvueloPorConsecutivo);
+router.get('/etapas/:consecutivo',[validarJWT], httpPostvuelos.obtenerPostvueloConEtapas);
+router.get('/conetapas',[validarJWT], httpPostvuelos.obtenerTodosPostvuelosConEtapas);
+router.get('/estadoproceso/:estado',[validarJWT], httpPostvuelos.obtenerPostvuelosPorEstado);
 
 // router.post("/crear",httpPostvuelos.crearPostvuelo)
 router.post("/crear", [validarJWT, upload.array('archivos')], httpPostvuelos.crearPostvuelo);
 
-router.put("/editar/:consecutivo",[validarJWT],httpPostvuelos.editarPostvuelo)
+router.put("/editar/:consecutivo",[validarJWT, upload.array('archivos')], httpPostvuelos.editarPostvuelo)
 
 router.put("/aprobar/:consecutivo",[validarJWT],httpPostvuelos.aprobarestadoPostvuelo)
 router.put("/denegar/:consecutivo",[validarJWT],httpPostvuelos.denegarestadoPostvuelo)

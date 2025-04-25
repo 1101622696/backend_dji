@@ -98,7 +98,16 @@ obtenerPostvuelosPendientesCantidad: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener postvuelos pendientes' });
   }
 },
-
+verificarPostvueloPendiente: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const EsPendiente = await postvueloHelper.getEsPostvueloPendiente(consecutivo);
+    res.json({ EsPendiente });
+  } catch (error) {
+    console.error('Error al verificar estado del postvuelo:', error);
+    res.status(500).json({ mensaje: 'Error al verificar estado del postvuelo' });
+  }
+},
 obtenerPostvuelosAprobados: async (req, res) => {
   try {
     const data = await postvueloHelper.getPostvuelosByStatus('aprobado');
@@ -257,11 +266,64 @@ obtenerPostvueloPorConsecutivo: async (req, res) => {
   }
 },
 
+obtenerPostvueloConEtapas: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const data = await postvueloHelper.getPostvueloConEtapas(consecutivo);
+    
+    if (!data) {
+      return res.status(404).json({ mensaje: 'Postvuelo no encontrado' });
+    }
+    
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener postvuelo con etapas' });
+  }
+},
+
+obtenerTodosPostvuelosConEtapas: async (req, res) => {
+  try {
+    const data = await postvueloHelper.getPostvuelosConEtapas();
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener todos los postvuelos con etapas' });
+  }
+},
+
+obtenerPostvuelosPorEstado: async (req, res) => {
+  try {
+    const { estado } = req.params;
+    const todosPostvuelos = await postvueloHelper.getPostvuelosConEtapas();
+    
+    const postvuelosFiltrados = todosPostvuelos.filter(
+      postvuelo => postvuelo.estadoProceso === estado
+    );
+    
+    res.json(postvuelosFiltrados);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener postvuelos por estado' });
+  }
+},
+
 editarPostvuelo: async (req, res) => {
   try {
     const { consecutivo } = req.params;
     const nuevosDatos = req.body;
+    const { email, nombre } = req.usuariobdtoken;
 
+        if (req.files && req.files.length > 0) {
+          // Procesará los archivos reutilizando la carpeta si existe
+          const Link = await postvueloHelper.procesarArchivos(req.files, consecutivo);
+          nuevosDatos.Link = Link;
+        }
+    
+    // Añadir datos del usuario token si no están en los datos nuevos
+    if (!nuevosDatos.useremail) nuevosDatos.useremail = email;
+    if (!nuevosDatos.username) nuevosDatos.username = nombre;
+    
     const resultado = await postvueloHelper.editarPostvueloPorConsecutivo(consecutivo, nuevosDatos);
 
     if (!resultado) {

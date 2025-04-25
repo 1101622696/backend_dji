@@ -105,9 +105,14 @@ obtenerdron: async (req, res) => {
     try {
       const { numeroserie } = req.params;
       const nuevosDatos = req.body;
-  
-      const resultado = await dronHelper.editarDronporNumeroserie(numeroserie, nuevosDatos);
-  
+
+    if (req.files && req.files.length > 0) {
+      const Link = await dronHelper.procesarArchivos(req.files, numeroserie);
+      nuevosDatos.Link = Link;
+    }
+
+    const resultado = await dronHelper.editarDronporNumeroserie(numeroserie, nuevosDatos);
+
       if (!resultado) {
         return res.status(404).json({ mensaje: 'Dron no encontrado' });
       }

@@ -118,30 +118,40 @@ const editarDronporNumeroserie = async (numeroserie, nuevosDatos) => {
   });
 
   const filas = response.data.values;
-  const encabezado = [
-    "codigo", 
-    "numeroSerie", 
-    "marca", 
-    "modelo", 
-    "peso", 
-    "dimensiones", 
-    "alturaMaxima", 
-    "velocidadMaxima", 
-    "fechaCompra", 
-    "capacidadBateria", 
-    "ubicaciondron", 
-    "contratodron", 
-    "tipoCamarasSensores", 
-    "fechapoliza"
-  ];
-
-  const filaIndex = filas.findIndex(fila => fila[1]?.toLowerCase() === numeroserie.toLowerCase());
+  const filaIndex = filas.findIndex(fila => fila[0]?.toLowerCase() === numeroserie.toLowerCase());
 
   if (filaIndex === -1) {
     return null; 
   }
 
-  const filaEditada = encabezado.map((campo) => nuevosDatos[campo] ?? filas[filaIndex][encabezado.indexOf(campo)]);
+  // teer los datos actuales
+  const filaActual = filas[filaIndex];
+  
+  const filaEditada = [
+    filaActual[0], 
+    nuevosDatos.numeroSerie || filaActual[1],
+    nuevosDatos.marca || filaActual[2],
+    nuevosDatos.modelo || filaActual[3],
+    nuevosDatos.peso || filaActual[4],
+    nuevosDatos.dimensiones || filaActual[5],
+    nuevosDatos.autonomiavuelo || filaActual[6],
+    nuevosDatos.alturaMaxima || filaActual[7],
+    nuevosDatos.velocidadMaxima || filaActual[8],
+    nuevosDatos.fechaCompra || filaActual[9],
+    nuevosDatos.capacidadBateria || filaActual[10],
+    nuevosDatos.tipoCamarasSensores || filaActual[11],
+    nuevosDatos.Link || filaActual[12],
+    filaActual[13], 
+    filaActual[14], 
+    nuevosDatos.contratodron || filaActual[15],
+    filaActual[16], 
+    filaActual[17], 
+    filaActual[18], 
+    nuevosDatos.contratodron || filaActual[19],
+    nuevosDatos.ubicaciondron || filaActual[20],
+    filaActual[21], 
+
+  ];
 
   const filaEnHoja = filaIndex + 2;
 
@@ -213,7 +223,11 @@ const procesarArchivos = async (archivos, numeroSerie) => {
   const carpetaPadreId = '1LPVkbgDSu3lfv0visAqh_kVrile_Twbl';
   
   // Crear una carpeta con el nombre del numeroSerie
-  const carpeta = await crearCarpeta(numeroSerie, carpetaPadreId);
+  const carpeta = await buscarCarpetaPorNombre(numeroSerie, carpetaPadreId);
+  
+  if (!carpeta) {
+    carpeta = await crearCarpeta(numeroSerie, carpetaPadreId);
+  }
   
   // Subir cada archivo a la carpeta creada
   const enlaces = [];
@@ -294,6 +308,46 @@ function getColumnLetter(columnNumber) {
   return columnLetter;
 }
 
+const subirArchivosACarpetaExistente = async (archivos, carpetaId) => {
+  if (!archivos || archivos.length === 0) {
+    return null;
+  }
+  
+  // Subir cada archivo a la carpeta existente
+  const enlaces = [];
+  for (const archivo of archivos) {
+    const enlace = await subirArchivo(archivo, carpetaId);
+    enlaces.push(enlace);
+  }
+  
+  // Devolver el enlace a la carpeta (necesitamos obtenerlo)
+  const drive = await getDriveClient();
+  const carpeta = await drive.files.get({
+    fileId: carpetaId,
+    fields: 'webViewLink'
+  });
+  
+  return carpeta.data.webViewLink;
+};
+
+const buscarCarpetaPorNombre = async (nombreCarpeta, parentFolderId) => {
+  const drive = await getDriveClient();
+  
+  // Crear consulta para buscar por nombre exacto dentro de la carpeta padre
+  let query = `name = '${nombreCarpeta}' and mimeType = 'application/vnd.google-apps.folder'`;
+  if (parentFolderId) {
+    query += ` and '${parentFolderId}' in parents`;
+  }
+  
+  const response = await drive.files.list({
+    q: query,
+    fields: 'files(id, name, webViewLink)',
+    spaces: 'drive'
+  });
+  
+  return response.data.files.length > 0 ? response.data.files[0] : null;
+};
+
 export const dronHelper = {
   getDrones,
   guardarDron,
@@ -302,6 +356,7 @@ export const dronHelper = {
   getDronByNumeroserie,
   editarDronporNumeroserie,
   procesarArchivos,
-  actualizarEstadoEnSheets
-
+  actualizarEstadoEnSheets,
+  subirArchivosACarpetaExistente,
+  buscarCarpetaPorNombre
 };
