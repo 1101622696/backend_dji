@@ -1,6 +1,8 @@
 import { google } from 'googleapis';
 import path from 'path';
 import stream from 'stream';
+import { prevueloHelper } from '../helpers/prevuelos.js';
+import {postvueloHelper} from '../helpers/postvuelos.js';
 
 const spreadsheetId = '1sJwTVoeFelYt5QE2Pk8KSYFZ8_3wRQjWr5HlDkhhrso';
 
@@ -79,10 +81,10 @@ const getSiguienteConsecutivo = async () => {
   return `SAV-${siguiente}`;
 };
 
-const guardarSolicitud = async ({ useremail, username, proposito, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado }) => {
+const guardarSolicitud = async ({ useremail, username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado }) => {
   const sheets = await getSheetsClient();
   const consecutivo = await getSiguienteConsecutivo();
-  const nuevaFila = [consecutivo, useremail, username, proposito, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username, useremail];
+  const nuevaFila = [consecutivo, useremail, username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username, useremail];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
@@ -107,7 +109,10 @@ const getSolicitudesByStatus = async (status) => {
     solicitud.estado && solicitud.estado.toLowerCase() === status.toLowerCase()
   );
 };
-
+const getEssolicitudPendiente = async (consecutivo) => {
+  const solicitud = await getSolicitudesByConsecutivo(consecutivo);
+  return solicitud && solicitud.estado && solicitud.estado.toLowerCase() === 'pendiente';
+};
 const getConsecutivosPrevuelo = async () => {
   try {
     const sheets = await getSheetsClient();
@@ -182,6 +187,153 @@ const getSolicitudesByEmailAndStatus = async (email, status) => {
   );
 };
 
+const getSolicitudConEtapas = async (consecutivo) => {
+  try {
+    const solicitudes = await getSolicitudesVuelo();
+    const solicitud = solicitudes.find(s => s.consecutivo === consecutivo);
+    
+    if (!solicitud) {
+      return null;
+    }
+    
+    // Comprobaciones dependientes en cascada
+    const solicitudExiste = true;
+    const solicitudAprobada = solicitud.estado === 'Aprobado';
+    
+    // Solo buscar prevuelo si la solicitud está aprobada
+    let prevuelo = null;
+    let prevueloExiste = false;
+    let prevueloAprobado = false;
+    
+    if (solicitudAprobada) {
+      const prevuelos = await prevueloHelper.getPrevuelos();
+      prevuelo = prevuelos.find(p => p.solicitudesaprobadas === consecutivo);
+      prevueloExiste = !!prevuelo;
+      prevueloAprobado = prevuelo ? prevuelo["estado del prevuelo"] === "Aprobado" : false;
+    }
+    
+    // Solo buscar postvuelo si el prevuelo existe y está aprobado
+    let postvuelo = null;
+    let postvueloExiste = false;
+    let postvueloAprobado = false;
+    
+    if (prevueloExiste && prevueloAprobado) {
+      const postvuelos = await postvueloHelper.getPostvuelos();
+      postvuelo = postvuelos.find(p => p['consecutivo-solicitud'] === consecutivo);
+      postvueloExiste = !!postvuelo;
+      postvueloAprobado = postvuelo ? postvuelo["estado del postvuelo"] === "Aprobado" : false;
+    }
+    
+    return {
+      solicitud,
+      solicitudExiste,
+      solicitudAprobada,
+      prevueloExiste,
+      prevueloAprobado,
+      postvueloExiste,
+      postvueloAprobado,
+      estadoProceso: determinarEstadoProceso(
+        solicitudExiste, 
+        solicitudAprobada, 
+        prevueloExiste, 
+        prevueloAprobado, 
+        postvueloExiste, 
+        postvueloAprobado
+      )
+    };
+  } catch (error) {
+    console.error('Error al obtener solicitud con etapas:', error);
+    throw error;
+  }
+};
+
+// Función determinarEstadoProceso refactorizada
+const determinarEstadoProceso = (
+  solicitudExiste, 
+  solicitudAprobada, 
+  prevueloExiste, 
+  prevueloAprobado, 
+  postvueloExiste, 
+  postvueloAprobado
+) => {
+  if (!solicitudExiste) return 'Desconocido';
+  
+  if (!solicitudAprobada) {
+    return 'Pendiente de aprobación';
+  }
+  
+  if (!prevueloExiste) {
+    return 'Solicitud aprobada, pendiente de prevuelo';
+  }
+  
+  if (!prevueloAprobado) {
+    return 'Prevuelo pendiente de aprobación';
+  }
+  
+  if (!postvueloExiste) {
+    return 'Prevuelo aprobado, pendiente de postvuelo';
+  }
+  
+  if (!postvueloAprobado) {
+    return 'Postvuelo pendiente de aprobación';
+  }
+  
+  return 'Proceso Completado';
+};
+
+// También refactorizamos getAllSolicitudesConEtapas
+const getAllSolicitudesConEtapas = async () => {
+  try {
+    const solicitudes = await getSolicitudesVuelo();
+    const prevuelos = await prevueloHelper.getPrevuelos();
+    const postvuelos = await postvueloHelper.getPostvuelos();
+    
+    return solicitudes.map(solicitud => {
+      const solicitudExiste = true;
+      const solicitudAprobada = solicitud.estado === 'Aprobado';
+      
+      let prevueloExiste = false;
+      let prevueloAprobado = false;
+      
+      if (solicitudAprobada) {
+        const prevuelo = prevuelos.find(p => p.solicitudesaprobadas === solicitud.consecutivo);
+        prevueloExiste = !!prevuelo;
+        prevueloAprobado = prevuelo ? prevuelo["estado del prevuelo"] === "Aprobado" : false;
+      }
+      
+      let postvueloExiste = false;
+      let postvueloAprobado = false;
+      
+      if (prevueloExiste && prevueloAprobado) {
+        const postvuelo = postvuelos.find(p => p['consecutivo-solicitud'] === solicitud.consecutivo);
+        postvueloExiste = !!postvuelo;
+        postvueloAprobado = postvuelo ? postvuelo["estado del postvuelo"] === "Aprobado" : false;
+      }
+      
+      return {
+        ...solicitud,
+        solicitudExiste,
+        solicitudAprobada,
+        prevueloExiste,
+        prevueloAprobado,
+        postvueloExiste,
+        postvueloAprobado,
+        estadoProceso: determinarEstadoProceso(
+          solicitudExiste, 
+          solicitudAprobada, 
+          prevueloExiste, 
+          prevueloAprobado, 
+          postvueloExiste, 
+          postvueloAprobado
+        )
+      };
+    });
+  } catch (error) {
+    console.error('Error al obtener todas las solicitudes con etapas:', error);
+    throw error;
+  }
+};
+
 const editarSolicitudPorConsecutivo = async (consecutivo, nuevosDatos) => {
   const sheets = await getSheetsClient();
 
@@ -191,69 +343,70 @@ const editarSolicitudPorConsecutivo = async (consecutivo, nuevosDatos) => {
   });
 
   const filas = response.data.values;
-  const encabezado = [
-    'consecutivo',
-    'useremail',
-    'username',
-    'proposito',
-    'empresa', 
-    'fecha_inicio', 
-    'hora_inicio', 
-    'fecha_fin', 
-    'hora_fin', 
-    'detalles_cronograma', 
-    'peso_maximo', 
-    'municipio', 
-    'departamento', 
-    'tipodecontactovisualconlaua', 
-    'vueloespecial', 
-    'justificacionvueloespecial', 
-    'poligononombre', 
-    'altura_poligono', 
-    'latitud_poligono_1', 
-    'longitud_poligono_1', 
-    'latitud_poligono_2', 
-    'longitud_poligono_2', 
-    'latitud_poligono_3', 
-    'longitud_poligono_3', 
-    'latitud_poligono_4', 
-    'longitud_poligono_4', 
-    'latitud_poligono_5', 
-    'longitud_poligono_5', 
-    'tramolinealnombre', 
-    'altura_tramo', 
-    'latitud_tramo_1', 
-    'longitud_tramo_1', 
-    'latitud_tramo_2', 
-    'longitud_tramo_2', 
-    'latitud_tramo_3', 
-    'longitud_tramo_3', 
-    'latitud_tramo_4', 
-    'longitud_tramo_4', 
-    'latitud_tramo_5', 
-    'longitud_tramo_5', 
-    'circuferenciaencoordenadayradionombre', 
-    'altura_circunferencia', 
-    'latitud_circunferencia_1', 
-    'longitud_circunferencia_1', 
-    'check_kmz', 
-    'Link', 
-    'estado', 
-    'fechadeCreacion', 
-    'realizado', 
-    'username', 
-    'useremail'
-  ];
-
   const filaIndex = filas.findIndex(fila => fila[0]?.toLowerCase() === consecutivo.toLowerCase());
 
   if (filaIndex === -1) {
     return null; 
   }
 
-  const filaEditada = encabezado.map((campo) => nuevosDatos[campo] ?? filas[filaIndex][encabezado.indexOf(campo)]);
+  // teer los datos actuales
+  const filaActual = filas[filaIndex];
+  
+  const filaEditada = [
+    filaActual[0], 
+    nuevosDatos.useremail || filaActual[1],
+    nuevosDatos.username || filaActual[2], 
+    nuevosDatos.tipodeoperacionaerea || filaActual[3], 
+    nuevosDatos.empresa || filaActual[4],
+    nuevosDatos.fecha_inicio || filaActual[5], 
+    nuevosDatos.hora_inicio || filaActual[6], 
+    nuevosDatos.fecha_fin || filaActual[7], 
+    nuevosDatos.hora_fin || filaActual[8], 
+    nuevosDatos.detalles_cronograma || filaActual[9], 
+    nuevosDatos.peso_maximo || filaActual[10], 
+    nuevosDatos.municipio || filaActual[11], 
+    nuevosDatos.departamento || filaActual[12], 
+    nuevosDatos.tipodecontactovisualconlaua || filaActual[13], 
+    nuevosDatos.vueloespecial || filaActual[14], 
+    nuevosDatos.justificacionvueloespecial || filaActual[15], 
+    nuevosDatos.poligononombre || filaActual[16], 
+    nuevosDatos.altura_poligono || filaActual[17], 
+    nuevosDatos.latitud_poligono_1 || filaActual[18], 
+    nuevosDatos.longitud_poligono_1 || filaActual[19], 
+    nuevosDatos.latitud_poligono_2 || filaActual[20], 
+    nuevosDatos.longitud_poligono_2 || filaActual[21], 
+    nuevosDatos.latitud_poligono_3 || filaActual[22], 
+    nuevosDatos.longitud_poligono_3 || filaActual[23], 
+    nuevosDatos.latitud_poligono_4 || filaActual[24], 
+    nuevosDatos.longitud_poligono_4 || filaActual[25], 
+    nuevosDatos.latitud_poligono_5 || filaActual[26], 
+    nuevosDatos.longitud_poligono_5 || filaActual[27], 
+    nuevosDatos.tramolinealnombre || filaActual[28], 
+    nuevosDatos.altura_tramo || filaActual[29], 
+    nuevosDatos.latitud_tramo_1 || filaActual[30], 
+    nuevosDatos.longitud_tramo_1 || filaActual[31], 
+    nuevosDatos.latitud_tramo_2 || filaActual[32], 
+    nuevosDatos.longitud_tramo_2 || filaActual[33], 
+    nuevosDatos.latitud_tramo_3 || filaActual[34], 
+    nuevosDatos.longitud_tramo_3 || filaActual[35], 
+    nuevosDatos.latitud_tramo_4 || filaActual[36], 
+    nuevosDatos.longitud_tramo_4 || filaActual[37], 
+    nuevosDatos.latitud_tramo_5 || filaActual[38], 
+    nuevosDatos.longitud_tramo_5 || filaActual[39], 
+    nuevosDatos.circuferenciaencoordenadayradionombre || filaActual[40], 
+    nuevosDatos.altura_circunferencia || filaActual[41], 
+    nuevosDatos.latitud_circunferencia_1 || filaActual[42], 
+    nuevosDatos.longitud_circunferencia_1 || filaActual[43], 
+    filaActual[44], 
+    nuevosDatos.Link || filaActual[45], 
+    filaActual[46], 
+    filaActual[47], 
+    nuevosDatos.realizado || filaActual[48], 
+    nuevosDatos.username || filaActual[49], 
+    nuevosDatos.useremail || filaActual[50], 
+  ];
 
-  const filaEnHoja = filaIndex + 2;
+  const filaEnHoja = filaIndex + 2; 
 
   await sheets.spreadsheets.values.update({
     spreadsheetId,
@@ -266,6 +419,7 @@ const editarSolicitudPorConsecutivo = async (consecutivo, nuevosDatos) => {
 
   return true;
 };
+
 
 const crearCarpeta = async (nombreCarpeta, parentFolderId) => {
   const drive = await getDriveClient();
@@ -318,10 +472,15 @@ const procesarArchivos = async (archivos, consecutivo) => {
   // ID de la carpeta padre que proporcionaste
   const carpetaPadreId = '1iaCvCuKoK-uMelKCg2OREkFBQj8bq5fW';
   
-  // Crear una carpeta con el nombre del consecutivo
-  const carpeta = await crearCarpeta(consecutivo, carpetaPadreId);
+  // Buscar si ya existe una carpeta con el nombre del consecutivo
+  let carpeta = await buscarCarpetaPorNombre(consecutivo, carpetaPadreId);
   
-  // Subir cada archivo a la carpeta creada
+  // Si no existe, crearla
+  if (!carpeta) {
+    carpeta = await crearCarpeta(consecutivo, carpetaPadreId);
+  }
+  
+  // Subir cada archivo a la carpeta (existente o recién creada)
   const enlaces = [];
   for (const archivo of archivos) {
     const enlace = await subirArchivo(archivo, carpeta.id);
@@ -405,19 +564,63 @@ const putSolicitudByStatus = async (consecutivo, nuevoEstado = "aprobado") => {
   return await actualizarEstadoEnSheets(consecutivo, nuevoEstado);
 };
 
+const subirArchivosACarpetaExistente = async (archivos, carpetaId) => {
+  if (!archivos || archivos.length === 0) {
+    return null;
+  }
+  
+  // Subir cada archivo a la carpeta existente
+  const enlaces = [];
+  for (const archivo of archivos) {
+    const enlace = await subirArchivo(archivo, carpetaId);
+    enlaces.push(enlace);
+  }
+  
+  // Devolver el enlace a la carpeta (necesitamos obtenerlo)
+  const drive = await getDriveClient();
+  const carpeta = await drive.files.get({
+    fileId: carpetaId,
+    fields: 'webViewLink'
+  });
+  
+  return carpeta.data.webViewLink;
+};
 
+const buscarCarpetaPorNombre = async (nombreCarpeta, parentFolderId) => {
+  const drive = await getDriveClient();
+  
+  // Crear consulta para buscar por nombre exacto dentro de la carpeta padre
+  let query = `name = '${nombreCarpeta}' and mimeType = 'application/vnd.google-apps.folder'`;
+  if (parentFolderId) {
+    query += ` and '${parentFolderId}' in parents`;
+  }
+  
+  const response = await drive.files.list({
+    q: query,
+    fields: 'files(id, name, webViewLink)',
+    spaces: 'drive'
+  });
+  
+  return response.data.files.length > 0 ? response.data.files[0] : null;
+};
 
 export const solicitudHelper = {
   getSolicitudesVuelo,
   guardarSolicitud,
   getSolicitudesByStatus,
+  getEssolicitudPendiente,
   getSolicitudesByEmail,
   getSolicitudesByEmailAndStatus,
   getSolicitudesByConsecutivo,
   getSolicitudesEnProceso,
   getSolicitudesEnProcesoPorEmail,
+  getAllSolicitudesConEtapas,
+  determinarEstadoProceso,
+  getSolicitudConEtapas,
   editarSolicitudPorConsecutivo,
   getSiguienteConsecutivo,
   procesarArchivos,
-  putSolicitudByStatus
+  putSolicitudByStatus,
+  subirArchivosACarpetaExistente,
+  buscarCarpetaPorNombre
 };

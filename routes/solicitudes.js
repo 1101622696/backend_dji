@@ -7,14 +7,11 @@ const router=Router()
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-// router.get("/",[validarJWT],httpSolicitudes.obtenerSolicitudes)
-
-// router.post("/crear",[validarJWT],httpSolicitudes.crearSolicitud)
-
 router.get("/",[validarJWT],httpSolicitudes.obtenerSolicitudes)
 router.get("/scantidad",[validarJWT],httpSolicitudes.obtenerSolicitudesCantidad)
 router.get("/pendientes",[validarJWT],httpSolicitudes.obtenerSolicitudesPendientes)
 router.get("/pendientes/cantidad",[validarJWT],httpSolicitudes.obtenerSolicitudesPendientesCantidad)
+router.get("/pendientes/verificar/:consecutivo",[validarJWT],httpSolicitudes.verificarSolicitudPendiente)
 router.get("/aprobadas",[validarJWT],httpSolicitudes.obtenerSolicitudesAprobadas)
 router.get("/aprobadas/cantidad",[validarJWT],httpSolicitudes.obtenerSolicitudesAprobadasCantidad)
 router.get("/enproceso",[validarJWT],httpSolicitudes.obtenerSolicitudesEnProceso)
@@ -28,12 +25,16 @@ router.get("/enproceso/email/cantidad/:email",[validarJWT],httpSolicitudes.obten
 router.get('/email/:email',[validarJWT], httpSolicitudes.obtenerSolicitudesPorEmail);
 router.get('/filtrar-completo',[validarJWT], httpSolicitudes.obtenerSolicitudesPorEmailYEstado);
 router.get('/obtenerdatossolicitud/:consecutivo',[validarJWT], httpSolicitudes.obtenerSolicitudPorConsecutivo);
-
+router.get('/etapas/:consecutivo',[validarJWT], httpSolicitudes.obtenerSolicitudConEtapas);
+router.get('/conetapas',[validarJWT], httpSolicitudes.obtenerTodasSolicitudesConEtapas);
+router.get('/estadoproceso/:estado',[validarJWT], httpSolicitudes.obtenerSolicitudesPorEstadoProceso);
 
 // router.post("/crear",httpSolicitudes.crearSolicitud)
 router.post("/crear", [validarJWT, upload.array('archivos')], httpSolicitudes.crearSolicitud);
 
-router.put("/editar/:consecutivo",[validarJWT],httpSolicitudes.editarSolicitud)
+// In your routes.js
+router.put("/editar/:consecutivo", [validarJWT, upload.array('archivos')], httpSolicitudes.editarSolicitud);
+// router.put("/editar/:consecutivo",[validarJWT],httpSolicitudes.editarSolicitud)
 
 router.put("/aprobar/:consecutivo",[validarJWT],httpSolicitudes.aprobarestadoSolicitud)
 router.put("/denegar/:consecutivo",[validarJWT],httpSolicitudes.denegarestadoSolicitud)

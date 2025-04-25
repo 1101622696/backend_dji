@@ -1,4 +1,6 @@
 import { google } from 'googleapis';
+import {postvueloHelper} from '../helpers/postvuelos.js';
+import {solicitudHelper} from '../helpers/solicitudes.js';
 
 const spreadsheetId = '1sJwTVoeFelYt5QE2Pk8KSYFZ8_3wRQjWr5HlDkhhrso';
 
@@ -95,7 +97,10 @@ const getPrevuelosByStatus = async (status) => {
     prevuelo["estado del prevuelo"] && prevuelo["estado del prevuelo"].toLowerCase() === status.toLowerCase()
   );
 };
-
+const getEsPrevueloPendiente = async (consecutivo) => {
+  const prevuelo = await getPrevueloByConsecutivo(consecutivo);
+  return prevuelo && prevuelo["estado del prevuelo"] && prevuelo["estado del prevuelo"].toLowerCase() === 'pendiente';
+};
 const getConsecutivosPostvuelo = async () => {
   try {
     const sheets = await getSheetsClient();
@@ -169,6 +174,81 @@ const getPrevuelosByEmailAndStatus = async (email, status) => {
   );
 };
 
+const getPrevuelosConEtapas = async () => {
+  try {
+    const prevuelos = await getPrevuelos();
+    const postvuelos = await postvueloHelper.getPostvuelos();
+    
+    return prevuelos.map(prevuelo => {
+      const consecutivoSolicitud = prevuelo.solicitudesaprobadas;
+      const postvuelo = postvuelos.find(p => p['consecutivo-solicitud'] === consecutivoSolicitud);
+      
+      const prevueloAprobado = prevuelo["estado del prevuelo"] === "Aprobado";
+      const postvueloExiste = !!postvuelo;
+      const postvueloAprobado = postvuelo ? postvuelo["estado del postvuelo"] === "Aprobado" : false;
+      
+      return {
+        ...prevuelo,
+        solicitudExiste: true,
+        solicitudAprobada: true,
+        prevueloExiste: true,
+        prevueloAprobado,
+        postvueloExiste,
+        postvueloAprobado,
+        estadoProceso: solicitudHelper.determinarEstadoProceso(
+          true, // solicitudExiste
+          true, // solicitudAprobada
+          true, // prevueloExiste
+          prevueloAprobado,
+          postvueloExiste,
+          postvueloAprobado
+        )
+      };
+    });
+  } catch (error) {
+    console.error('Error al obtener prevuelos con etapas:', error);
+    throw error;
+  }
+};
+const getPrevueloConEtapas = async (consecutivo) => {
+  try {
+    const prevuelos = await getPrevuelos();
+    const prevuelo = prevuelos.find(p => p.solicitudesaprobadas === consecutivo);
+    
+    if (!prevuelo) {
+      return null;
+    }
+    
+    const postvuelos = await postvueloHelper.getPostvuelos();
+    const postvuelo = postvuelos.find(p => p['consecutivo-solicitud'] === consecutivo);
+    
+    const prevueloAprobado = prevuelo["estado del prevuelo"] === "Aprobado";
+    const postvueloExiste = !!postvuelo;
+    const postvueloAprobado = postvuelo ? postvuelo["estado del postvuelo"] === "Aprobado" : false;
+    
+    return {
+      ...prevuelo,
+      solicitudExiste: true,
+      solicitudAprobada: true,
+      prevueloExiste: true,
+      prevueloAprobado,
+      postvueloExiste,
+      postvueloAprobado,
+      estadoProceso: solicitudHelper.determinarEstadoProceso(
+        true, // solicitudExiste
+        true, // solicitudAprobada
+        true, // prevueloExiste
+        prevueloAprobado,
+        postvueloExiste,
+        postvueloAprobado
+      )
+    };
+  } catch (error) {
+    console.error('Error al obtener prevuelo con etapas:', error);
+    throw error;
+  }
+};
+
 const editarPrevueloPorConsecutivo = async (consecutivo, nuevosDatos) => {
   const sheets = await getSheetsClient();
 
@@ -178,50 +258,54 @@ const editarPrevueloPorConsecutivo = async (consecutivo, nuevosDatos) => {
   });
 
   const filas = response.data.values;
-  const encabezado = [
-    'useremail', 
-    'consecutivo', 
-    'username', 
-    'permiso', 
-    'fecha', 
-    'ubicacion', 
-    'modelodron', 
-    'proposito', 
-    'empresa', 
-    'autorizadopor', 
-    'fechaautorizacion', 
-    "item1", 
-    "item2", 
-    "item3", 
-    "item4", 
-    "item5", 
-    "item6", 
-    "item7", 
-    "item8", 
-    "item9", 
-    "item10", 
-    "item11", 
-    "item12", 
-    "item13", 
-    "item14", 
-    "item15", 
-    "item16", 
-    "item17", 
-    "item18", 
-    "item19", 
-    "item20", 
-    "item21", 
-    "item22", 
-    "notas"
-  ];
-
-  const filaIndex = filas.findIndex(fila => fila[2]?.toLowerCase() === consecutivo.toLowerCase());
+  const filaIndex = filas.findIndex(fila => fila[0]?.toLowerCase() === consecutivo.toLowerCase());
 
   if (filaIndex === -1) {
     return null; 
   }
 
-  const filaEditada = encabezado.map((campo) => nuevosDatos[campo] ?? filas[filaIndex][encabezado.indexOf(campo)]);
+  // teer los datos actuales
+  const filaActual = filas[filaIndex];
+  
+  const filaEditada = [
+    filaActual[0], 
+    filaActual[1], 
+    filaActual[2], 
+    filaActual[3], 
+    filaActual[4], 
+    filaActual[5], 
+    filaActual[6], 
+    filaActual[7], 
+    filaActual[8], 
+    filaActual[9], 
+    filaActual[10], 
+    filaActual[11], 
+    nuevosDatos.useremail || filaActual[12],
+    nuevosDatos.useremail || filaActual[13],
+    nuevosDatos.useremail || filaActual[14],
+    nuevosDatos.useremail || filaActual[15],
+    nuevosDatos.useremail || filaActual[16],
+    nuevosDatos.useremail || filaActual[17],
+    nuevosDatos.useremail || filaActual[18],
+    nuevosDatos.useremail || filaActual[19],
+    nuevosDatos.useremail || filaActual[20],
+    nuevosDatos.useremail || filaActual[21],
+    nuevosDatos.useremail || filaActual[22],
+    nuevosDatos.useremail || filaActual[23],
+    nuevosDatos.useremail || filaActual[24],
+    nuevosDatos.useremail || filaActual[25],
+    nuevosDatos.useremail || filaActual[26],
+    nuevosDatos.useremail || filaActual[27],
+    nuevosDatos.useremail || filaActual[28],
+    nuevosDatos.useremail || filaActual[29],
+    nuevosDatos.useremail || filaActual[30],
+    nuevosDatos.useremail || filaActual[31],
+    nuevosDatos.useremail || filaActual[32],
+    nuevosDatos.useremail || filaActual[33],
+    nuevosDatos.useremail || filaActual[34],
+    filaActual[35], 
+    filaActual[36], 
+  ];
 
   const filaEnHoja = filaIndex + 2;
 
@@ -308,11 +392,14 @@ export const prevueloHelper = {
   getPrevuelos,
   guardarPrevuelo,
   getPrevuelosByStatus,
+  getEsPrevueloPendiente,
   getPrevuelosByEmail,
   getPrevuelosByEmailAndStatus,
   getPrevuelosEnProceso,
   getprevuelosEnProcesoPorEmail,
   getPrevueloByConsecutivo,
+  getPrevueloConEtapas,
+  getPrevuelosConEtapas,
   editarPrevueloPorConsecutivo,
   actualizarEstadoEnSheets
 };

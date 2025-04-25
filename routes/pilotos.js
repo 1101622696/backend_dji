@@ -16,7 +16,7 @@ router.get('/obtenerdatospiloto/:identificacion',[validarJWT], httpPilotos.obten
 // router.post("/crear",httpPilotos.crearPiloto)
 router.post("/crear", [validarJWT, upload.array('archivos')], httpPilotos.crearPiloto);
 
-router.put("/editar/:identificacion",[validarJWT],httpPilotos.editarPiloto)
+router.put("/editar/:identificacion",[validarJWT, upload.array('archivos')], httpPilotos.editarPiloto)
 
 router.put("/activar/:identificacion",[validarJWT],httpPilotos.activarPiloto)
 router.put("/desactivar/:identificacion",[validarJWT],httpPilotos.desactivarPiloto)

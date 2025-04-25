@@ -10,6 +10,7 @@ router.get("/",[validarJWT],httpPrevuelos.obtenerprevuelos)
 router.get("/pcantidad",[validarJWT],httpPrevuelos.obtenerprevuelosCantidad)
 router.get("/pendientes",[validarJWT],httpPrevuelos.obtenerPrevuelosPendientes)
 router.get("/pendientes/cantidad",[validarJWT],httpPrevuelos.obtenerPrevuelosPendientesCantidad)
+router.get("/pendientes/verificar/:consecutivo",[validarJWT],httpPrevuelos.verificarPrevueloPendiente)
 router.get("/aprobados",[validarJWT],httpPrevuelos.obtenerPrevuelosAprobadas)
 router.get("/aprobados/cantidad",[validarJWT],httpPrevuelos.obtenerPrevuelosAprobadasCantidad)
 router.get("/enproceso",[validarJWT],httpPrevuelos.obtenerPrevuelosEnProceso)
@@ -23,6 +24,9 @@ router.get("/enproceso/email/cantidad/:email",[validarJWT],httpPrevuelos.obtener
 router.get('/email/:email',[validarJWT], httpPrevuelos.obtenerPrevuelosPorEmail);
 router.get('/filtrar-completo',[validarJWT], httpPrevuelos.obtenerPrevuelosPorEmailYEstado);
 router.get('/obtenerdatosprevuelo/:consecutivo',[validarJWT], httpPrevuelos.obtenerPrevueloPorConsecutivo);
+router.get('/etapas/:consecutivo',[validarJWT], httpPrevuelos.obtenerPrevueloConEtapas);
+router.get('/conetapas',[validarJWT], httpPrevuelos.obtenerTodosPrevuelosConEtapas);
+router.get('/estadoproceso/:estado',[validarJWT], httpPrevuelos.obtenerPrevuelosPorEstado);
 
 router.post("/crear",[validarJWT],httpPrevuelos.crearPrevuelo)
 // router.post("/crear",httpPrevuelos.crearPrevuelo)
