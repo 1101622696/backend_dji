@@ -7,7 +7,7 @@ crearSolicitud: async (req, res) => {
     // console.log("Usuario token:", req.usuariobdtoken);
     
     const { email, nombre } = req.usuariobdtoken;
-    const {proposito, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, realizado  } = req.body;
+    const {tipodeoperacionaerea, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, realizado  } = req.body;
 
     const estado = req.body.estado || "Pendiente";
     const fechadeCreacion = new Date().toISOString().split('T')[0];
@@ -17,7 +17,7 @@ crearSolicitud: async (req, res) => {
       const consecutivo = await solicitudHelper.getSiguienteConsecutivo();
       Link = await solicitudHelper.procesarArchivos(req.files, consecutivo);
 
-    const resultado = await solicitudHelper.guardarSolicitud({  useremail: email, username: nombre, proposito, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username: nombre, useremail: email });
+    const resultado = await solicitudHelper.guardarSolicitud({  useremail: email, username: nombre, tipodeoperacionaerea, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username: nombre, useremail: email });
     res.status(200).json({ 
       mensaje: 'Solicitud guardada correctamente', 
       consecutivo: resultado.consecutivo, 
@@ -26,7 +26,7 @@ crearSolicitud: async (req, res) => {
     const resultado = await solicitudHelper.guardarSolicitud({ 
       useremail: email,
       username: nombre,
-      proposito, 
+      tipodeoperacionaerea, 
       fecha_inicio,
       hora_inicio, 
       fecha_fin, 
@@ -123,6 +123,16 @@ obtenerSolicitudesPendientesCantidad: async (req, res) => {
   } catch (error) {
     console.error('Error al obtener datos:', error);
     res.status(500).json({ mensaje: 'Error al obtener solicitudes pendientes' });
+  }
+},
+verificarSolicitudPendiente: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const EsPendiente = await solicitudHelper.getEssolicitudPendiente(consecutivo);
+    res.json({ EsPendiente });
+  } catch (error) {
+    console.error('Error al verificar estado de solicitud:', error);
+    res.status(500).json({ mensaje: 'Error al verificar estado de solicitud' });
   }
 },
 obtenerSolicitudesAprobadas: async (req, res) => {
@@ -317,11 +327,65 @@ obtenerSolicitudPorConsecutivo: async (req, res) => {
   }
 },
 
+obtenerSolicitudConEtapas: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const data = await solicitudHelper.getSolicitudConEtapas(consecutivo);
+    
+    if (!data) {
+      return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
+    }
+    
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener solicitud con etapas' });
+  }
+},
+
+obtenerTodasSolicitudesConEtapas: async (req, res) => {
+  try {
+    const data = await solicitudHelper.getAllSolicitudesConEtapas();
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener todas las solicitudes con etapas' });
+  }
+},
+
+obtenerSolicitudesPorEstadoProceso: async (req, res) => {
+  try {
+    const { estado } = req.params;
+    const todasSolicitudes = await solicitudHelper.getAllSolicitudesConEtapas();
+    
+    const solicitudesFiltradas = todasSolicitudes.filter(
+      solicitud => solicitud.estadoProceso === estado
+    );
+    
+    res.json(solicitudesFiltradas);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener solicitudes por estado de proceso' });
+  }
+},
+
 editarSolicitud: async (req, res) => {
   try {
     const { consecutivo } = req.params;
     const nuevosDatos = req.body;
+    const { email, nombre } = req.usuariobdtoken;
+    
+    // Procesar archivos si se han enviado
+    if (req.files && req.files.length > 0) {
+      // Procesará los archivos reutilizando la carpeta si existe
+      const Link = await solicitudHelper.procesarArchivos(req.files, consecutivo);
+      nuevosDatos.Link = Link;
+    }
 
+    // Añadir datos del usuario token si no están en los datos nuevos
+    if (!nuevosDatos.useremail) nuevosDatos.useremail = email;
+    if (!nuevosDatos.username) nuevosDatos.username = nombre;
+    
     const resultado = await solicitudHelper.editarSolicitudPorConsecutivo(consecutivo, nuevosDatos);
 
     if (!resultado) {

@@ -65,6 +65,16 @@ obtenerPrevuelosPendientesCantidad: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener prevuelos pendientes' });
   }
 },
+verificarPrevueloPendiente: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const EsPendiente = await prevueloHelper.getEsPrevueloPendiente(consecutivo);
+    res.json({ EsPendiente });
+  } catch (error) {
+    console.error('Error al verificar estado del prevuelo:', error);
+    res.status(500).json({ mensaje: 'Error al verificar estado del prevuelo' });
+  }
+},
 obtenerPrevuelosAprobadas: async (req, res) => {
   try {
     const data = await prevueloHelper.getPrevuelosByStatus('aprobado');
@@ -259,11 +269,65 @@ obtenerPrevueloPorConsecutivo: async (req, res) => {
   }
 },
 
+
+obtenerPrevueloConEtapas: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const data = await prevueloHelper.getPrevueloConEtapas(consecutivo);
+    
+    if (!data) {
+      return res.status(404).json({ mensaje: 'Prevuelo no encontrado para esta solicitud' });
+    }
+    
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener prevuelo con etapas' });
+  }
+},
+
+obtenerTodosPrevuelosConEtapas: async (req, res) => {
+  try {
+    const data = await prevueloHelper.getPrevuelosConEtapas();
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener todos los prevuelos con etapas' });
+  }
+},
+
+obtenerPrevuelosPorEstado: async (req, res) => {
+  try {
+    const { estado } = req.params;
+    const todosPrevuelos = await prevueloHelper.getPrevuelosConEtapas();
+    
+    const prevuelosFiltrados = todosPrevuelos.filter(
+      prevuelo => prevuelo.estadoProceso === estado
+    );
+    
+    res.json(prevuelosFiltrados);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener prevuelos por estado' });
+  }
+},
+
 editarPrevuelo: async (req, res) => {
   try {
     const { consecutivo } = req.params;
     const nuevosDatos = req.body;
+    const { email, nombre } = req.usuariobdtoken;
 
+    if (req.files && req.files.length > 0) {
+      // Procesará los archivos reutilizando la carpeta si existe
+      const Link = await prevueloHelper.procesarArchivos(req.files, consecutivo);
+      nuevosDatos.Link = Link;
+    }
+
+    // Añadir datos del usuario token si no están en los datos nuevos
+    if (!nuevosDatos.useremail) nuevosDatos.useremail = email;
+    if (!nuevosDatos.username) nuevosDatos.username = nombre;
+    
     const resultado = await prevueloHelper.editarPrevueloPorConsecutivo(consecutivo, nuevosDatos);
 
     if (!resultado) {

@@ -103,8 +103,14 @@ const httpPilotos = {
       const { identificacion } = req.params;
       const nuevosDatos = req.body;
   
-      const resultado = await pilotoHelper.editarPilotoporIdentificacion(identificacion, nuevosDatos);
-  
+    if (req.files && req.files.length > 0) {
+      // Procesará los archivos reutilizando la carpeta si existe
+      const Link = await pilotoHelper.procesarArchivos(req.files, identificacion);
+      nuevosDatos.Link = Link;
+    }
+
+    const resultado = await pilotoHelper.editarPilotoporIdentificacion(identificacion, nuevosDatos);
+
       if (!resultado) {
         return res.status(404).json({ mensaje: 'Piloto no encontrado' });
       }
