@@ -7,13 +7,15 @@ const router=Router()
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-// router.get("/",[validarJWT],httpPilotos.obtenerPilotos)
-// router.get("/",httpPilotos.listarPilotos)
+
 router.get("/",[validarJWT],httpPilotos.obtenerPilotos)
 router.get("/activos",[validarJWT],httpPilotos.obtenerPilotosActivos)
+router.get("/inactivos",[validarJWT],httpPilotos.obtenerPilotosInactivos)
 router.get('/obtenerdatospiloto/:identificacion',[validarJWT], httpPilotos.obtenerPilotoporIdentificacion);
 
-// router.post("/crear",httpPilotos.crearPiloto)
+router.get("/ordenados", [validarJWT], httpPilotos.obtenerPilotosOrdenados);
+router.get("/filtrados", [validarJWT], httpPilotos.obtenerPilotosFiltrados);
+
 router.post("/crear", [validarJWT, upload.array('archivos')], httpPilotos.crearPiloto);
 
 router.put("/editar/:identificacion",[validarJWT, upload.array('archivos')], httpPilotos.editarPiloto)

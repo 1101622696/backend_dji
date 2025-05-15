@@ -7,25 +7,30 @@ crearSolicitud: async (req, res) => {
     // console.log("Usuario token:", req.usuariobdtoken);
     
     const { email, nombre } = req.usuariobdtoken;
-    const {tipodeoperacionaerea, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, realizado  } = req.body;
+    const {tipodeoperacionaerea, fecha_inicio, hora_inicio, pilotoarealizarvuelo, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, realizado  } = req.body;
 
     const estado = req.body.estado || "Pendiente";
     const fechadeCreacion = new Date().toISOString().split('T')[0];
     
+    const includeUserDetails = pilotoarealizarvuelo === 'Si';
+
+    const userEmailFirst = includeUserDetails ? email : null;
+    const usernameFirst = includeUserDetails ? nombre : null;
+   
     let Link = null;
     if (req.files && req.files.length > 0) {
       const consecutivo = await solicitudHelper.getSiguienteConsecutivo();
       Link = await solicitudHelper.procesarArchivos(req.files, consecutivo);
 
-    const resultado = await solicitudHelper.guardarSolicitud({  useremail: email, username: nombre, tipodeoperacionaerea, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username: nombre, useremail: email });
+    const resultado = await solicitudHelper.guardarSolicitud({  useremail: userEmailFirst, username: usernameFirst, tipodeoperacionaerea, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final: nombre, useremail_final: email });
     res.status(200).json({ 
       mensaje: 'Solicitud guardada correctamente', 
       consecutivo: resultado.consecutivo, 
     });
   } else {
     const resultado = await solicitudHelper.guardarSolicitud({ 
-      useremail: email,
-      username: nombre,
+      useremail: userEmailFirst,
+      username: usernameFirst,
       tipodeoperacionaerea, 
       fecha_inicio,
       hora_inicio, 
@@ -71,7 +76,9 @@ crearSolicitud: async (req, res) => {
       Link: null,
       estado,
       fechadeCreacion,
-      realizado
+      realizado,
+      username_final: nombre, 
+      useremail_final: email 
     });
     
     res.status(200).json({ 
@@ -103,6 +110,16 @@ obtenerSolicitudesCantidad: async (req, res) => {
   } catch (error) {
     console.error('Error al obtener datos:', error);
     res.status(500).json({ mensaje: 'Error al obtener solicitudes' });
+  }
+},
+obtenerSolicitudesPorCliente: async (req, res) => {
+  try {
+    const { cliente } = req.params;
+    const data = await solicitudHelper.getSolicitudesByCliente(cliente);
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener solicitudes por cliente' });
   }
 },
 obtenerSolicitudesPendientes: async (req, res) => {
@@ -156,6 +173,16 @@ obtenerSolicitudesAprobadasCantidad: async (req, res) => {
   }
 },
 
+obtenerSolicitudesCanceladas: async (req, res) => {
+  try {
+    const data = await solicitudHelper.getSolicitudesByStatus('Cancelado');
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener solicitudes canceladas' });
+  }
+},
+
 obtenerSolicitudesPorEmail: async (req, res) => {
   try {
     const { email } = req.params; // Obtiene el email desde los parámetros de la URL
@@ -171,6 +198,23 @@ obtenerSolicitudesPorEmail: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener solicitudes por email' });
   }
 },
+
+obtenerSolicitudesPorUltimoEmail: async (req, res) => {
+  try {
+    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await solicitudHelper.getSolicitudesByLastEmail(email);
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener solicitudes por email' });
+  }
+},
+
 obtenerSolicitudesPorEmailYEstado: async (req, res) => {
   try {
     const { email, estado } = req.query;
@@ -293,6 +337,23 @@ obtenerSolicitudesEnProcesoPorEmail: async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener solicitudes en proceso por email' });
   }
 },
+
+obtenerSolicitudesCanceladasPorEmail: async (req, res) => {
+  try {
+    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es requerido' });
+    }
+    
+    const data = await solicitudHelper.getSolicitudesByEmailAndStatus(email, 'Cancelado');
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener solicitudes canceladas por email:', error);
+    res.status(500).json({ mensaje: 'Error al obtener solicitudes canceladas por email' });
+  }
+},
+
 obtenerSolicitudesEnProcesoPorEmailCantidad: async (req, res) => {
   try {
     const { email } = req.params; 
@@ -353,6 +414,23 @@ obtenerTodasSolicitudesConEtapas: async (req, res) => {
   }
 },
 
+obtenerTodasSolicitudesConEtapasEmail: async (req, res) => {
+  try {
+    // Obtener el email del parámetro de la URL o del cuerpo de la solicitud
+    const email = req.params.email || req.query.email || req.body.email;
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'Email no proporcionado' });
+    }
+    
+    const data = await solicitudHelper.getAllSolicitudesConEtapasEmail(email);
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener todas las solicitudes con etapas email' });
+  }
+},
+
 obtenerSolicitudesPorEstadoProceso: async (req, res) => {
   try {
     const { estado } = req.params;
@@ -402,11 +480,49 @@ editarSolicitud: async (req, res) => {
 aprobarestadoSolicitud: async (req, res) => {
   try {
     const { consecutivo } = req.params;
-    const { estado } = req.body; // Opcional, puedes obtener el estado del body o usar "aprobado" por defecto
+    const { estado = "Aprobado", numeroserie, piloto, notas } = req.body;
     
-    const resultado = await solicitudHelper.putSolicitudByStatus(consecutivo, estado || "Aprobado");
+    await solicitudHelper.putSolicitudByStatus(consecutivo, estado);
+    
+    const resultado = await solicitudHelper.generarValidacionPrevuelo(
+      consecutivo,
+      numeroserie,
+      piloto,
+      notas
+    );
 
-    res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
+    res.status(200).json({ 
+      mensaje: 'Solicitud aprobada correctamente',
+      codigo: resultado.codigo,
+      fechaValidacion: resultado.fechaValidacion
+    });
+  } catch (error) {
+    console.error('Error al aprobar solicitud:', error);
+    res.status(500).json({ 
+      mensaje: 'Error al aprobar solicitud', 
+      error: error.message 
+    });
+  }
+},
+
+denegarestadoSolicitud: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const { estado = "Denegado", numeroserie, piloto, notas  } = req.body; 
+    
+     await solicitudHelper.putSolicitudByStatus(consecutivo, estado || "Denegado");
+
+     const resultado = await solicitudHelper.generarValidacionPrevuelo(
+      consecutivo,
+      numeroserie,
+      piloto,
+      notas
+     )
+
+    res.status(200).json({ 
+      mensaje: 'Estado actualizado correctamente',
+      codigo: resultado.codigo,
+    });
   } catch (error) {
     console.error('Error al editar estado de solicitud:', error);
     res.status(500).json({ 
@@ -416,18 +532,24 @@ aprobarestadoSolicitud: async (req, res) => {
   }
 },
 
-denegarestadoSolicitud: async (req, res) => {
+cancelarEstadoSolicitud: async (req, res) => {
   try {
     const { consecutivo } = req.params;
-    const { estado } = req.body; // Opcional, puedes obtener el estado del body o usar "aprobado" por defecto
+    const { notas } = req.body; 
     
-    const resultado = await solicitudHelper.putSolicitudByStatus(consecutivo, estado || "Denegado");
+    await solicitudHelper.putSolicitudByStatus(consecutivo, "Cancelado");
 
-    res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
+    const resultado = await solicitudHelper.generarCancelacionPrevuelo(consecutivo, notas);
+
+    res.status(200).json({ 
+      mensaje: 'Solicitud cancelada correctamente', 
+      codigo: resultado.codigo,
+      fechaValidacion: resultado.fechaValidacion
+    });
   } catch (error) {
-    console.error('Error al editar estado de solicitud:', error);
+    console.error('Error al cancelar solicitud:', error);
     res.status(500).json({ 
-      mensaje: 'Error al actualizar estado', 
+      mensaje: 'Error al cancelar la solicitud', 
       error: error.message 
     });
   }
