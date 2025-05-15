@@ -105,6 +105,53 @@ const getPilotoById = async (identificacion) => {
   );
 };
 
+const filtrarPilotosPorCampoTexto = (drones, campo, valor) => {
+  return drones.filter(dron => 
+    dron[campo] && dron[campo].toLowerCase() === valor.toLowerCase()
+  );
+};
+
+const getPilotosPorEstado = async (valor) => {
+  const pilotos = await getPilotos();
+  return filtrarPilotosPorCampoTexto(pilotos, "estado piloto", valor);
+};
+
+const ordenarPilotosPorCampoNumerico = (pilotos, campo, orden = 'desc') => {
+  return pilotos.sort((a, b) => {
+    const valorA = parseFloat(a[campo]) || 0;
+    const valorB = parseFloat(b[campo]) || 0;
+    
+    return orden.toLowerCase() === 'desc' ? valorB - valorA : valorA - valorB;
+  });
+};
+
+const getPilotoOrdenadosPorFechaPoliza = async (orden = 'desc') => {
+  const pilotos = await getPilotos();
+  
+  return pilotos.sort((a, b) => {
+    const fechaA = new Date(a["fecha examen"] || 0);
+    const fechaB = new Date(b["fecha examen"] || 0);
+    
+    return orden.toLowerCase() === 'desc' ? fechaB - fechaA : fechaA - fechaB;
+  });
+};
+
+const getPilotoOrdenadosPorTiempo = async (orden = 'desc') => {
+  const pilotos = await getPilotos();
+  return ordenarPilotosPorCampoNumerico(pilotos, "tiempo acumulado", orden);
+};
+
+const getPilotoOrdenadosPorDistancia = async (orden = 'desc') => {
+  const pilotos = await getPilotos();
+  return ordenarPilotosPorCampoNumerico(pilotos, "distancia acumulada", orden);
+};
+
+const getPilotoOrdenadosPorVuelos = async (orden = 'desc') => {
+  const pilotos = await getPilotos();
+  return ordenarPilotosPorCampoNumerico(pilotos, "vuelos realizados", orden);
+};
+
+
 const editarPilotoporIdentificacion = async (identificacion, nuevosDatos) => {
   const sheets = await getSheetsClient();
 
@@ -114,7 +161,7 @@ const editarPilotoporIdentificacion = async (identificacion, nuevosDatos) => {
   });
 
   const filas = response.data.values;
-  const filaIndex = filas.findIndex(fila => fila[0]?.toLowerCase() === identificacion.toLowerCase());
+  const filaIndex = filas.findIndex(fila => fila[5]?.toLowerCase() === identificacion.toLowerCase());
 
   if (filaIndex === -1) {
     return null; 
@@ -224,7 +271,7 @@ const procesarArchivos = async (archivos, identificacion) => {
   const carpetaPadreId = '1Ys_okDNkr4RalNdDFLGW4jlNTmsEPAjS';
   
   // Crear una carpeta con la identificacion
-  const carpeta = await buscarCarpetaPorNombre(identificacion, carpetaPadreId);
+  let carpeta = await buscarCarpetaPorNombre(identificacion, carpetaPadreId);
   
     // Si no existe, crearla
     if (!carpeta) {
@@ -354,6 +401,11 @@ export const pilotoHelper = {
   guardarPiloto,
   getPilotoByStatus,
   getPilotoById,
+  getPilotosPorEstado,
+  getPilotoOrdenadosPorDistancia,
+  getPilotoOrdenadosPorTiempo,
+  getPilotoOrdenadosPorVuelos,
+  getPilotoOrdenadosPorFechaPoliza,
   editarPilotoporIdentificacion,
   getSiguienteCodigo,
   procesarArchivos,

@@ -11,7 +11,7 @@ crearPrevuelo: async (req, res) => {
     const estado = req.body.estado || "Pendiente";
     const fechadeCreacion = new Date().toISOString().split('T')[0];
 
-    const resultado = await prevueloHelper.guardarPrevuelo({  useremail: email, consecutivo, username: nombre, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item13, item14, item15, item16, item17, item18, item19, item20, item21, item22, notas, estado, fechadeCreacion });
+    const resultado = await prevueloHelper.guardarPrevuelo({  useremail: email, username: nombre, consecutivo, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item13, item14, item15, item16, item17, item18, item19, item20, item21, item22, notas, estado, fechadeCreacion });
 
     res.status(200).json({
       mensaje: 'prevuelo guardado correctamente',
@@ -296,6 +296,22 @@ obtenerTodosPrevuelosConEtapas: async (req, res) => {
   }
 },
 
+obtenerTodosPrevuelosConEtapasEmail: async (req, res) => {
+  try {
+    const email = req.params.email || req.query.email || req.body.email;
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'Email no proporcionado' });
+    }
+    
+    const data = await prevueloHelper.getPrevuelosConEtapasEmail(email);
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener todas los prevuelos con etapas email' });
+  }
+},
+
 obtenerPrevuelosPorEstado: async (req, res) => {
   try {
     const { estado } = req.params;
@@ -344,11 +360,22 @@ editarPrevuelo: async (req, res) => {
 aprobarestadoPrevuelo: async (req, res) => {
   try {
     const { consecutivo } = req.params;
-    const { estado } = req.body; // Opcional, puedes obtener el estado del body o usar "aprobado" por defecto
+    const { estado = "Aprobado", piloto, permiso, notas  } = req.body; 
     
-    const resultado = await prevueloHelper.actualizarEstadoEnSheets(consecutivo, estado || "Aprobado");
+    await prevueloHelper.actualizarEstadoEnSheets(consecutivo, estado || "Aprobado");
 
-    res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
+    const resultado = await prevueloHelper.generarValidarPrevuelo(
+    consecutivo,
+     piloto,
+     permiso,
+     notas
+    );
+
+    res.status(200).json({ 
+      mensaje: 'Estado actualizado correctamente',
+      codigo: resultado.codigo,
+      fechaValidacion: resultado.fechaValidacion
+    });
   } catch (error) {
     console.error('Error al editar estado de Prevuelo:', error);
     res.status(500).json({ 
@@ -361,9 +388,16 @@ aprobarestadoPrevuelo: async (req, res) => {
 denegarestadoPrevuelo: async (req, res) => {
   try {
     const { consecutivo } = req.params;
-    const { estado } = req.body; // Opcional, puedes obtener el estado del body o usar "aprobado" por defecto
+    const { estado = "Denegado", piloto, permiso, notas } = req.body; 
     
-    const resultado = await prevueloHelper.actualizarEstadoEnSheets(consecutivo, estado || "Denegado");
+ await prevueloHelper.actualizarEstadoEnSheets(consecutivo, estado || "Denegado");
+   
+ const resultado = await prevueloHelper.generarValidarPrevuelo(
+  consecutivo,
+  piloto,
+  permiso,
+  notas
+ )
 
     res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
   } catch (error) {

@@ -31,7 +31,6 @@ const getAuth = () => {
   }
 };
 
-// Cliente Sheets
 const getSheetsClient = async () => {
   const authClient = getAuth();
   const client = await authClient.getClient();
@@ -42,7 +41,7 @@ const getDriveClient = async () => {
   const client = await authClient.getClient();
   return google.drive({ version: 'v3', auth: client });
 };
-// Obtener datos 
+
 const obtenerDatosPostvuelo = async (nombreHoja, rango = 'A1:S1000') => {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
@@ -59,7 +58,18 @@ const obtenerDatosPostvuelo = async (nombreHoja, rango = 'A1:S1000') => {
   );
 };
 
-const getPostvuelos = () => obtenerDatosPostvuelo('PostVuelo');
+// const getPostvuelos = () => obtenerDatosPostvuelo('PostVuelo');
+
+const getPostvuelos = async () => {
+  const postvuelos = await obtenerDatosPostvuelo('PostVuelo');
+  
+  return postvuelos.sort((a, b) => {
+    const numA = parseInt(a["consecutivo-solicitud"].replace(/\D/g, ''), 10);
+    const numB = parseInt(b["consecutivo-solicitud"].replace(/\D/g, ''), 10);
+    
+    return numB - numA;
+  });
+};
 
 const getSiguienteConsecutivo = async () => {
   const postvuelos = await getPostvuelos();
@@ -77,10 +87,73 @@ const getSiguienteConsecutivo = async () => {
   return `PV-${siguiente}`;
 };
 
-const guardarPostvuelo = async ({ consecutivo, username, dronusado, fechaInicio, horaInicio, horaFin, duracion, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail, estado, proposito, empresa }) => {
+const obtenerDatosPrevuelo = async (consecutivo) => {
   const sheets = await getSheetsClient();
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: 'Prevuelo!A:L',
+  });
+
+  const rows = response.data.values || [];
+  if (rows.length <= 1) return null;
+  
+  const headers = rows[0];
+  
+  const consecutivoIndex = headers.findIndex(h => h === 'solicitudesAprobadas');
+  const empresaIndex = headers.findIndex(h => h === 'autorizacion');
+  const tipoOperacionIndex = headers.findIndex(h => h === 'proposito');
+  const fechaIndex = headers.findIndex(h => h === 'fecha');
+  const dronIndex = headers.findIndex(h => h === 'modelo-dron');
+  
+  const PrevueloRow = rows.find(row => 
+    row[consecutivoIndex] && row[consecutivoIndex].toString() === consecutivo.toString()
+  );
+  
+  if (!PrevueloRow) return null;
+  
+  return {
+    consecutivo: PrevueloRow[consecutivoIndex],
+    empresa: PrevueloRow[empresaIndex],
+    proposito: PrevueloRow[tipoOperacionIndex],
+    fecha: PrevueloRow[fechaIndex],
+    dron: PrevueloRow[dronIndex]
+  };
+};
+
+const calcularDuracion = (horaInicio, horaFin) => {
+  const [horaInicioHoras, horaInicioMinutos] = horaInicio.split(':').map(Number);
+  const [horaFinHoras, horaFinMinutos] = horaFin.split(':').map(Number);
+  
+  let minutosInicio = horaInicioHoras * 60 + horaInicioMinutos;
+  let minutosFin = horaFinHoras * 60 + horaFinMinutos;
+  
+  if (minutosFin < minutosInicio) {
+    minutosFin += 24 * 60; 
+  }
+  
+  return minutosFin - minutosInicio;
+  
+};
+
+const guardarPostvuelo = async ({ consecutivo, username, horaInicio, horaFin, duracion, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail, estado }) => {
+  const sheets = await getSheetsClient();
+  
+  const datosPrevuelo = await obtenerDatosPrevuelo(consecutivo);
+
+  if (!datosPrevuelo) {
+    throw new Error(`No se encontró la solicitud con consecutivo ${consecutivo}`);
+  }
+  
   const idPostvuelo = await getSiguienteConsecutivo();
-  const nuevaFila = [idPostvuelo, consecutivo, username, dronusado, fechaInicio, horaInicio, horaFin, duracion, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail, estado, proposito, empresa];
+  
+  const fecha = datosPrevuelo.fecha;
+  const proposito = datosPrevuelo.proposito;
+  const empresa = datosPrevuelo.empresa;
+  const dronusado = datosPrevuelo.dron;
+  
+  const duracionFinal = duracion || calcularDuracion(horaInicio, horaFin);
+
+  const nuevaFila = [idPostvuelo, consecutivo, username, dronusado, fecha, horaInicio, horaFin, duracionFinal, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail, estado, proposito, empresa];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
@@ -92,6 +165,7 @@ const guardarPostvuelo = async ({ consecutivo, username, dronusado, fechaInicio,
 
   return { idPostvuelo };
 };
+
 
   const getPostvuelosByStatus = async (status) => {
     const postvuelos = await getPostvuelos();
@@ -149,6 +223,21 @@ const getPostvuelosConEtapas = async () => {
   }
 };
 
+const getPostvuelosConEtapasEmail = async (email) => {
+  try {
+    const postvuelosconetapasemail = await getPostvuelosConEtapas();
+ 
+        // Filtrar por el email del usuario
+        return postvuelosconetapasemail.filter(prevuelo => 
+          prevuelo["correo de usuario"] && prevuelo["correo de usuario"].toLowerCase() === email.toLowerCase()
+        );
+      } catch (error) {
+        console.error('Error al obtener postvuelos con etapas por email:', error);
+        throw error;
+      }
+
+};
+
 const getPostvueloConEtapas = async (consecutivo) => {
   try {
     const postvuelos = await getPostvuelos();
@@ -185,7 +274,7 @@ const getPostvueloConEtapas = async (consecutivo) => {
     });
   
     const filas = response.data.values;
-    const filaIndex = filas.findIndex(fila => fila[0]?.toLowerCase() === consecutivo.toLowerCase());
+    const filaIndex = filas.findIndex(fila => fila[1]?.toLowerCase() === consecutivo.toLowerCase());
   
     if (filaIndex === -1) {
       return null; 
@@ -283,7 +372,7 @@ const procesarArchivos = async (archivos, consecutivo) => {
   const carpetaPadreId = '1-P0Y8rdlvgZaEsnPVN4hzf42pWhH1WY1';
   
   // Crear una carpeta con el nombre del consecutivo
-  const carpeta = await buscarCarpetaPorNombre(consecutivo, carpetaPadreId);
+  let carpeta = await buscarCarpetaPorNombre(consecutivo, carpetaPadreId);
   
   // Buscar si ya existe una carpeta con el nombre del consecutivo
   if (!carpeta) {
@@ -408,8 +497,339 @@ const buscarCarpetaPorNombre = async (nombreCarpeta, parentFolderId) => {
   return response.data.files.length > 0 ? response.data.files[0] : null;
 };
 
+
+const generarValidacionPostvuelo = async (consecutivo, piloto, numeroserie, notas = '') => {
+  try {
+    const sheets = await getSheetsClient();
+    
+    // Obtener datos de la hoja PostVuelo
+    const postvueloResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'PostVuelo',
+    });
+    
+    const rowsPostvuelo = postvueloResponse.data.values;
+    if (!rowsPostvuelo || rowsPostvuelo.length === 0) {
+      throw new Error('No se encontraron datos en la hoja Postvuelo');
+    }
+    
+    // Buscar la solicitud por consecutivo
+    const headersPostvuelo = rowsPostvuelo[0];
+    const consecutivoIndex = headersPostvuelo.findIndex(header => 
+      header.toLowerCase() === 'consecutivo-solicitud');
+    
+    const PilotoIndex = headersPostvuelo.findIndex(header => 
+      header.toLowerCase() === 'piloto-postvuelo');
+    const duracionIndex = headersPostvuelo.findIndex(header => 
+      header.toLowerCase() === 'duración') || 7;  // Columna H (índice 7)
+    const distanciaIndex = headersPostvuelo.findIndex(header => 
+      header.toLowerCase() === 'distancia recorrida') || 8; // Columna I (índice 8)
+    const correoPilotoIndex = headersPostvuelo.findIndex(header => 
+      header.toLowerCase() === 'correo de usuario');
+    const dronUsadoIndex = headersPostvuelo.findIndex(header => 
+      header.toLowerCase() === 'dron-usado');
+      
+    if (consecutivoIndex === -1) {
+      throw new Error('No se encontró la columna consecutivo');
+    }
+    
+    // Buscar el registro de postvuelo por consecutivo
+    let rowPostvuelo = null;
+    for (let i = 1; i < rowsPostvuelo.length; i++) {
+      if (rowsPostvuelo[i][consecutivoIndex] && 
+          rowsPostvuelo[i][consecutivoIndex].toLowerCase() === consecutivo.toLowerCase()) {
+        rowPostvuelo = rowsPostvuelo[i];
+        break;
+      }
+    }
+    
+    if (!rowPostvuelo) {
+      throw new Error(`No se encontró el consecutivo ${consecutivo}`);
+    }
+    
+    // Obtener valores de duración, distancia, correo del piloto y dron usado
+    const duracion = rowPostvuelo[duracionIndex] ? parseFloat(rowPostvuelo[duracionIndex]) || 0 : 0;
+    const distancia = rowPostvuelo[distanciaIndex] ? parseFloat(rowPostvuelo[distanciaIndex]) || 0 : 0;
+    const emailPiloto = correoPilotoIndex !== -1 ? rowPostvuelo[correoPilotoIndex] : '';
+    const dronUsado = dronUsadoIndex !== -1 ? rowPostvuelo[dronUsadoIndex] : '';
+    
+    // Verificar que se obtuvieron correctamente los valores necesarios
+    if (!emailPiloto) {
+      console.warn('No se encontró el correo del piloto en el registro de PostVuelo');
+    }
+    
+    if (!dronUsado) {
+      console.warn('No se encontró el dron usado en el registro de PostVuelo');
+    }
+   
+    // Actualizar estadísticas del piloto
+    const pilotosResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: '3.Pilotos',
+    });
+    
+    const pilotosRows = pilotosResponse.data.values || [];
+    if (pilotosRows.length > 1) {
+      // Buscar piloto por email en la columna U (índice 20)
+      const emailIndex = 20; // Columna U (índice 20)
+      const tiempoAcumuladoCol = 'Y'; // Columna Y
+      const distanciaAcumuladaCol = 'Z'; // Columna Z
+      const vuelosRealizadosCol = 'AA'; // Columna AA
+      
+      let pilotoRowIndex = -1;
+      for (let i = 1; i < pilotosRows.length; i++) {
+        if (pilotosRows[i][emailIndex] && 
+            pilotosRows[i][emailIndex].toLowerCase() === emailPiloto.toLowerCase()) {
+          pilotoRowIndex = i;
+          break;
+        }
+      }
+      
+      if (pilotoRowIndex !== -1) {
+        // Obtener valores actuales
+        const tiempoActualResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range: `3.Pilotos!${tiempoAcumuladoCol}${pilotoRowIndex + 1}`,
+        });
+        
+        const distanciaActualResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range: `3.Pilotos!${distanciaAcumuladaCol}${pilotoRowIndex + 1}`,
+        });
+        
+        const vuelosActualResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range: `3.Pilotos!${vuelosRealizadosCol}${pilotoRowIndex + 1}`,
+        });
+        
+        // Extraer valores numéricos actuales
+        const tiempoActual = tiempoActualResponse.data.values?.[0]?.[0] 
+          ? parseFloat(tiempoActualResponse.data.values[0][0]) || 0 
+          : 0;
+          
+        const distanciaActual = distanciaActualResponse.data.values?.[0]?.[0] 
+          ? parseFloat(distanciaActualResponse.data.values[0][0]) || 0 
+          : 0;
+          
+        const vuelosActual = vuelosActualResponse.data.values?.[0]?.[0] 
+          ? parseInt(vuelosActualResponse.data.values[0][0], 10) || 0 
+          : 0;
+        
+        // Calcular nuevos valores
+        const nuevoTiempo = tiempoActual + duracion;
+        const nuevaDistancia = distanciaActual + distancia;
+        const nuevosVuelos = vuelosActual + 1;
+        
+        // Actualizar tiempo acumulado
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `3.Pilotos!${tiempoAcumuladoCol}${pilotoRowIndex + 1}`,
+          valueInputOption: 'RAW',
+          resource: {
+            values: [[nuevoTiempo]]
+          }
+        });
+        
+        // Actualizar distancia acumulada
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `3.Pilotos!${distanciaAcumuladaCol}${pilotoRowIndex + 1}`,
+          valueInputOption: 'RAW',
+          resource: {
+            values: [[nuevaDistancia]]
+          }
+        });
+        
+        // Actualizar vuelos realizados
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `3.Pilotos!${vuelosRealizadosCol}${pilotoRowIndex + 1}`,
+          valueInputOption: 'RAW',
+          resource: {
+            values: [[nuevosVuelos]]
+          }
+        });
+        
+        // console.log(`Estadísticas del piloto con email ${emailPiloto} actualizadas correctamente`);
+      } else {
+        console.warn(`No se encontró un piloto con el email: ${emailPiloto}`);
+      }
+    } else {
+      console.warn('No hay datos de pilotos disponibles');
+    }
+    
+    // Actualizar estadísticas del dron
+    const dronesResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: '3.Drones',
+    });
+    
+    const droneRows = dronesResponse.data.values || [];
+    if (droneRows.length > 1) {
+      // Buscar el dron por número de serie en la columna B (índice 1)
+      const numeroSerieIndex = 1; // Columna B (índice 1)
+      const tiempoAcumuladoCol = 'Q'; // Columna Q
+      const distanciaAcumuladaCol = 'R'; // Columna R
+      const vuelosRealizadosCol = 'S'; // Columna S
+      const disponibilidadCol = 'V'; // Columna V para disponibilidad
+      
+      let droneRowIndex = -1;
+      for (let i = 1; i < droneRows.length; i++) {
+        if (droneRows[i][numeroSerieIndex] && 
+            droneRows[i][numeroSerieIndex].toLowerCase() === dronUsado.toLowerCase()) {
+          droneRowIndex = i;
+          break;
+        }
+      }
+      
+      if (droneRowIndex !== -1) {
+        // Obtener valores actuales
+        const tiempoActualResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range: `3.Drones!${tiempoAcumuladoCol}${droneRowIndex + 1}`,
+        });
+        
+        const distanciaActualResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range: `3.Drones!${distanciaAcumuladaCol}${droneRowIndex + 1}`,
+        });
+        
+        const vuelosActualResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range: `3.Drones!${vuelosRealizadosCol}${droneRowIndex + 1}`,
+        });
+        
+        // Extraer valores numéricos actuales
+        const tiempoActual = tiempoActualResponse.data.values?.[0]?.[0] 
+          ? parseFloat(tiempoActualResponse.data.values[0][0]) || 0 
+          : 0;
+          
+        const distanciaActual = distanciaActualResponse.data.values?.[0]?.[0] 
+          ? parseFloat(distanciaActualResponse.data.values[0][0]) || 0 
+          : 0;
+          
+        const vuelosActual = vuelosActualResponse.data.values?.[0]?.[0] 
+          ? parseInt(vuelosActualResponse.data.values[0][0], 10) || 0 
+          : 0;
+        
+        // Calcular nuevos valores
+        const nuevoTiempo = tiempoActual + duracion;
+        const nuevaDistancia = distanciaActual + distancia;
+        const nuevosVuelos = vuelosActual + 1;
+        
+        // Actualizar tiempo acumulado
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `3.Drones!${tiempoAcumuladoCol}${droneRowIndex + 1}`,
+          valueInputOption: 'RAW',
+          resource: {
+            values: [[nuevoTiempo]]
+          }
+        });
+        
+        // Actualizar distancia acumulada
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `3.Drones!${distanciaAcumuladaCol}${droneRowIndex + 1}`,
+          valueInputOption: 'RAW',
+          resource: {
+            values: [[nuevaDistancia]]
+          }
+        });
+        
+        // Actualizar vuelos realizados
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `3.Drones!${vuelosRealizadosCol}${droneRowIndex + 1}`,
+          valueInputOption: 'RAW',
+          resource: {
+            values: [[nuevosVuelos]]
+          }
+        });
+        
+        // Actualizar disponibilidad a "No"
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `3.Drones!${disponibilidadCol}${droneRowIndex + 1}`,
+          valueInputOption: 'RAW',
+          resource: {
+            values: [["No"]]
+          }
+        });
+        
+        // console.log(`Estadísticas del dron ${dronUsado} actualizadas correctamente`);
+      } else {
+        console.warn(`No se encontró un dron con el número de serie: ${dronUsado}`);
+      }
+    } else {
+      console.warn('No hay datos de drones disponibles');
+    }
+    
+    // Obtener el último código consecutivo de la hoja 4.ValidarPostvuelo
+    const validacionResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: '4.ValidarPostvuelo',
+    });
+    
+    const rowsValidacion = validacionResponse.data.values || [];
+    
+    // Generar nuevo código consecutivo (APO-X)
+    let ultimoNumero = 0;
+    if (rowsValidacion.length > 1) {  
+      const codigoColumna = 0;
+      
+      for (let i = 1; i < rowsValidacion.length; i++) {
+        if (rowsValidacion[i] && rowsValidacion[i][codigoColumna]) {
+          const codigo = rowsValidacion[i][codigoColumna];
+          const match = codigo.match(/APO-(\d+)/);
+          if (match && match[1]) {
+            const num = parseInt(match[1], 10);
+            if (num > ultimoNumero) {
+              ultimoNumero = num;
+            }
+          }
+        }
+      }
+    }
+    
+    const nuevoCodigo = `APO-${ultimoNumero + 1}`;
+    const fechaActual = new Date().toLocaleDateString('es-ES');
+
+    // Utilizamos los valores obtenidos de la hoja PostVuelo para el registro
+    const nuevoRegistro = [
+      nuevoCodigo,              // Código consecutivo
+      consecutivo,              // ID del registro de SolicitudVuelo
+      "Aprobado",               // Estado
+      PilotoIndex,              // Email del piloto 
+      dronUsado,                // Dron usado
+      fechaActual,              // Fecha actual
+      notas,                    // Notas
+    ];
+    
+    // Anexar el nuevo registro a la hoja 4.ValidarPostvuelo
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: '4.ValidarPostvuelo',
+      valueInputOption: 'USER_ENTERED',
+      insertDataOption: 'INSERT_ROWS',
+      resource: {
+        values: [nuevoRegistro]
+      }
+    });
+    
+    return {
+      codigo: nuevoCodigo,
+      fechaValidacion: fechaActual
+    };
+  } catch (error) {
+    console.error('Error al generar validar postvuelo:', error);
+    throw error;
+  }
+};
+
 export const postvueloHelper = {
   getPostvuelos,
+  calcularDuracion,
   guardarPostvuelo,
   getPostvuelosByStatus,
   getEsPostvueloPendiente,
@@ -417,12 +837,15 @@ export const postvueloHelper = {
   getPostvuelosByEmailAndStatus,
   getPostvueloByConsecutivo,
   getPostvuelosConEtapas,
+  getPostvuelosConEtapasEmail,
   getPostvueloConEtapas,
   editarPostvueloPorConsecutivo,
   procesarArchivos,
   getSiguienteConsecutivo,
   actualizarEstadoEnSheets,
   buscarCarpetaPorNombre,
-  subirArchivosACarpetaExistente
+  subirArchivosACarpetaExistente,
+  generarValidacionPostvuelo,
+  getSiguienteConsecutivo
 
 };

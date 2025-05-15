@@ -63,7 +63,18 @@ const obtenerDatosSolicitud = async (nombreHoja, rango = 'A1:AY1000') => {
   );
 };
 
-const getSolicitudesVuelo = () => obtenerDatosSolicitud('SolicitudVuelo');
+// const getSolicitudesVuelo = () => obtenerDatosSolicitud('SolicitudVuelo');
+
+const getSolicitudesVuelo = async () => {
+  const solicitudes = await obtenerDatosSolicitud('SolicitudVuelo');
+  
+  return solicitudes.sort((a, b) => {
+    const numA = parseInt(a.consecutivo.replace(/\D/g, ''), 10);
+    const numB = parseInt(b.consecutivo.replace(/\D/g, ''), 10);
+    
+    return numB - numA;
+  });
+};
 
 const getSiguienteConsecutivo = async () => {
   const solicitudes = await getSolicitudesVuelo();
@@ -81,10 +92,11 @@ const getSiguienteConsecutivo = async () => {
   return `SAV-${siguiente}`;
 };
 
-const guardarSolicitud = async ({ useremail, username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado }) => {
+const guardarSolicitud = async ({ useremail, username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final, useremail_final }) => {
   const sheets = await getSheetsClient();
   const consecutivo = await getSiguienteConsecutivo();
-  const nuevaFila = [consecutivo, useremail, username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username, useremail];
+ 
+  const nuevaFila = [consecutivo, useremail === null ? '' : useremail, username === null ? '' : username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final, useremail_final];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
@@ -109,6 +121,14 @@ const getSolicitudesByStatus = async (status) => {
     solicitud.estado && solicitud.estado.toLowerCase() === status.toLowerCase()
   );
 };
+
+const getSolicitudesByCliente = async (cliente) => {
+  const solicitudes = await getSolicitudesVuelo();
+  return solicitudes.filter(solicitud => 
+    solicitud.empresa && solicitud.empresa.toLowerCase() === cliente.toLowerCase()
+  );
+};
+
 const getEssolicitudPendiente = async (consecutivo) => {
   const solicitud = await getSolicitudesByConsecutivo(consecutivo);
   return solicitud && solicitud.estado && solicitud.estado.toLowerCase() === 'pendiente';
@@ -177,6 +197,20 @@ const getSolicitudesByEmail = async (email) => {
     solicitud.usuario && solicitud.usuario.toLowerCase() === email.toLowerCase()
   );
 };
+
+const getSolicitudesByLastEmail = async (email) => {
+  const solicitudes = await getSolicitudesVuelo();
+  return solicitudes.filter(solicitud => {
+    const esCoordinador = solicitud.correodelcoordinador && 
+                          solicitud.correodelcoordinador.toLowerCase() === email.toLowerCase();
+    
+    const esUsuario = solicitud.usuario && 
+                      solicitud.usuario.toLowerCase() === email.toLowerCase();
+    
+    return esCoordinador && !esUsuario;
+  });
+};
+
 const getSolicitudesByEmailAndStatus = async (email, status) => {
   const solicitudes = await getSolicitudesVuelo();
   return solicitudes.filter(solicitud => 
@@ -334,6 +368,20 @@ const getAllSolicitudesConEtapas = async () => {
   }
 };
 
+const getAllSolicitudesConEtapasEmail = async (email) => {
+  try {
+    const solicitudesconetapasemail = await getAllSolicitudesConEtapas();
+ 
+        return solicitudesconetapasemail.filter(solicitud => 
+          solicitud.usuario && solicitud.usuario.toLowerCase() === email.toLowerCase()
+        );
+      } catch (error) {
+        console.error('Error al obtener solicitudes con etapas por email:', error);
+        throw error;
+      }
+
+};
+
 const editarSolicitudPorConsecutivo = async (consecutivo, nuevosDatos) => {
   const sheets = await getSheetsClient();
 
@@ -349,7 +397,6 @@ const editarSolicitudPorConsecutivo = async (consecutivo, nuevosDatos) => {
     return null; 
   }
 
-  // teer los datos actuales
   const filaActual = filas[filaIndex];
   
   const filaEditada = [
@@ -441,7 +488,6 @@ const crearCarpeta = async (nombreCarpeta, parentFolderId) => {
 const subirArchivo = async (archivo, carpetaId) => {
   const drive = await getDriveClient();
   
-  // Si estamos trabajando con buffer desde multer
   const fileMetadata = {
     name: archivo.originalname,
     parents: [carpetaId]
@@ -469,25 +515,20 @@ const procesarArchivos = async (archivos, consecutivo) => {
     return null;
   }
   
-  // ID de la carpeta padre que proporcionaste
   const carpetaPadreId = '1iaCvCuKoK-uMelKCg2OREkFBQj8bq5fW';
   
-  // Buscar si ya existe una carpeta con el nombre del consecutivo
   let carpeta = await buscarCarpetaPorNombre(consecutivo, carpetaPadreId);
   
-  // Si no existe, crearla
   if (!carpeta) {
     carpeta = await crearCarpeta(consecutivo, carpetaPadreId);
   }
   
-  // Subir cada archivo a la carpeta (existente o recién creada)
   const enlaces = [];
   for (const archivo of archivos) {
     const enlace = await subirArchivo(archivo, carpeta.id);
     enlaces.push(enlace);
   }
   
-  // Devolver el enlace a la carpeta
   return carpeta.webViewLink;
 };
 
@@ -495,7 +536,6 @@ const actualizarEstadoEnSheets = async (consecutivo, nuevoEstado = "aprobado") =
   try {
     const sheets = await getSheetsClient();
     
-    // Primero, obtener todos los datos para encontrar la fila del consecutivo
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: 'SolicitudVuelo',
@@ -506,7 +546,6 @@ const actualizarEstadoEnSheets = async (consecutivo, nuevoEstado = "aprobado") =
       throw new Error('No se encontraron datos en la hoja');
     }
     
-    // Determinar qué columna contiene el consecutivo y el estado
     const headers = rows[0];
     const consecutivoIndex = headers.findIndex(header => 
       header.toLowerCase() === 'consecutivo');
@@ -517,7 +556,6 @@ const actualizarEstadoEnSheets = async (consecutivo, nuevoEstado = "aprobado") =
       throw new Error('No se encontraron las columnas necesarias');
     }
     
-    // Encontrar la fila que corresponde al consecutivo
     let rowIndex = -1;
     for (let i = 1; i < rows.length; i++) {
       if (rows[i][consecutivoIndex] && 
@@ -531,7 +569,6 @@ const actualizarEstadoEnSheets = async (consecutivo, nuevoEstado = "aprobado") =
       throw new Error(`No se encontró el consecutivo ${consecutivo}`);
     }
     
-    // Actualizar el estado en Google Sheets
     await sheets.spreadsheets.values.update({
       spreadsheetId,
       range: `SolicitudVuelo!${getColumnLetter(estadoIndex + 1)}${rowIndex + 1}`,
@@ -548,7 +585,6 @@ const actualizarEstadoEnSheets = async (consecutivo, nuevoEstado = "aprobado") =
   }
 };
 
-// Función auxiliar para convertir número de columna a letra
 function getColumnLetter(columnNumber) {
   let columnLetter = '';
   while (columnNumber > 0) {
@@ -559,7 +595,6 @@ function getColumnLetter(columnNumber) {
   return columnLetter;
 }
 
-// Reemplaza tu función actual por esta:
 const putSolicitudByStatus = async (consecutivo, nuevoEstado = "aprobado") => {
   return await actualizarEstadoEnSheets(consecutivo, nuevoEstado);
 };
@@ -569,14 +604,12 @@ const subirArchivosACarpetaExistente = async (archivos, carpetaId) => {
     return null;
   }
   
-  // Subir cada archivo a la carpeta existente
   const enlaces = [];
   for (const archivo of archivos) {
     const enlace = await subirArchivo(archivo, carpetaId);
     enlaces.push(enlace);
   }
   
-  // Devolver el enlace a la carpeta (necesitamos obtenerlo)
   const drive = await getDriveClient();
   const carpeta = await drive.files.get({
     fileId: carpetaId,
@@ -589,7 +622,6 @@ const subirArchivosACarpetaExistente = async (archivos, carpetaId) => {
 const buscarCarpetaPorNombre = async (nombreCarpeta, parentFolderId) => {
   const drive = await getDriveClient();
   
-  // Crear consulta para buscar por nombre exacto dentro de la carpeta padre
   let query = `name = '${nombreCarpeta}' and mimeType = 'application/vnd.google-apps.folder'`;
   if (parentFolderId) {
     query += ` and '${parentFolderId}' in parents`;
@@ -604,17 +636,539 @@ const buscarCarpetaPorNombre = async (nombreCarpeta, parentFolderId) => {
   return response.data.files.length > 0 ? response.data.files[0] : null;
 };
 
+// Función actualizada para manejar el caso donde no se recibe piloto
+const generarValidacionPrevuelo = async (consecutivo, numeroserie, piloto, notas = '') => {
+  try {
+    const sheets = await getSheetsClient();
+    
+    // Primero obtenemos la solicitud original para extraer información necesaria
+    const solicitudResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'SolicitudVuelo',
+    });
+    
+    const rowsSolicitud = solicitudResponse.data.values;
+    if (!rowsSolicitud || rowsSolicitud.length === 0) {
+      throw new Error('No se encontraron datos en la hoja SolicitudVuelo');
+    }
+    
+    // Buscar la solicitud por consecutivo
+    const headersSolicitud = rowsSolicitud[0];
+    const consecutivoIndex = headersSolicitud.findIndex(header => 
+      header.toLowerCase() === 'consecutivo');
+    const empresaIndex = headersSolicitud.findIndex(header => 
+      header.toLowerCase() === 'empresa');
+    const fechaIndex = headersSolicitud.findIndex(header => 
+      header.toLowerCase() === 'fecha_inicio');
+    const nombreCompletoIndex = headersSolicitud.findIndex(header => 
+      header.toLowerCase() === 'nombre_completo');
+    const usuarioIndex = headersSolicitud.findIndex(header => 
+      header.toLowerCase() === 'usuario');
+      
+    if (consecutivoIndex === -1) {
+      throw new Error('No se encontró la columna consecutivo');
+    }
+    
+    let rowSolicitud = null;
+    let rowIndex = -1;
+    for (let i = 1; i < rowsSolicitud.length; i++) {
+      if (rowsSolicitud[i][consecutivoIndex] && 
+          rowsSolicitud[i][consecutivoIndex].toLowerCase() === consecutivo.toLowerCase()) {
+        rowSolicitud = rowsSolicitud[i];
+        rowIndex = i;
+        break;
+      }
+    }
+    
+    if (!rowSolicitud) {
+      throw new Error(`No se encontró el consecutivo ${consecutivo}`);
+    }
+    
+    // Obtener empresa y fecha de la solicitud
+    const empresa = empresaIndex !== -1 ? rowSolicitud[empresaIndex] : '';
+    const fechaSolicitud = fechaIndex !== -1 ? rowSolicitud[fechaIndex] : '';
+    
+    // Verificar si ya existe un piloto asignado (nombre_completo) cuando no se recibe piloto
+    const nombreCompletoPiloto = nombreCompletoIndex !== -1 ? rowSolicitud[nombreCompletoIndex] || '' : '';
+    const usuarioAsignado = usuarioIndex !== -1 ? rowSolicitud[usuarioIndex] || '' : '';
+    
+    // Si no se recibió piloto y existe un usuario asignado, usamos el nombre_completo
+    let pilotoValor;
+    let usarNombreCompleto = false;
+    
+    if (!piloto && usuarioAsignado.trim() !== '') {
+      pilotoValor = nombreCompletoPiloto.trim();
+      usarNombreCompleto = true;
+      // console.log(`Usando nombre_completo como piloto: ${pilotoValor}`);
+    } else {
+      // Extraer valor del piloto si es un objeto
+      pilotoValor = typeof piloto === 'object' && piloto !== null
+        ? piloto.valor || piloto.label || JSON.stringify(piloto)
+        : (piloto || '');  // Si piloto es null/undefined, usar cadena vacía
+    }
+    
+    // Calcular fecha un día antes (si existe fecha en el registro)
+    let fechaAnterior = '';
+    if (fechaSolicitud) {
+      try {
+        const fecha = new Date(fechaSolicitud);
+        fecha.setDate(fecha.getDate() - 1);
+        fechaAnterior = fecha.toLocaleDateString('es-ES');
+      } catch (e) {
+        console.error('Error al calcular fecha anterior:', e);
+      }
+    }
+    
+    // Obtener el último código consecutivo de la hoja 2.ValidacionPrevuelo
+    const validacionResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: '2.ValidacionPrevuelo',
+    });
+    
+    const rowsValidacion = validacionResponse.data.values || [];
+    
+    // Generar nuevo código consecutivo (AV-X)
+    let ultimoNumero = 0;
+    if (rowsValidacion.length > 1) {  // Si hay al menos un registro (además de la cabecera)
+      const codigoColumna = 0; // Asumimos que el código está en la primera columna
+      
+      // Buscar todos los códigos y obtener el número más alto
+      for (let i = 1; i < rowsValidacion.length; i++) {
+        if (rowsValidacion[i] && rowsValidacion[i][codigoColumna]) {
+          const codigo = rowsValidacion[i][codigoColumna];
+          const match = codigo.match(/AV-(\d+)/);
+          if (match && match[1]) {
+            const num = parseInt(match[1], 10);
+            if (num > ultimoNumero) {
+              ultimoNumero = num;
+            }
+          }
+        }
+      }
+    }
+    
+    const nuevoCodigo = `AV-${ultimoNumero + 1}`;
+    const fechaActual = new Date().toLocaleDateString('es-ES');
+    
+    // Extraer valores simples de los objetos si son objetos
+    const numeroSerieValor = typeof numeroserie === 'object' && numeroserie !== null 
+      ? numeroserie.valor || numeroserie.label || JSON.stringify(numeroserie) 
+      : numeroserie;
+    
+    let emailPiloto = '';
+    let nombrePiloto = '';
+    
+    // Solo buscar en la hoja de pilotos si no estamos usando el nombre_completo
+    if (!usarNombreCompleto && pilotoValor) {
+      // Obtener datos de la hoja de pilotos
+      const pilotosResponse = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: '3.Pilotos',
+      });
+      
+      const pilotosRows = pilotosResponse.data.values || [];
+      if (pilotosRows.length <= 1) {
+        console.warn('No hay datos de pilotos disponibles');
+      } else {
+        // Encontrar los índices de las columnas que necesitamos
+        const identidadIndex = 5; // Columna F (índice 5 - basado en 0)
+        const nombresIndex = 1;   // Columna B (índice 1)
+        const apellidosIndex = 2; // Columna C (índice 2)
+        const emailIndex = 20;    // Columna U (índice 20)
+        
+        // Buscar el piloto por identificación
+        let pilotoEncontrado = null;
+        
+        for (let i = 1; i < pilotosRows.length; i++) {
+          const row = pilotosRows[i];
+          if (row[identidadIndex] && 
+              row[identidadIndex].toString().toLowerCase() === pilotoValor.toString().toLowerCase()) {
+            pilotoEncontrado = row;
+            break;
+          }
+        }
+        
+        if (pilotoEncontrado) {
+          // Obtener el email del piloto (columna U)
+          emailPiloto = pilotoEncontrado[emailIndex] || '';
+          
+          // Combinar nombres y apellidos (columnas B y C)
+          const nombres = pilotoEncontrado[nombresIndex] || '';
+          const apellidos = pilotoEncontrado[apellidosIndex] || '';
+          nombrePiloto = `${nombres} ${apellidos}`.trim();
+          
+          // ACTUALIZAR la solicitud en la hoja SolicitudVuelo
+          if (rowIndex !== -1) {
+            // Actualizar email en la columna 2 (B)
+            await sheets.spreadsheets.values.update({
+              spreadsheetId,
+              range: `SolicitudVuelo!B${rowIndex + 1}`,
+              valueInputOption: 'RAW',
+              resource: {
+                values: [[emailPiloto]]
+              }
+            });
+            
+            // Actualizar nombre en la columna 3 (C)
+            await sheets.spreadsheets.values.update({
+              spreadsheetId,
+              range: `SolicitudVuelo!C${rowIndex + 1}`,
+              valueInputOption: 'RAW',
+              resource: {
+                values: [[nombrePiloto]]
+              }
+            });
+          }
+        } else {
+          console.warn(`No se encontró un piloto con la identificación: ${pilotoValor}`);
+        }
+      }
+    }
+    
+    // Actualizar estado del dron
+    const dronesResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: '3.Drones',
+    });
+    
+    const droneRows = dronesResponse.data.values || [];
+    if (droneRows.length > 1) {
+      // Buscar el dron por número de serie en la columna 2 (B - índice 1)
+      const numeroSerieIndex = 1; // Columna B (índice 1)
+      const disponibilidadCol = 'V'; // Columna V para disponibilidad
+      
+      let droneRowIndex = -1;
+      for (let i = 1; i < droneRows.length; i++) {
+        if (droneRows[i][numeroSerieIndex] && 
+            droneRows[i][numeroSerieIndex].toString().toLowerCase() === numeroSerieValor.toString().toLowerCase()) {
+          droneRowIndex = i;
+          break;
+        }
+      }
+      
+      // Si encontramos el dron, actualizamos la columna V a "si"
+      if (droneRowIndex !== -1) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `3.Drones!${disponibilidadCol}${droneRowIndex + 1}`,
+          valueInputOption: 'RAW',
+          resource: {
+            values: [["si"]]
+          }
+        });
+      } else {
+        console.warn(`No se encontró un dron con el número de serie: ${numeroSerieValor}`);
+      }
+    } else {
+      console.warn('No hay datos de drones disponibles');
+    }
+    
+    // Construir el nuevo registro para la validación prevuelo
+    // Si usarNombreCompleto es true, usamos directamente el nombre_completo como pilotoValor
+    const nuevoRegistro = [
+      nuevoCodigo,              // Código consecutivo
+      consecutivo,              // ID del registro de SolicitudVuelo
+      "Aprobado",               // Estado
+      numeroSerieValor,         // Valor extraído del objeto número serie del dron
+      pilotoValor,              // Valor del piloto (puede ser el ID o el nombre_completo)
+      empresa,                  // Empresa
+      fechaActual,              // Fecha actual
+      notas,                    // Notas
+      fechaAnterior             // Fecha un día antes
+    ];
+    
+    // Anexar el nuevo registro a la hoja 2.ValidacionPrevuelo
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: '2.ValidacionPrevuelo',
+      valueInputOption: 'USER_ENTERED',
+      insertDataOption: 'INSERT_ROWS',
+      resource: {
+        values: [nuevoRegistro]
+      }
+    });
+    
+    return {
+      codigo: nuevoCodigo,
+      fechaValidacion: fechaActual,
+    };
+  } catch (error) {
+    console.error('Error al generar validación de prevuelo:', error);
+    throw error;
+  }
+};
+
+const generarCancelacionPrevuelo = async (consecutivo, notas = '') => {
+  try {
+    const sheets = await getSheetsClient();
+    
+    const solicitudes = await getSolicitudesVuelo();
+    
+    if (!solicitudes || solicitudes.length === 0) {
+      throw new Error('No se encontraron solicitudes');
+    }
+    
+    const solicitud = solicitudes.find(s => 
+      s.consecutivo && s.consecutivo.toLowerCase() === consecutivo.toLowerCase()
+    );
+    
+    if (!solicitud) {
+      throw new Error(`No se encontró el consecutivo ${consecutivo}`);
+    }
+    
+    const tipoOperacion = solicitud.tipodeoperacionaerea || '';
+    const empresa = solicitud.empresa || '';
+    const fecha = solicitud.fecha_inicio || '';
+    const useremail = solicitud.usuario || '';
+    const username = solicitud.nombre_completo || '';
+    
+    const validacionResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: '2.ValidacionPrevuelo',
+    });
+    
+    const rowsValidacion = validacionResponse.data.values || [];
+    
+    let ultimoNumero = 0;
+    if (rowsValidacion.length > 1) {
+      const codigoColumna = 0; 
+      
+      for (let i = 1; i < rowsValidacion.length; i++) {
+        if (rowsValidacion[i] && rowsValidacion[i][codigoColumna]) {
+          const codigo = rowsValidacion[i][codigoColumna];
+          const match = codigo.match(/AV-(\d+)/);
+          if (match && match[1]) {
+            const num = parseInt(match[1], 10);
+            if (num > ultimoNumero) {
+              ultimoNumero = num;
+            }
+          }
+        }
+      }
+    }
+    
+    const nuevoCodigo = `AV-${ultimoNumero + 1}`;
+    const fechaActual = new Date().toLocaleDateString('es-ES');
+    
+    const nuevoRegistro = [
+      nuevoCodigo,              
+      consecutivo,              
+      "Cancelado",                            
+      "Cancelado",                            
+      username,
+      empresa,
+      fechaActual,              
+      notas,                              
+    ];
+    
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: '2.ValidacionPrevuelo',
+      valueInputOption: 'USER_ENTERED',
+      insertDataOption: 'INSERT_ROWS',
+      resource: {
+        values: [nuevoRegistro]
+      }
+    });
+    
+    const prevuelosResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'Prevuelo!A:AK',
+    });
+    
+    const prevuelosRows = prevuelosResponse.data.values || [];
+    const prevuelosHeaders = prevuelosRows[0].map(h => h.trim().toLowerCase());
+    
+    const solicitudesAprobadasIndex = prevuelosHeaders.findIndex(h => 
+      h === 'solicitudesaprobadas');
+    const estadoPrevueloIndex = prevuelosHeaders.findIndex(h => 
+      h === 'estado del prevuelo');
+    
+    if (solicitudesAprobadasIndex === -1) {
+      throw new Error('No se encontró la columna solicitudesaprobadas en la hoja Prevuelo');
+    }
+    
+    if (estadoPrevueloIndex === -1) {
+      throw new Error('No se encontró la columna estado del prevuelo en la hoja Prevuelo');
+    }
+    
+    let prevueloExiste = false;
+    let prevueloRowIndex = -1;
+    
+    for (let i = 1; i < prevuelosRows.length; i++) {
+      if (prevuelosRows[i][solicitudesAprobadasIndex] && 
+          prevuelosRows[i][solicitudesAprobadasIndex].toLowerCase() === consecutivo.toLowerCase()) {
+        prevueloExiste = true;
+        prevueloRowIndex = i;
+        break;
+      }
+    }
+    
+    if (prevueloExiste) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `Prevuelo!${getColumnLetter(estadoPrevueloIndex + 1)}${prevueloRowIndex + 1}`,
+        valueInputOption: 'RAW',
+        resource: {
+          values: [['Cancelado']]
+        }
+      });
+    } else {
+      const consecutivoPrevuelo = await prevueloHelper.getSiguienteConsecutivoPrevuelo();
+      
+      const nuevaFilaPrevuelo = [
+        consecutivoPrevuelo,
+        useremail,
+        consecutivo, 
+        username,
+        nuevoCodigo,
+        fecha,
+        '',
+        '',
+        tipoOperacion,
+        empresa,
+        '', 
+        '', 
+        '',
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        '', 
+        notas, 
+        'Cancelado', 
+        fechaActual 
+      ];
+      
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: 'Prevuelo!A1',
+        valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS',
+        requestBody: { 
+          values: [nuevaFilaPrevuelo]
+        },
+      });
+    }
+    
+    const postvuelosResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'Postvuelo!A:S',
+    });
+    
+    const postvuelosRows = postvuelosResponse.data.values || [];
+    const postvuelosHeaders = postvuelosRows[0].map(h => h.trim().toLowerCase());
+    
+    const consecutivoSolicitudIndex = postvuelosHeaders.findIndex(h => 
+      h === 'consecutivo-solicitud');
+    const estadoPostvueloIndex = postvuelosHeaders.findIndex(h => 
+      h === 'estado del postvuelo');
+    
+    if (consecutivoSolicitudIndex === -1) {
+      throw new Error('No se encontró la columna consecutivo-solicitud en la hoja Postvuelo');
+    }
+    
+    if (estadoPostvueloIndex === -1) {
+      throw new Error('No se encontró la columna estado del postvuelo en la hoja Postvuelo');
+    }
+    
+    let postvueloExiste = false;
+    let postvueloRowIndex = -1;
+    
+    for (let i = 1; i < postvuelosRows.length; i++) {
+      if (postvuelosRows[i][consecutivoSolicitudIndex] && 
+          postvuelosRows[i][consecutivoSolicitudIndex].toLowerCase() === consecutivo.toLowerCase()) {
+        postvueloExiste = true;
+        postvueloRowIndex = i;
+        break;
+      }
+    }
+    
+    if (postvueloExiste) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `Postvuelo!${getColumnLetter(estadoPostvueloIndex + 1)}${postvueloRowIndex + 1}`,
+        valueInputOption: 'RAW',
+        resource: {
+          values: [['Cancelado']]
+        }
+      });
+    } else {
+      const idPostvuelo = await postvueloHelper.getSiguienteConsecutivo();
+      
+      const nuevaFilaPostvuelo = [
+        idPostvuelo,
+        consecutivo, 
+        username,
+        'Cancelado', 
+        fecha,
+        'Cancelado',
+        'Cancelado',
+        'Cancelado', 
+        'Cancelado',
+        'Cancelado',
+        'Cancelado',
+        'Cancelado',
+        'Cancelado',
+        fechaActual, 
+        'Cancelado',
+        useremail,
+        'Cancelado',
+        tipoOperacion,
+        empresa,
+      ];
+      
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: 'Postvuelo!A1',
+        valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS',
+        requestBody: { 
+          values: [nuevaFilaPostvuelo]
+        },
+      });
+    }
+    
+    return {
+      codigo: nuevoCodigo,
+      fechaValidacion: fechaActual
+    };
+  } catch (error) {
+    console.error('Error al generar cancelación de prevuelo/postvuelo:', error);
+    throw error;
+  }
+};
+
 export const solicitudHelper = {
   getSolicitudesVuelo,
   guardarSolicitud,
   getSolicitudesByStatus,
+  getSolicitudesByCliente,
   getEssolicitudPendiente,
   getSolicitudesByEmail,
+  getSolicitudesByLastEmail,
   getSolicitudesByEmailAndStatus,
   getSolicitudesByConsecutivo,
   getSolicitudesEnProceso,
   getSolicitudesEnProcesoPorEmail,
   getAllSolicitudesConEtapas,
+  getAllSolicitudesConEtapasEmail,
   determinarEstadoProceso,
   getSolicitudConEtapas,
   editarSolicitudPorConsecutivo,
@@ -622,5 +1176,7 @@ export const solicitudHelper = {
   procesarArchivos,
   putSolicitudByStatus,
   subirArchivosACarpetaExistente,
-  buscarCarpetaPorNombre
+  buscarCarpetaPorNombre,
+  generarValidacionPrevuelo,
+  generarCancelacionPrevuelo
 };
