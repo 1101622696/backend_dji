@@ -2,11 +2,13 @@ import {postvueloHelper} from '../helpers/postvuelos.js';
 
 const httpPostvuelos = {
 
-crearPostvuelo: async (req, res) => {
+ crearPostvuelo: async (req, res) => {
   try {
     const { email, nombre } = req.usuariobdtoken;
 
-    const { consecutivo, dronusado, fechaInicio, horaInicio, horaFin, duracion, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, proposito, empresa } = req.body;
+    const { consecutivo, horaInicio, horaFin, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo } = req.body;
+    
+    const duracion = postvueloHelper.calcularDuracion(horaInicio, horaFin);
    
     const estado = req.body.estado || "Pendiente";
     const fechadeCreacion = new Date().toISOString().split('T')[0];
@@ -16,7 +18,22 @@ crearPostvuelo: async (req, res) => {
         const consecutivonombre = consecutivo;
         Link = await postvueloHelper.procesarArchivos(req.files, consecutivonombre);
       
-    const resultado = await postvueloHelper.guardarPostvuelo({ consecutivo, username: nombre, dronusado, fechaInicio, horaInicio, horaFin, duracion, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail:email, estado, proposito, empresa  });
+    const resultado = await postvueloHelper.guardarPostvuelo({ 
+      consecutivo, 
+      username: nombre, 
+      horaInicio, 
+      horaFin, 
+      duracion, 
+      distanciaRecorrida, 
+      alturaMaxima, 
+      incidentes, 
+      propositoAlcanzado, 
+      observacionesVuelo, 
+      fechadeCreacion, 
+      Link, 
+      useremail: email, 
+      estado 
+    });
 
     res.status(200).json({
       mensaje: 'Postvuelo guardado correctamente',
@@ -26,8 +43,6 @@ crearPostvuelo: async (req, res) => {
         const resultado = await postvueloHelper.guardarPostvuelo({ 
           consecutivo, 
           username: nombre, 
-          dronusado,
-          fechaInicio, 
           horaInicio, 
           horaFin, 
           duracion, 
@@ -37,11 +52,9 @@ crearPostvuelo: async (req, res) => {
           propositoAlcanzado, 
           observacionesVuelo, 
           fechadeCreacion, 
-          Link:null, 
-          useremail:email, 
+          Link: null, 
+          useremail: email, 
           estado, 
-          proposito, 
-          empresa
         });
         
         res.status(200).json({ 
@@ -292,6 +305,22 @@ obtenerTodosPostvuelosConEtapas: async (req, res) => {
   }
 },
 
+obtenerTodosPostvuelosConEtapasEmail: async (req, res) => {
+  try {
+    const email = req.params.email || req.query.email || req.body.email;
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'Email no proporcionado' });
+    }
+    
+    const data = await postvueloHelper.getPostvuelosConEtapasEmail(email);
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener todas los postvuelos con etapas email' });
+  }
+},
+
 obtenerPostvuelosPorEstado: async (req, res) => {
   try {
     const { estado } = req.params;
@@ -314,11 +343,25 @@ editarPostvuelo: async (req, res) => {
     const nuevosDatos = req.body;
     const { email, nombre } = req.usuariobdtoken;
 
-        if (req.files && req.files.length > 0) {
-          // Procesará los archivos reutilizando la carpeta si existe
-          const Link = await postvueloHelper.procesarArchivos(req.files, consecutivo);
-          nuevosDatos.Link = Link;
-        }
+    // Calcular duración automáticamente si se modifican las horas
+    if (nuevosDatos.horaInicio && nuevosDatos.horaFin) {
+      nuevosDatos.duracion = calcularDuracion(nuevosDatos.horaInicio, nuevosDatos.horaFin);
+    } else if (nuevosDatos.horaInicio || nuevosDatos.horaFin) {
+      // Si solo se cambia una de las horas, necesitamos los datos actuales para calcular
+      const datosActuales = await postvueloHelper.getPostvueloByConsecutivo(consecutivo);
+      
+      if (datosActuales) {
+        const horaInicio = nuevosDatos.horaInicio || datosActuales.horaInicio;
+        const horaFin = nuevosDatos.horaFin || datosActuales.horaFin;
+        nuevosDatos.duracion = calcularDuracion(horaInicio, horaFin);
+      }
+    }
+
+    if (req.files && req.files.length > 0) {
+      // Procesará los archivos reutilizando la carpeta si existe
+      const Link = await postvueloHelper.procesarArchivos(req.files, consecutivo);
+      nuevosDatos.Link = Link;
+    }
     
     // Añadir datos del usuario token si no están en los datos nuevos
     if (!nuevosDatos.useremail) nuevosDatos.useremail = email;
@@ -340,9 +383,16 @@ editarPostvuelo: async (req, res) => {
 aprobarestadoPostvuelo: async (req, res) => {
   try {
     const { consecutivo } = req.params;
-    const { estado } = req.body; // Opcional, puedes obtener el estado del body o usar "aprobado" por defecto
+    const { estado = "Aprobado", piloto, numeroserie, notas  } = req.body; 
     
-    const resultado = await postvueloHelper.actualizarEstadoEnSheets(consecutivo, estado || "Aprobado");
+    await postvueloHelper.actualizarEstadoEnSheets(consecutivo, estado || "Aprobado");
+
+    const resultado = await postvueloHelper.generarValidacionPostvuelo(
+      consecutivo,
+      piloto,
+      numeroserie,
+      notas
+    )
 
     res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
   } catch (error) {
@@ -357,9 +407,16 @@ aprobarestadoPostvuelo: async (req, res) => {
 denegarestadoPostvuelo: async (req, res) => {
   try {
     const { consecutivo } = req.params;
-    const { estado } = req.body; // Opcional, puedes obtener el estado del body o usar "aprobado" por defecto
+    const { estado = "Denegado", piloto, numeroserie, notas  } = req.body; 
     
-    const resultado = await postvueloHelper.actualizarEstadoEnSheets(consecutivo, estado || "Denegado");
+   await postvueloHelper.actualizarEstadoEnSheets(consecutivo, estado || "Denegado");
+
+   const resultado = postvueloHelper.generarValidacionPostvuelo(
+    consecutivo,
+    piloto,
+    numeroserie,
+    notas
+   )
 
     res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
   } catch (error) {

@@ -109,6 +109,66 @@ const getDronByNumeroserie = async (numeroserie) => {
   );
 };
 
+const ordenarDronesPorCampoNumerico = (drones, campo, orden = 'desc') => {
+  return drones.sort((a, b) => {
+    const valorA = parseFloat(a[campo]) || 0;
+    const valorB = parseFloat(b[campo]) || 0;
+    
+    return orden.toLowerCase() === 'desc' ? valorB - valorA : valorA - valorB;
+  });
+};
+const filtrarDronesPorCampoTexto = (drones, campo, valor) => {
+  return drones.filter(dron => 
+    dron[campo] && dron[campo].toLowerCase() === valor.toLowerCase()
+  );
+};
+const getDronesPorOcupacion = async (valor) => {
+  const drones = await getDrones();
+  return filtrarDronesPorCampoTexto(drones, "ocupado_dron", valor);
+};
+
+const getDronesPorEstado = async (valor) => {
+  const drones = await getDrones();
+  return filtrarDronesPorCampoTexto(drones, "estado-dron", valor);
+};
+
+const getDronesOrdenadosPorFechaPoliza = async (orden = 'desc') => {
+  const drones = await getDrones();
+  
+  return drones.sort((a, b) => {
+    const fechaA = new Date(a["fecha de póliza"] || 0);
+    const fechaB = new Date(b["fecha de póliza"] || 0);
+    
+    return orden.toLowerCase() === 'desc' ? fechaB - fechaA : fechaA - fechaB;
+  });
+};
+
+const getDronOrdenadosPorTiempo = async (orden = 'desc') => {
+  const drones = await getDrones();
+  return ordenarDronesPorCampoNumerico(drones, "tiempo acumulado-dron", orden);
+};
+
+const getDronOrdenadosPorDistancia = async (orden = 'desc') => {
+  const drones = await getDrones();
+  return ordenarDronesPorCampoNumerico(drones, "distancia acumulada-dron", orden);
+};
+
+const getDronOrdenadosPorVuelos = async (orden = 'desc') => {
+  const drones = await getDrones();
+  return ordenarDronesPorCampoNumerico(drones, "vuelos realizados-dron", orden);
+};
+
+const getDronOrdenadosPorPeso = async (orden = 'desc') => {
+  const drones = await getDrones();
+  return ordenarDronesPorCampoNumerico(drones, "peso", orden);
+};
+
+const getDronOrdenadosPorVelocidad = async (orden = 'desc') => {
+  const drones = await getDrones();
+  return ordenarDronesPorCampoNumerico(drones, "velocidadmaxima", orden);
+};
+
+
 const editarDronporNumeroserie = async (numeroserie, nuevosDatos) => {
   const sheets = await getSheetsClient();
 
@@ -118,7 +178,7 @@ const editarDronporNumeroserie = async (numeroserie, nuevosDatos) => {
   });
 
   const filas = response.data.values;
-  const filaIndex = filas.findIndex(fila => fila[0]?.toLowerCase() === numeroserie.toLowerCase());
+  const filaIndex = filas.findIndex(fila => fila[1]?.toLowerCase() === numeroserie.toLowerCase());
 
   if (filaIndex === -1) {
     return null; 
@@ -149,8 +209,7 @@ const editarDronporNumeroserie = async (numeroserie, nuevosDatos) => {
     filaActual[18], 
     nuevosDatos.contratodron || filaActual[19],
     nuevosDatos.ubicaciondron || filaActual[20],
-    filaActual[21], 
-
+    nuevosDatos.ubicaciondron || filaActual[21],
   ];
 
   const filaEnHoja = filaIndex + 2;
@@ -240,7 +299,8 @@ const procesarArchivos = async (archivos, numeroSerie) => {
   return carpeta.webViewLink;
 };
 
-const actualizarEstadoEnSheets = async (numeroSerie, nuevoEstado = "activo") => {
+// Corregido: actualizarEstadoEnSheets
+const actualizarEstadoEnSheets = async (numeroserie, nuevoEstado = "activo") => {
   try {
     const sheets = await getSheetsClient();
     
@@ -270,14 +330,14 @@ const actualizarEstadoEnSheets = async (numeroSerie, nuevoEstado = "activo") => 
     let rowIndex = -1;
     for (let i = 1; i < rows.length; i++) {
       if (rows[i][numeroSerieIndex] && 
-          rows[i][numeroSerieIndex].toLowerCase() === numeroSerie.toLowerCase()) {
+          rows[i][numeroSerieIndex].toLowerCase() === numeroserie.toLowerCase()) {
         rowIndex = i;
         break;
       }
     }
     
     if (rowIndex === -1) {
-      throw new Error(`No se encontró el numero de Serie ${numeroSerie}`);
+      throw new Error(`No se encontró el numero de Serie ${numeroserie}`);
     }
     
     // Actualizar el estado en Google Sheets
@@ -296,7 +356,6 @@ const actualizarEstadoEnSheets = async (numeroSerie, nuevoEstado = "activo") => 
     throw error;
   }
 };
-
 // Función auxiliar para convertir número de columna a letra
 function getColumnLetter(columnNumber) {
   let columnLetter = '';
@@ -354,6 +413,14 @@ export const dronHelper = {
   getDronesByStatus,
   getDronesByStatusyOcupado,
   getDronByNumeroserie,
+  getDronOrdenadosPorTiempo,
+  getDronOrdenadosPorDistancia,
+  getDronOrdenadosPorVuelos,
+  getDronOrdenadosPorVelocidad,
+  getDronOrdenadosPorPeso,
+  getDronesOrdenadosPorFechaPoliza,
+  getDronesPorOcupacion,
+  getDronesPorEstado,
   editarDronporNumeroserie,
   procesarArchivos,
   actualizarEstadoEnSheets,
