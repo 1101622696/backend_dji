@@ -332,17 +332,11 @@ editarPrevuelo: async (req, res) => {
   try {
     const { consecutivo } = req.params;
     const nuevosDatos = req.body;
-    const { email, nombre } = req.usuariobdtoken;
+    // console.log(nuevosDatos)
+    // const { email, nombre } = req.usuariobdtoken;
 
-    if (req.files && req.files.length > 0) {
-      // Procesará los archivos reutilizando la carpeta si existe
-      const Link = await prevueloHelper.procesarArchivos(req.files, consecutivo);
-      nuevosDatos.Link = Link;
-    }
-
-    // Añadir datos del usuario token si no están en los datos nuevos
-    if (!nuevosDatos.useremail) nuevosDatos.useremail = email;
-    if (!nuevosDatos.username) nuevosDatos.username = nombre;
+    // if (!nuevosDatos.useremail) nuevosDatos.useremail = email;
+    // if (!nuevosDatos.username) nuevosDatos.username = nombre;
     
     const resultado = await prevueloHelper.editarPrevueloPorConsecutivo(consecutivo, nuevosDatos);
 
