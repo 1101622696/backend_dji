@@ -345,7 +345,7 @@ editarPostvuelo: async (req, res) => {
 
     // Calcular duración automáticamente si se modifican las horas
     if (nuevosDatos.horaInicio && nuevosDatos.horaFin) {
-      nuevosDatos.duracion = calcularDuracion(nuevosDatos.horaInicio, nuevosDatos.horaFin);
+      nuevosDatos.duracion = postvueloHelper.calcularDuracion(nuevosDatos.horaInicio, nuevosDatos.horaFin);
     } else if (nuevosDatos.horaInicio || nuevosDatos.horaFin) {
       // Si solo se cambia una de las horas, necesitamos los datos actuales para calcular
       const datosActuales = await postvueloHelper.getPostvueloByConsecutivo(consecutivo);
@@ -353,7 +353,7 @@ editarPostvuelo: async (req, res) => {
       if (datosActuales) {
         const horaInicio = nuevosDatos.horaInicio || datosActuales.horaInicio;
         const horaFin = nuevosDatos.horaFin || datosActuales.horaFin;
-        nuevosDatos.duracion = calcularDuracion(horaInicio, horaFin);
+        nuevosDatos.duracion = postvueloHelper.calcularDuracion(horaInicio, horaFin);
       }
     }
 
