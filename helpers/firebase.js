@@ -4,13 +4,29 @@ import {usuarioHelper} from '../helpers/usuarios.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
 const initializeFirebaseAdmin = () => {
   if (admin.apps.length === 0) {
     try {
-      // Verificar si estamos en producción (Render)
-      if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+      // Verificar si estamos en producción (Render) o si las variables de entorno están definidas
+      console.log("Verificando credenciales de Firebase...");
+      console.log("FIREBASE_PROJECT_ID presente:", !!process.env.FIREBASE_PROJECT_ID);
+      console.log("FIREBASE_CLIENT_EMAIL presente:", !!process.env.FIREBASE_CLIENT_EMAIL);
+      console.log("FIREBASE_PRIVATE_KEY presente:", !!process.env.FIREBASE_PRIVATE_KEY);
+      
+      // Comprobar si estamos en Render (Render establece esta variable de entorno)
+      const isRender = process.env.RENDER === 'true' || process.env.RENDER === true;
+      console.log("¿Estamos en Render?", isRender);
+      
+      // Usar variables de entorno si estamos en Render o si están todas definidas
+      if (isRender || (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY)) {
         console.log("Inicializando Firebase con variables de entorno");
+        
+        if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
+          throw new Error("Faltan variables de entorno necesarias para Firebase");
+        }
+        
         admin.initializeApp({
           credential: admin.credential.cert({
             projectId: process.env.FIREBASE_PROJECT_ID,
@@ -19,27 +35,49 @@ const initializeFirebaseAdmin = () => {
           })
         });
       } else {
-        // Para desarrollo local, leer el archivo manualmente
-        console.log("Inicializando Firebase con archivo de credenciales");
-        const __filename = fileURLToPath(import.meta.url);
-        const __dirname = path.dirname(__filename);
-        const filePath = path.join(__dirname, '../config/firebase-credentials.json');
+        // Solo para desarrollo local
+        console.log("Inicializando Firebase con archivo de credenciales con local");
         
-        const serviceAccountRaw = fs.readFileSync(filePath, 'utf8');
-        const serviceAccount = JSON.parse(serviceAccountRaw);
-        
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount)
-        });
+        try {
+          const __filename = fileURLToPath(import.meta.url);
+          const __dirname = path.dirname(__filename); // Usar path.dirname en lugar de dirname
+          const require = createRequire(import.meta.url);
+          
+          const credentialsPath = path.join(__dirname, '../config/firebase-credentials.json'); // Usar path.join en lugar de join
+          console.log("Buscando archivo de credenciales en:", credentialsPath);
+          
+          if (!fs.existsSync(credentialsPath)) {
+            throw new Error(`No se encontró el archivo de credenciales en: ${credentialsPath}`);
+          }
+          
+          const serviceAccount = require(credentialsPath);
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+          });
+        } catch (fileError) {
+          console.error("Error al cargar el archivo de credenciales:", fileError);
+          throw new Error("No se pudo inicializar Firebase: faltan credenciales y variables de entorno");
+        }
       }
       console.log("Firebase inicializado correctamente");
     } catch (error) {
       console.error("Error al inicializar Firebase:", error);
-      throw error;
+      // No propagar el error, pero registrarlo
+      console.error("Firebase no se inicializó correctamente. Las notificaciones no funcionarán.");
+      // Configuración de respaldo para permitir que la app continúe funcionando
+      return {
+        messaging: () => ({
+          send: async () => {
+            console.log("Intento de enviar notificación fallido - Firebase no inicializado");
+            return false;
+          }
+        })
+      };
     }
   }
   return admin;
 };
+
 // Guardar token FCM en Google Sheets
 const guardarTokenFCM = async (email, token) => {
   try {
