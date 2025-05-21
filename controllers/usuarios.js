@@ -242,5 +242,31 @@ const httpUsuarios = {
       }
     },
 
+    registrarTokenFCM: async (req, res) => {
+  try {
+    const { token } = req.body;
+    const email = req.usuariobdtoken.email;
+    
+    if (!token) {
+      return res.status(400).json({ msg: "El token FCM es obligatorio" });
+    }
+    
+    const resultado = await guardarTokenFCM(email, token);
+    
+    if (resultado) {
+      return res.json({ 
+        msg: "Token FCM registrado correctamente" 
+      });
+    } else {
+      return res.status(500).json({ 
+        msg: "Error al registrar token FCM" 
+      });
+    }
+  } catch (error) {
+    console.error("Error al registrar token FCM:", error);
+    res.status(500).json({ msg: "Error interno del servidor" });
+  }
+}
+
 };
 export default httpUsuarios;

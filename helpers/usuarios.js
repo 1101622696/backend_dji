@@ -319,5 +319,7 @@ export const usuarioHelper = {
   getUsuarioByPerfil,
   getUsuarioByEmail,
   getUsuarioPorPerfil,
-  getUsuarioPorEstado
+  getUsuarioPorEstado,
+  getAuth,
+  getSheetsClient
 };

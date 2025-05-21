@@ -19,13 +19,14 @@ router.get("/uclientes",[validarJWT],httpUsuarios.obtenerUsuariosPerfilCliente)
 router.get("/filtrados", [validarJWT], httpUsuarios.obtenerUsuariosFiltrados);
 
 router.post("/crear",[validarJWT],httpUsuarios.crearUsuario)
+router.post("/login",httpUsuarios.login)
+router.post("/registrar-token-fcm", [validarJWT], httpUsuarios.registrarTokenFCM);
 
 router.put("/editar/:email",[validarJWT],httpUsuarios.editarUsuario)
 router.put("/editarpassword/:email",[validarJWT],httpUsuarios.editarPasswordUsuario)
 router.put("/activar/:email",[validarJWT],httpUsuarios.activarUsuario)
 router.put("/inactivar/:email",[validarJWT],httpUsuarios.desactivarUsuario)
 
-router.post("/login",httpUsuarios.login)
 
 
 export default router
