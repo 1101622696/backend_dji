@@ -1,5 +1,7 @@
 import { google } from 'googleapis';
 import stream from 'stream';
+import nodemailer from 'nodemailer';
+import { domainToUnicode } from 'url';
 
 const spreadsheetId = '1sJwTVoeFelYt5QE2Pk8KSYFZ8_3wRQjWr5HlDkhhrso';
 
@@ -29,6 +31,16 @@ const getAuth = () => {
       ],
     });
   }
+};
+
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    service: 'gmail',  // O puedes usar otro servicio como Outlook, SendinBlue, etc.
+    auth: {
+      user: process.env.EMAIL_USER,       // Tu correo
+      pass: process.env.EMAIL_APP_PASSWORD // Contraseña de aplicación
+    }
+  });
 };
 
 const getSheetsClient = async () => {
@@ -135,6 +147,37 @@ const calcularDuracion = (horaInicio, horaFin) => {
   
 };
 
+// const guardarPostvuelo = async ({ consecutivo, username, horaInicio, horaFin, duracion, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail, estado }) => {
+//   const sheets = await getSheetsClient();
+  
+//   const datosPrevuelo = await obtenerDatosPrevuelo(consecutivo);
+
+//   if (!datosPrevuelo) {
+//     throw new Error(`No se encontró la solicitud con consecutivo ${consecutivo}`);
+//   }
+  
+//   const idPostvuelo = await getSiguienteConsecutivo();
+  
+//   const fecha = datosPrevuelo.fecha;
+//   const proposito = datosPrevuelo.proposito;
+//   const empresa = datosPrevuelo.empresa;
+//   const dronusado = datosPrevuelo.dron;
+  
+//   const duracionFinal = duracion || calcularDuracion(horaInicio, horaFin);
+
+//   const nuevaFila = [idPostvuelo, consecutivo, username, dronusado, fecha, horaInicio, horaFin, duracionFinal, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail, estado, proposito, empresa];
+
+//   await sheets.spreadsheets.values.append({
+//     spreadsheetId,
+//     range: 'Postvuelo!A1',
+//     valueInputOption: 'RAW',
+//     insertDataOption: 'INSERT_ROWS',
+//     requestBody: { values: [nuevaFila] },
+//   });
+
+//   return { idPostvuelo };
+// };
+
 const guardarPostvuelo = async ({ consecutivo, username, horaInicio, horaFin, duracion, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail, estado }) => {
   const sheets = await getSheetsClient();
   
@@ -163,7 +206,58 @@ const guardarPostvuelo = async ({ consecutivo, username, horaInicio, horaFin, du
     requestBody: { values: [nuevaFila] },
   });
 
+    try {
+    const destinatario = "apinto@sevicol.com.co";
+    
+    await enviarNotificacionPostvuelo({
+      destinatario,
+      consecutivo: consecutivo,
+      piloto: username,
+      fecha,
+      estado,
+      empresa,
+      observaciones: observacionesVuelo
+    });
+    
+    console.log(`Notificación enviada para el postvuelo ${idPostvuelo}`);
+  } catch (error) {
+    console.error('Error al enviar notificación:', error);
+  }
+
   return { idPostvuelo };
+};
+
+const enviarNotificacionPostvuelo  = async (datos) => {
+  try {
+    const transporter = createTransporter();
+    
+    const info = await transporter.sendMail({
+      from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
+      to: datos.destinatario,
+      subject: `Nuevo Postvuelo Registrado - Consecutivo: ${datos.consecutivo}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+          <h2 style="color: #333;">Notificación de Postvuelo</h2>
+          <p>Se ha registrado un nuevo postvuelo en el sistema con la siguiente información:</p>
+          <ul style="list-style-type: none; padding: 0;">
+            <li><strong>Consecutivo:</strong> ${datos.consecutivo}</li>
+            <li><strong>Piloto:</strong> ${datos.piloto}</li>
+            <li><strong>Fecha:</strong> ${datos.fecha}</li>
+            <li><strong>Estado:</strong> ${datos.estado}</li>
+            <li><strong>Empresa:</strong> ${datos.empresa}</li>
+          </ul>
+          <p>Por favor, ingrese al sistema para continuar con el proceso de aprobación.</p>
+          <p>Saludos cordiales,<br>Sistema de Gestión de Vuelos</p>
+        </div>
+      `
+    });
+    
+    console.log('Correo enviado:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Error al enviar correo de notificación:', error);
+    throw error;
+  }
 };
 
 
@@ -528,7 +622,10 @@ const generarValidacionPostvuelo = async (consecutivo, piloto, numeroserie, nota
       header.toLowerCase() === 'correo de usuario');
     const dronUsadoIndex = headersPostvuelo.findIndex(header => 
       header.toLowerCase() === 'dron-usado');
-      
+    const fechaPostIndex = headersPostvuelo.findIndex(header => 
+      header.toLowerCase() === 'id-fecha'); 
+    const empresaPostIndex = headersPostvuelo.findIndex(header => 
+      header.toLowerCase() === 'empresa_post');
     if (consecutivoIndex === -1) {
       throw new Error('No se encontró la columna consecutivo');
     }
@@ -817,12 +914,62 @@ const generarValidacionPostvuelo = async (consecutivo, piloto, numeroserie, nota
       }
     });
     
+   try {
+    const destinatario = correoPilotoIndex;
+    
+    await enviaAprobacionPostvuelo({
+      destinatario,
+      consecutivo: consecutivo,
+      piloto: PilotoIndex,
+      fecha:fechaPostIndex,
+      estado: "Aprobado",
+      empresa:empresaPostIndex,
+      notas
+    });
+    
+    console.log(`Notificación enviada para el postvuelo ${consecutivo}`);
+  } catch (error) {
+    console.error('Error al enviar notificación:', error);
+  }
+
     return {
       codigo: nuevoCodigo,
       fechaValidacion: fechaActual
     };
   } catch (error) {
     console.error('Error al generar validar postvuelo:', error);
+    throw error;
+  }
+};
+
+const enviaAprobacionPostvuelo  = async (datos) => {
+  try {
+    const transporter = createTransporter();
+    
+    const info = await transporter.sendMail({
+      from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
+      to: datos.destinatario,
+      subject: `Nuevo Postvuelo Registrado - Consecutivo: ${datos.consecutivo}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+          <h2 style="color: #333;">Aprobación de Postvuelo</h2>
+          <p>Su postvuelo fue aprobdo</p>
+          <ul style="list-style-type: none; padding: 0;">
+            <li><strong>Consecutivo:</strong> ${datos.consecutivo}</li>
+            <li><strong>Fecha:</strong> ${datos.fecha}</li>
+            <li><strong>Estado:</strong> ${datos.estado}</li>
+            <li><strong>Empresa:</strong> ${datos.empresa}</li>
+          </ul>
+          <p>Saludos cordiales,<br>Sistema de Gestión de Vuelos</p>
+        </div>
+      `
+    });
+    
+    console.log('Correo enviado:', info.messageId);
+    console.log('Correo enviado al piloto:', datos.piloto);
+    return info;
+  } catch (error) {
+    console.error('Error al enviar correo de notificación:', error);
     throw error;
   }
 };
