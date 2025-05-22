@@ -3,6 +3,7 @@ import path from 'path';
 import stream from 'stream';
 import { prevueloHelper } from '../helpers/prevuelos.js';
 import {postvueloHelper} from '../helpers/postvuelos.js';
+import { firebaseHelper } from '../helpers/firebase.js';
 
 const spreadsheetId = '1sJwTVoeFelYt5QE2Pk8KSYFZ8_3wRQjWr5HlDkhhrso';
 
@@ -888,6 +889,31 @@ const generarValidacionPrevuelo = async (consecutivo, numeroserie, piloto, notas
       }
     });
     
+    const emailUsuarioSolicitante = 'apinto@sevicol.com.co';
+    const emailUsuarioquerecibe = emailPiloto;
+    
+await firebaseHelper.enviarNotificacion(
+  emailUsuarioSolicitante,
+  'Solicitud de vuelo aprobada',
+  `La solicitud #${consecutivo} ha sido aprobada`,
+  { 
+    tipo: "aprobacion_solicitud", 
+    consecutivo: consecutivo 
+  }
+);
+
+if (emailUsuarioquerecibe) {
+  await firebaseHelper.enviarNotificacion(
+    emailUsuarioquerecibe,
+    'Tienes una nueva asignación de vuelo',
+    `Has sido asignado al vuelo #${consecutivo}`,
+    { 
+      tipo: "asignacion_piloto", 
+      consecutivo: consecutivo 
+    }
+  );
+}
+
     return {
       codigo: nuevoCodigo,
       fechaValidacion: fechaActual,

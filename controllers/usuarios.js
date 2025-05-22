@@ -1,6 +1,7 @@
 // import Usuario from "../models/usuarios.js";
 import { generarJWT } from "../helpers/generar-jwt.js";
 import { usuarioHelper } from '../helpers/usuarios.js';
+import { firebaseHelper } from '../helpers/firebase.js';
 
 
 const FILTRO_HANDLERS = {
@@ -251,7 +252,7 @@ const httpUsuarios = {
       return res.status(400).json({ msg: "El token FCM es obligatorio" });
     }
     
-    const resultado = await guardarTokenFCM(email, token);
+    const resultado = await firebaseHelper.guardarTokenFCM(email, token);
     
     if (resultado) {
       return res.json({ 
