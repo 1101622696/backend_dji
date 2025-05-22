@@ -1,4 +1,5 @@
 import { solicitudHelper } from '../helpers/solicitudes.js';
+import { firebaseHelper } from '../helpers/firebase.js';
 
 const httpSolicitudes = {
 
@@ -18,11 +19,16 @@ crearSolicitud: async (req, res) => {
     const usernameFirst = includeUserDetails ? nombre : null;
    
     let Link = null;
+    let consecutivo;
+
     if (req.files && req.files.length > 0) {
-      const consecutivo = await solicitudHelper.getSiguienteConsecutivo();
+      consecutivo = await solicitudHelper.getSiguienteConsecutivo();
       Link = await solicitudHelper.procesarArchivos(req.files, consecutivo);
 
     const resultado = await solicitudHelper.guardarSolicitud({  useremail: userEmailFirst, username: usernameFirst, tipodeoperacionaerea, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final: nombre, useremail_final: email });
+  
+    consecutivo = resultado.consecutivo;
+
     res.status(200).json({ 
       mensaje: 'Solicitud guardada correctamente', 
       consecutivo: resultado.consecutivo, 
@@ -81,11 +87,24 @@ crearSolicitud: async (req, res) => {
       useremail_final: email 
     });
     
+    consecutivo = resultado.consecutivo;
+    
     res.status(200).json({ 
       mensaje: 'Solicitud guardada correctamente', 
       consecutivo: resultado.consecutivo, 
     });
   }
+
+   await firebaseHelper.enviarNotificacion(
+      "apinto@sevicol.com.co", // Email fijo del destinatario
+      "Nueva solicitud de vuelo registrada",
+      `${nombre} ha registrado una solicitud de vuelo #${consecutivo}`,
+      { 
+        tipo: "registro_solicitud", 
+        consecutivo: consecutivo 
+      }
+    );
+
 } catch (error) { 
   console.error('Error al guardar solicitud:', error); 
   res.status(500).json({ mensaje: 'Error interno del servidor' }); 

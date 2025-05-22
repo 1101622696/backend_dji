@@ -15,11 +15,11 @@ import mantenimiento from "./routes/mantenimiento.js"
 import validarpostvuelo from "./routes/validarpostvuelo.js"
 import validarprevuelo from "./routes/validarprevuelo.js"
 import validacionprevuelo from "./routes/validarprevuelo.js"
-import { initializeFirebaseAdmin } from "./helpers/firebase.js";
+import { firebaseHelper } from "./helpers/firebase.js";
 
 const app = express();
 
-initializeFirebaseAdmin();
+firebaseHelper.initializeFirebaseAdmin();
 
 // con esto funciona todo menos desde localhost9000 entocnes agregaré el 9000 pero dejar esto quieto 
 // const whitelist = ['https://localhost', 'http://localhost', 'http://localhost:3000', 'capacitor://localhost', 'ionic://localhost'];

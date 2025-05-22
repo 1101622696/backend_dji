@@ -224,7 +224,7 @@ const enviarNotificacion = async (email, titulo, mensaje, datos = {}) => {
   }
 };
 
-export {
+export const firebaseHelper = {
   initializeFirebaseAdmin,
   guardarTokenFCM,
   obtenerTokenFCM,
