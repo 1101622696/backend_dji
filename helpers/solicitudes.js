@@ -556,7 +556,7 @@ const getSolicitudesConEstadosGeneralesSolicitante = async () => {
 
     // Procesar solicitudes
     for (let i = 1; i < solicitudVuelo.length; i++) {
-      if (solicitudVuelo[i].length > 46) {
+      if (solicitudVuelo[i].length > 50) {
         const fila = solicitudVuelo[i];
         const consecutivo = fila[0];
         const email = fila[50];
