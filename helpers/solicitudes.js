@@ -526,48 +526,43 @@ const getSolicitudesConEstadosGeneralesSolicitante = async () => {
       throw new Error('No se pudieron obtener los datos de las hojas');
     }
 
-    // Crear mapas para prevuelo y postvuelo para búsqueda rápida
     const mapaPrevuelo = {};
     const mapaPostVuelo = {};
 
-    // Procesar datos de prevuelo (empezar desde índice 1 para saltar headers)
-  for (let i = 1; i < prevuelo.length; i++) {
-    const consecutivo = prevuelo[i][2]; 
-    const estado = prevuelo[i][35];
-    
-    if (consecutivo && estado) {
-      mapaPrevuelo[consecutivo] = estado;
+    for (let i = 1; i < prevuelo.length; i++) {
+      const consecutivo = prevuelo[i][2]; // Columna 3 (índice 2)
+      const estado = prevuelo[i][35];
+      
+      if (consecutivo && estado) {
+        mapaPrevuelo[consecutivo] = estado; // Solo usar consecutivo como clave
+      }
     }
-  }
 
-    // Procesar datos de postvuelo
     for (let i = 1; i < postVuelo.length; i++) {
       if (postVuelo[i].length > 16) {
-        const prevueloAsociado = postVuelo[i][1];
+        const consecutivo = postVuelo[i][1]; // Columna 2 (índice 1)
         const estado = postVuelo[i][16];
         
-        if (prevueloAsociado) {
-          mapaPostVuelo[prevueloAsociado] = estado || "No iniciado";
+        if (consecutivo) {
+          mapaPostVuelo[consecutivo] = estado || "No iniciado";
         }
       }
     }
 
     const resultados = [];
 
-    // Procesar solicitudes
     for (let i = 1; i < solicitudVuelo.length; i++) {
       if (solicitudVuelo[i].length > 50) {
         const fila = solicitudVuelo[i];
-        const consecutivo = fila[0];
-        const email = fila[50];
+        const consecutivo = fila[0]; // Columna 1 (índice 0)
+        const email = fila[50]; // Email del solicitante
         const piloto = fila[2];
         const cliente = fila[4];
         const fecha = fila[5];
         const estadoSolicitud = fila[46];
 
         if (consecutivo && email) {
-          const clave = `${consecutivo}-${email}`;
-          const estadoPrevuelo = mapaPrevuelo[clave] || "No iniciado";
+          const estadoPrevuelo = mapaPrevuelo[consecutivo] || "No iniciado";
           const estadoPostVuelo = mapaPostVuelo[consecutivo] || "No iniciado";
 
           // Formatear fecha si es necesario
