@@ -31,10 +31,17 @@ router.get('/estadoproceso/:estado',[validarJWT], httpSolicitudes.obtenerSolicit
 // fase mejorara para obtener los consecutivos con su estado en cada proceso 
 router.get("/listar",[validarJWT],httpSolicitudes.obtenerTodasLasSolicitudesConEstados)
 router.get("/resumen/email/:email",[validarJWT],httpSolicitudes.obtenerResumenPorEmail)
+router.get("/resumensolicitante/email/:email",[validarJWT],httpSolicitudes.obtenerResumenSolicitante)
+router.get("/resumenjefe/",[validarJWT],httpSolicitudes.obtenerResumenJefe)
+// esta de acá abajo funciona pero para eso ya está el endpoint de arriba de resumen
 router.get("/emailestado/email/:email",[validarJWT],httpSolicitudes.obtenerSolicitudesPorEmailConEstados)
+// ESTA SI SIRVE, devuelve el estado de cada proceso por consecutivo.
 router.get("/emailestado/consecutivo/:consecutivo",[validarJWT],httpSolicitudes.obtenerSolicitudPorConsecutivoConEstados)
+// bien, devuelve segun el estado general, por ejemplo: Prevuelo no iniciado
 router.get("/emailestado/estado/:estado",[validarJWT],httpSolicitudes.obtenerSolicitudesPorEstadoGeneral)
+// retoma los valores que devuelve resumen, entonces se podría eliminar también
 router.get("/estadisticas/email/:email",[validarJWT],httpSolicitudes.obtenerEstadisticasGenerales)
+// devuelve si se busca por piloto, cliente, fecha desde hasta
 router.get("/buscar",[validarJWT],httpSolicitudes.buscarSolicitudesAvanzado)
 
 

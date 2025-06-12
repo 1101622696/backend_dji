@@ -520,6 +520,55 @@ obtenerResumenPorEmail: async (req, res) => {
   }
 },
 
+obtenerResumenSolicitante: async (req, res) => {
+  try {
+    const { email } = req.params;
+    
+    if (!email) {
+      return res.status(400).json({
+        ok: false,
+        mensaje: 'Email es requerido'
+      });
+    }
+
+    const resumen = await solicitudHelper.getResumenSolicitudesPorSolicitante(email);
+    
+    res.json({
+      ok: true,
+      resumen,
+      email,
+      mensaje: 'Resumen obtenido exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al obtener resumen por email:', error);
+    res.status(500).json({
+      ok: false,
+      mensaje: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+},
+
+obtenerResumenJefe: async (req, res) => {
+  try {
+
+    const resumen = await solicitudHelper.getResumenSolicitudesGeneral();
+    
+    res.json({
+      ok: true,
+      resumen,
+      mensaje: 'Resumen obtenido exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al obtener resumen general:', error);
+    res.status(500).json({
+      ok: false,
+      mensaje: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+},
+
 obtenerSolicitudesPorEmailConEstados: async (req, res) => {
   try {
     const { email } = req.params;
@@ -634,19 +683,12 @@ obtenerEstadisticasGenerales: async (req, res) => {
     const estadisticas = {
       total: solicitudesFiltradas.length,
       completados: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Completado').length,
-      prevueloPendiente: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Prevuelo Pendiente').length,
-      postvueloPendiente: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Postvuelo Pendiente').length,
-      prevueloNoIniciado: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Prevuelo no iniciado').length,
+      enespera: solicitudesFiltradas.filter(s => s.estadoSolicitud === 'Enespera' ).length,
+      aprobados: solicitudesFiltradas.filter(s =>  s.estadoGeneral === 'Aprobado'|| s.estadoPrevuelo === "Aprobado" || s.estadoPostVuelo === "Aprobado").length,
+      pendientes: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Pendiente'|| s.estadoPrevuelo === "Pendiente" || s.estadoPostVuelo === "Pendiente").length,
       sinPostvuelo: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Sin Postvuelo').length,
+      sinPrevuelos: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Sin Prevuelo').length,
       cancelados: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Cancelado').length,
-      
-      // Estadísticas adicionales por estado individual
-      solicitudesPendientes: solicitudesFiltradas.filter(s => s.estadoSolicitud === 'Pendiente').length,
-      solicitudesAprobadas: solicitudesFiltradas.filter(s => s.estadoSolicitud === 'Aprobado').length,
-      solicitudesEnEspera: solicitudesFiltradas.filter(s => s.estadoSolicitud === 'Enespera').length,
-      
-      prevuelosAprobados: solicitudesFiltradas.filter(s => s.estadoPrevuelo === 'Aprobado').length,
-      postvuelosAprobados: solicitudesFiltradas.filter(s => s.estadoPostVuelo === 'Aprobado').length
     };
 
     res.json({
