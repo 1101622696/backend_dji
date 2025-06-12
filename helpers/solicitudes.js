@@ -531,9 +531,9 @@ const getSolicitudesConEstadosGeneralesSolicitante = async () => {
     const mapaPostVuelo = {};
 
     // Procesar datos de prevuelo (empezar desde índice 1 para saltar headers)
-  for (let i = 1; i < datosPrevuelo.length; i++) {
-    const consecutivo = datosPrevuelo[i][2]; 
-    const estado = datosPrevuelo[i][35];
+  for (let i = 1; i < prevuelo.length; i++) {
+    const consecutivo = prevuelo[i][2]; 
+    const estado = prevuelo[i][35];
     
     if (consecutivo && estado) {
       mapaPrevuelo[consecutivo] = estado;
