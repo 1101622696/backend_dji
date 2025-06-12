@@ -96,7 +96,7 @@ crearSolicitud: async (req, res) => {
   }
 
    await firebaseHelper.enviarNotificacion(
-      "apinto@sevicol.com.co", // Email fijo del destinatario
+      "apinto@sevicol.com.co", 
       "Nueva solicitud de vuelo registrada",
       `${nombre} ha registrado una solicitud de vuelo #${consecutivo}`,
       { 
@@ -110,6 +110,9 @@ crearSolicitud: async (req, res) => {
   res.status(500).json({ mensaje: 'Error interno del servidor' }); 
 } 
 },
+
+
+
 
 obtenerSolicitudes: async (req, res) => {
   try {
@@ -253,7 +256,7 @@ obtenerSolicitudesPorEmailYEstado: async (req, res) => {
 },
 obtenerSolicitudesPendientesPorEmail: async (req, res) => {
   try {
-    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    const { email } = req.params; 
     
     if (!email) {
       return res.status(400).json({ mensaje: 'El email es requerido' });
@@ -269,7 +272,7 @@ obtenerSolicitudesPendientesPorEmail: async (req, res) => {
 
 obtenerSolicitudesPendientesPorEmailCantidad: async (req, res) => {
   try {
-    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    const { email } = req.params; 
     
     if (!email) {
       return res.status(400).json({ mensaje: 'El email es requerido' });
@@ -287,7 +290,7 @@ obtenerSolicitudesPendientesPorEmailCantidad: async (req, res) => {
 
 obtenerSolicitudesAprobadasPorEmail: async (req, res) => {
   try {
-    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    const { email } = req.params; 
     
     if (!email) {
       return res.status(400).json({ mensaje: 'El email es requerido' });
@@ -303,7 +306,7 @@ obtenerSolicitudesAprobadasPorEmail: async (req, res) => {
 
 obtenerSolicitudesAprobadasPorEmailCantidad: async (req, res) => {
   try {
-    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
+    const { email } = req.params; 
     
     if (!email) {
       return res.status(400).json({ mensaje: 'El email es requerido' });
@@ -435,7 +438,6 @@ obtenerTodasSolicitudesConEtapas: async (req, res) => {
 
 obtenerTodasSolicitudesConEtapasEmail: async (req, res) => {
   try {
-    // Obtener el email del parámetro de la URL o del cuerpo de la solicitud
     const email = req.params.email || req.query.email || req.body.email;
     
     if (!email) {
@@ -463,6 +465,307 @@ obtenerSolicitudesPorEstadoProceso: async (req, res) => {
   } catch (error) {
     console.error('Error al obtener datos:', error);
     res.status(500).json({ mensaje: 'Error al obtener solicitudes por estado de proceso' });
+  }
+},
+
+
+// fase mejorara para obtener los consecutivos con su estado en cada proceso 
+
+obtenerTodasLasSolicitudesConEstados: async (req, res) => {
+  try {
+    const solicitudes = await solicitudHelper.getSolicitudesConEstadosGenerales();
+    
+    res.json({
+      ok: true,
+      solicitudes,
+      total: solicitudes.length,
+      mensaje: 'Solicitudes obtenidas exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al obtener todas las solicitudes:', error);
+    res.status(500).json({
+      ok: false,
+      mensaje: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+},
+
+obtenerResumenPorEmail: async (req, res) => {
+  try {
+    const { email } = req.params;
+    
+    if (!email) {
+      return res.status(400).json({
+        ok: false,
+        mensaje: 'Email es requerido'
+      });
+    }
+
+    const resumen = await solicitudHelper.getResumenSolicitudesPorEmail(email);
+    
+    res.json({
+      ok: true,
+      resumen,
+      email,
+      mensaje: 'Resumen obtenido exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al obtener resumen por email:', error);
+    res.status(500).json({
+      ok: false,
+      mensaje: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+},
+
+obtenerSolicitudesPorEmailConEstados: async (req, res) => {
+  try {
+    const { email } = req.params;
+    
+    if (!email) {
+      return res.status(400).json({
+        ok: false,
+        mensaje: 'Email es requerido'
+      });
+    }
+
+    const todasLasSolicitudes = await solicitudHelper.getSolicitudesConEstadosGenerales();
+    const solicitudesFiltradas = todasLasSolicitudes.filter(s => s.email === email);
+    
+    res.json({
+      ok: true,
+      solicitudes: solicitudesFiltradas,
+      total: solicitudesFiltradas.length,
+      email,
+      mensaje: 'Solicitudes por email obtenidas exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al obtener solicitudes por email:', error);
+    res.status(500).json({
+      ok: false,
+      mensaje: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+},
+
+obtenerSolicitudPorConsecutivoConEstados: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const { email } = req.query; // Email opcional como query parameter
+    
+    if (!consecutivo) {
+      return res.status(400).json({
+        ok: false,
+        mensaje: 'Consecutivo es requerido'
+      });
+    }
+
+    const solicitud = await solicitudHelper.getSolicitudPorConsecutivo(consecutivo, email);
+    
+    if (!solicitud) {
+      return res.status(404).json({
+        ok: false,
+        mensaje: 'Solicitud no encontrada'
+      });
+    }
+
+    res.json({
+      ok: true,
+      solicitud,
+      mensaje: 'Solicitud obtenida exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al obtener solicitud por consecutivo:', error);
+    res.status(500).json({
+      ok: false,
+      mensaje: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+},
+
+obtenerSolicitudesPorEstadoGeneral: async (req, res) => {
+  try {
+    const { estado } = req.params;
+    const { email } = req.query; 
+    
+    if (!estado) {
+      return res.status(400).json({
+        ok: false,
+        mensaje: 'Estado es requerido'
+      });
+    }
+
+    const solicitudes = await solicitudHelper.getSolicitudesPorEstadoGeneral(estado, email);
+    
+    res.json({
+      ok: true,
+      solicitudes,
+      total: solicitudes.length,
+      estado,
+      email: email || 'todos',
+      mensaje: 'Solicitudes por estado obtenidas exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al obtener solicitudes por estado:', error);
+    res.status(500).json({
+      ok: false,
+      mensaje: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+},
+
+obtenerEstadisticasGenerales: async (req, res) => {
+  try {
+    const { email } = req.query; 
+    
+    const todasLasSolicitudes = await solicitudHelper.getSolicitudesConEstadosGenerales();
+    let solicitudesFiltradas = todasLasSolicitudes;
+    
+    if (email) {
+      solicitudesFiltradas = todasLasSolicitudes.filter(s => s.email === email);
+    }
+
+    // Contar por estado general
+    const estadisticas = {
+      total: solicitudesFiltradas.length,
+      completados: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Completado').length,
+      prevueloPendiente: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Prevuelo Pendiente').length,
+      postvueloPendiente: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Postvuelo Pendiente').length,
+      prevueloNoIniciado: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Prevuelo no iniciado').length,
+      sinPostvuelo: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Sin Postvuelo').length,
+      cancelados: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Cancelado').length,
+      
+      // Estadísticas adicionales por estado individual
+      solicitudesPendientes: solicitudesFiltradas.filter(s => s.estadoSolicitud === 'Pendiente').length,
+      solicitudesAprobadas: solicitudesFiltradas.filter(s => s.estadoSolicitud === 'Aprobado').length,
+      solicitudesEnEspera: solicitudesFiltradas.filter(s => s.estadoSolicitud === 'Enespera').length,
+      
+      prevuelosAprobados: solicitudesFiltradas.filter(s => s.estadoPrevuelo === 'Aprobado').length,
+      postvuelosAprobados: solicitudesFiltradas.filter(s => s.estadoPostVuelo === 'Aprobado').length
+    };
+
+    res.json({
+      ok: true,
+      estadisticas,
+      email: email || 'todos',
+      mensaje: 'Estadísticas obtenidas exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al obtener estadísticas:', error);
+    res.status(500).json({
+      ok: false,
+      mensaje: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+},
+
+buscarSolicitudesAvanzado: async (req, res) => {
+  try {
+    const { 
+      email, 
+      estadoGeneral, 
+      estadoSolicitud, 
+      estadoPrevuelo, 
+      estadoPostVuelo, 
+      cliente, 
+      piloto,
+      fechaDesde,
+      fechaHasta,
+      limite = 100,
+      offset = 0
+    } = req.query;
+
+    const todasLasSolicitudes = await solicitudHelper.getSolicitudesConEstadosGenerales();
+    
+    let solicitudesFiltradas = todasLasSolicitudes;
+
+    // Aplicar filtros
+    if (email) {
+      solicitudesFiltradas = solicitudesFiltradas.filter(s => 
+        s.email.toLowerCase().includes(email.toLowerCase())
+      );
+    }
+
+    if (estadoGeneral) {
+      solicitudesFiltradas = solicitudesFiltradas.filter(s => s.estadoGeneral === estadoGeneral);
+    }
+
+    if (estadoSolicitud) {
+      solicitudesFiltradas = solicitudesFiltradas.filter(s => s.estadoSolicitud === estadoSolicitud);
+    }
+
+    if (estadoPrevuelo) {
+      solicitudesFiltradas = solicitudesFiltradas.filter(s => s.estadoPrevuelo === estadoPrevuelo);
+    }
+
+    if (estadoPostVuelo) {
+      solicitudesFiltradas = solicitudesFiltradas.filter(s => s.estadoPostVuelo === estadoPostVuelo);
+    }
+
+    if (cliente) {
+      solicitudesFiltradas = solicitudesFiltradas.filter(s => 
+        s.cliente.toLowerCase().includes(cliente.toLowerCase())
+      );
+    }
+
+    if (piloto) {
+      solicitudesFiltradas = solicitudesFiltradas.filter(s => 
+        s.piloto.toLowerCase().includes(piloto.toLowerCase())
+      );
+    }
+
+    // Filtros de fecha
+    if (fechaDesde) {
+      solicitudesFiltradas = solicitudesFiltradas.filter(s => 
+        new Date(s.fecha) >= new Date(fechaDesde)
+      );
+    }
+
+    if (fechaHasta) {
+      solicitudesFiltradas = solicitudesFiltradas.filter(s => 
+        new Date(s.fecha) <= new Date(fechaHasta)
+      );
+    }
+
+    // Paginación
+    const total = solicitudesFiltradas.length;
+    const solicitudesPaginadas = solicitudesFiltradas.slice(
+      parseInt(offset), 
+      parseInt(offset) + parseInt(limite)
+    );
+
+    res.json({
+      ok: true,
+      solicitudes: solicitudesPaginadas,
+      total,
+      limite: parseInt(limite),
+      offset: parseInt(offset),
+      filtros: {
+        email,
+        estadoGeneral,
+        estadoSolicitud,
+        estadoPrevuelo,
+        estadoPostVuelo,
+        cliente,
+        piloto,
+        fechaDesde,
+        fechaHasta
+      },
+      mensaje: 'Búsqueda avanzada completada exitosamente'
+    });
+  } catch (error) {
+    console.error('Error en búsqueda avanzada:', error);
+    res.status(500).json({
+      ok: false,
+      mensaje: 'Error interno del servidor',
+      error: error.message
+    });
   }
 },
 
