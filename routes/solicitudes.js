@@ -27,6 +27,18 @@ router.get('/conetapas',[validarJWT], httpSolicitudes.obtenerTodasSolicitudesCon
 router.get('/conetapas/email/:email',[validarJWT], httpSolicitudes.obtenerTodasSolicitudesConEtapasEmail);
 router.get('/estadoproceso/:estado',[validarJWT], httpSolicitudes.obtenerSolicitudesPorEstadoProceso);
 
+
+// fase mejorara para obtener los consecutivos con su estado en cada proceso 
+router.get("/listar",[validarJWT],httpSolicitudes.obtenerTodasLasSolicitudesConEstados)
+router.get("/resumen/email/:email",[validarJWT],httpSolicitudes.obtenerResumenPorEmail)
+router.get("/emailestado/email/:email",[validarJWT],httpSolicitudes.obtenerSolicitudesPorEmailConEstados)
+router.get("/emailestado/consecutivo/:consecutivo",[validarJWT],httpSolicitudes.obtenerSolicitudPorConsecutivoConEstados)
+router.get("/emailestado/estado/:estado",[validarJWT],httpSolicitudes.obtenerSolicitudesPorEstadoGeneral)
+router.get("/estadisticas/email/:email",[validarJWT],httpSolicitudes.obtenerEstadisticasGenerales)
+router.get("/buscar",[validarJWT],httpSolicitudes.buscarSolicitudesAvanzado)
+
+
+
 router.post("/crear", [validarJWT, upload.array('archivos')], httpSolicitudes.crearSolicitud);
 
 router.put("/editar/:consecutivo", [validarJWT, upload.array('archivos')], httpSolicitudes.editarSolicitud);
