@@ -531,17 +531,14 @@ const getSolicitudesConEstadosGeneralesSolicitante = async () => {
     const mapaPostVuelo = {};
 
     // Procesar datos de prevuelo (empezar desde índice 1 para saltar headers)
-    for (let i = 1; i < prevuelo.length; i++) {
-      if (prevuelo[i].length > 35) {
-        const email = prevuelo[i][1];
-        const consecutivo = prevuelo[i][2];
-        const estado = prevuelo[i][35];
-        
-        if (email && consecutivo) {
-          mapaPrevuelo[`${consecutivo}-${email}`] = estado || "No iniciado";
-        }
-      }
+  for (let i = 1; i < datosPrevuelo.length; i++) {
+    const consecutivo = datosPrevuelo[i][2]; 
+    const estado = datosPrevuelo[i][35];
+    
+    if (consecutivo && estado) {
+      mapaPrevuelo[consecutivo] = estado;
     }
+  }
 
     // Procesar datos de postvuelo
     for (let i = 1; i < postVuelo.length; i++) {
