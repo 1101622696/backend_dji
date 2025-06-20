@@ -64,8 +64,6 @@ const obtenerDatosSolicitud = async (nombreHoja, rango = 'A1:BF1000') => {
   );
 };
 
-// const getSolicitudesVuelo = () => obtenerDatosSolicitud('SolicitudVuelo');
-
 const getSolicitudesVuelo = async () => {
   const solicitudes = await obtenerDatosSolicitud('SolicitudVuelo');
   
@@ -142,275 +140,10 @@ const getSolicitudesByConsecutivo = async (consecutivo) => {
     solicitud.consecutivo && solicitud.consecutivo.toLowerCase() === consecutivo.toLowerCase()
   );
 };
-const getSolicitudesByStatus = async (status) => {
-  const solicitudes = await getSolicitudesVuelo();
-  return solicitudes.filter(solicitud => 
-    solicitud.estado && solicitud.estado.toLowerCase() === status.toLowerCase()
-  );
-};
-
-const getSolicitudesByCliente = async (cliente) => {
-  const solicitudes = await getSolicitudesVuelo();
-  return solicitudes.filter(solicitud => 
-    solicitud.empresa && solicitud.empresa.toLowerCase() === cliente.toLowerCase()
-  );
-};
-
-const getEssolicitudPendiente = async (consecutivo) => {
-  const solicitud = await getSolicitudesByConsecutivo(consecutivo);
-  return solicitud && solicitud.estado && solicitud.estado.toLowerCase() === 'pendiente';
-};
-const getConsecutivosPrevuelo = async () => {
-  try {
-    const sheets = await getSheetsClient();
-    
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: 'Prevuelo!C:C', 
-    });
-    
-    if (!response.data.values || response.data.values.length === 0) {
-      return [];
-    }
-    
-    const consecutivos = response.data.values.slice(1).map(row => row[0]?.toLowerCase());
-    return consecutivos.filter(Boolean); 
-  } catch (error) {
-    console.error('Error al obtener consecutivos de Prevuelo:', error);
-    throw error;
-  }
-};
-
-const getSolicitudesEnProceso = async () => {
-  try {
-    // Obtener todas las solicitudes
-    const solicitudes = await getSolicitudesVuelo();
-    
-    // Obtener todos los consecutivos de Prevuelo
-    const consecutivosPrevuelo = await getConsecutivosPrevuelo();
-    
-    // Filtrar las solicitudes que no están en Prevuelo
-    return solicitudes.filter(solicitud => 
-      solicitud.consecutivo && 
-      !consecutivosPrevuelo.includes(solicitud.consecutivo.toLowerCase())
-    );
-  } catch (error) {
-    console.error('Error al obtener solicitudes en proceso:', error);
-    throw error;
-  }
-};
-
-const getSolicitudesEnProcesoPorEmail = async (email) => {
-  try {
-    const solicitudesEnProceso = await getSolicitudesEnProceso();
-    
-    return solicitudesEnProceso.filter(solicitud => 
-      solicitud.usuario && 
-      solicitud.usuario.toLowerCase() === email.toLowerCase()
-    );
-  } catch (error) {
-    console.error('Error al obtener solicitudes en proceso por email:', error);
-    throw error;
-  }
-};
-
-const getSolicitudesByEmail = async (email) => {
-  const solicitudes = await getSolicitudesVuelo();
-  return solicitudes.filter(solicitud => 
-    solicitud.usuario && solicitud.usuario.toLowerCase() === email.toLowerCase()
-  );
-};
-
-const getSolicitudesByLastEmail = async (email) => {
-  const solicitudes = await getSolicitudesVuelo();
-  return solicitudes.filter(solicitud => {
-    const esCoordinador = solicitud.correodelcoordinador && 
-                          solicitud.correodelcoordinador.toLowerCase() === email.toLowerCase();
-    
-    const esUsuario = solicitud.usuario && 
-                      solicitud.usuario.toLowerCase() === email.toLowerCase();
-    
-    return esCoordinador && !esUsuario;
-  });
-};
-
-const getSolicitudesByEmailAndStatus = async (email, status) => {
-  const solicitudes = await getSolicitudesVuelo();
-  return solicitudes.filter(solicitud => 
-    solicitud.usuario && 
-    solicitud.usuario.toLowerCase() === email.toLowerCase() &&
-    solicitud.estado && 
-    solicitud.estado.toLowerCase() === status.toLowerCase()
-  );
-};
-
-const getSolicitudConEtapas = async (consecutivo) => {
-  try {
-    const solicitudes = await getSolicitudesVuelo();
-    const solicitud = solicitudes.find(s => s.consecutivo === consecutivo);
-    
-    if (!solicitud) {
-      return null;
-    }
-    
-    // Comprobaciones dependientes en cascada
-    const solicitudExiste = true;
-    const solicitudAprobada = solicitud.estado === 'Aprobado';
-    
-    // Solo buscar prevuelo si la solicitud está aprobada
-    let prevuelo = null;
-    let prevueloExiste = false;
-    let prevueloAprobado = false;
-    
-    if (solicitudAprobada) {
-      const prevuelos = await prevueloHelper.getPrevuelos();
-      prevuelo = prevuelos.find(p => p.solicitudesaprobadas === consecutivo);
-      prevueloExiste = !!prevuelo;
-      prevueloAprobado = prevuelo ? prevuelo["estado del prevuelo"] === "Aprobado" : false;
-    }
-    
-    // Solo buscar postvuelo si el prevuelo existe y está aprobado
-    let postvuelo = null;
-    let postvueloExiste = false;
-    let postvueloAprobado = false;
-    
-    if (prevueloExiste && prevueloAprobado) {
-      const postvuelos = await postvueloHelper.getPostvuelos();
-      postvuelo = postvuelos.find(p => p['consecutivo-solicitud'] === consecutivo);
-      postvueloExiste = !!postvuelo;
-      postvueloAprobado = postvuelo ? postvuelo["estado del postvuelo"] === "Aprobado" : false;
-    }
-    
-    return {
-      solicitud,
-      solicitudExiste,
-      solicitudAprobada,
-      prevueloExiste,
-      prevueloAprobado,
-      postvueloExiste,
-      postvueloAprobado,
-      estadoProceso: determinarEstadoProceso(
-        solicitudExiste, 
-        solicitudAprobada, 
-        prevueloExiste, 
-        prevueloAprobado, 
-        postvueloExiste, 
-        postvueloAprobado
-      )
-    };
-  } catch (error) {
-    console.error('Error al obtener solicitud con etapas:', error);
-    throw error;
-  }
-};
-
-const determinarEstadoProceso = (
-  solicitudExiste, 
-  solicitudAprobada, 
-  prevueloExiste, 
-  prevueloAprobado, 
-  postvueloExiste, 
-  postvueloAprobado
-) => {
-  if (!solicitudExiste) return 'Desconocido';
-  
-  if (!solicitudAprobada) {
-    return 'Pendiente de aprobación';
-  }
-  
-  if (!prevueloExiste) {
-    return 'Solicitud aprobada, pendiente de prevuelo';
-  }
-  
-  if (!prevueloAprobado) {
-    return 'Prevuelo pendiente de aprobación';
-  }
-  
-  if (!postvueloExiste) {
-    return 'Prevuelo aprobado, pendiente de postvuelo';
-  }
-  
-  if (!postvueloAprobado) {
-    return 'Postvuelo pendiente de aprobación';
-  }
-  
-  return 'Proceso Completado';
-};
-
-const getAllSolicitudesConEtapas = async () => {
-  try {
-    const solicitudes = await getSolicitudesVuelo();
-    const prevuelos = await prevueloHelper.getPrevuelos();
-    const postvuelos = await postvueloHelper.getPostvuelos();
-    
-    return solicitudes.map(solicitud => {
-      const solicitudExiste = true;
-      const solicitudAprobada = solicitud.estado === 'Aprobado';
-      
-      let prevueloExiste = false;
-      let prevueloAprobado = false;
-      
-      if (solicitudAprobada) {
-        const prevuelo = prevuelos.find(p => p.solicitudesaprobadas === solicitud.consecutivo);
-        prevueloExiste = !!prevuelo;
-        prevueloAprobado = prevuelo ? prevuelo["estado del prevuelo"] === "Aprobado" : false;
-      }
-      
-      let postvueloExiste = false;
-      let postvueloAprobado = false;
-      
-      if (prevueloExiste && prevueloAprobado) {
-        const postvuelo = postvuelos.find(p => p['consecutivo-solicitud'] === solicitud.consecutivo);
-        postvueloExiste = !!postvuelo;
-        postvueloAprobado = postvuelo ? postvuelo["estado del postvuelo"] === "Aprobado" : false;
-      }
-      
-      return {
-        ...solicitud,
-        solicitudExiste,
-        solicitudAprobada,
-        prevueloExiste,
-        prevueloAprobado,
-        postvueloExiste,
-        postvueloAprobado,
-        estadoProceso: determinarEstadoProceso(
-          solicitudExiste, 
-          solicitudAprobada, 
-          prevueloExiste, 
-          prevueloAprobado, 
-          postvueloExiste, 
-          postvueloAprobado
-        )
-      };
-    });
-  } catch (error) {
-    console.error('Error al obtener todas las solicitudes con etapas:', error);
-    throw error;
-  }
-};
-
-const getAllSolicitudesConEtapasEmail = async (email) => {
-  try {
-    const solicitudesconetapasemail = await getAllSolicitudesConEtapas();
- 
-        return solicitudesconetapasemail.filter(solicitud => 
-          solicitud.usuario && solicitud.usuario.toLowerCase() === email.toLowerCase()
-        );
-      } catch (error) {
-        console.error('Error al obtener solicitudes con etapas por email:', error);
-        throw error;
-      }
-
-};
-
-
-
-// fase mejorara para obtener los consecutivos con su estado en cada proceso 
 
 const obtenerTodasLasHojas = async () => {
   const sheets = await getSheetsClient();
   
-  // Una sola llamada a la API para obtener todas las hojas
   const batchRequest = {
     spreadsheetId,
     ranges: [
@@ -431,7 +164,6 @@ const obtenerTodasLasHojas = async () => {
   };
 };
 
-// Función principal que obtiene todas las solicitudes con sus estados
 const getSolicitudesConEstadosGenerales = async () => {
   try {
     const { solicitudVuelo, prevuelo, postVuelo } = await obtenerTodasLasHojas();
@@ -440,11 +172,9 @@ const getSolicitudesConEstadosGenerales = async () => {
       throw new Error('No se pudieron obtener los datos de las hojas');
     }
 
-    // Crear mapas para prevuelo y postvuelo para búsqueda rápida
     const mapaPrevuelo = {};
     const mapaPostVuelo = {};
 
-    // Procesar datos de prevuelo (empezar desde índice 1 para saltar headers)
     for (let i = 1; i < prevuelo.length; i++) {
       if (prevuelo[i].length > 35) {
         const email = prevuelo[i][1];
@@ -457,7 +187,6 @@ const getSolicitudesConEstadosGenerales = async () => {
       }
     }
 
-    // Procesar datos de postvuelo
     for (let i = 1; i < postVuelo.length; i++) {
       if (postVuelo[i].length > 16) {
         const prevueloAsociado = postVuelo[i][1];
@@ -471,7 +200,6 @@ const getSolicitudesConEstadosGenerales = async () => {
 
     const resultados = [];
 
-    // Procesar solicitudes - CAMBIO PRINCIPAL: Solo requiere consecutivo
     for (let i = 1; i < solicitudVuelo.length; i++) {
       if (solicitudVuelo[i].length > 46) {
         const fila = solicitudVuelo[i];
@@ -482,13 +210,10 @@ const getSolicitudesConEstadosGenerales = async () => {
         const fecha = fila[5];
         const estadoSolicitud = fila[46];
 
-        // CAMBIO: Solo requiere consecutivo, no email
         if (consecutivo) {
-          // Buscar estados de prevuelo y postvuelo
           let estadoPrevuelo = "No iniciado";
           let estadoPostVuelo = "No iniciado";
 
-          // Si hay email, buscar en mapas
           if (email) {
             const clave = `${consecutivo}-${email}`;
             estadoPrevuelo = mapaPrevuelo[clave] || "No iniciado";
@@ -542,24 +267,19 @@ const getSolicitudesConEstadosGenerales = async () => {
   }
 };
 
-// FUNCIÓN CORREGIDA: Determinar estado general incluyendo estado de solicitud
 const determinarEstadoGeneral = (estadoSolicitud, estadoPrevuelo, estadoPostVuelo) => {
-  // Si la solicitud está cancelada, siempre devolver cancelado
   if (estadoSolicitud === "Cancelado") {
     return "Cancelado";
   }
   
-  // Si la solicitud está pendiente, devolver solicitud pendiente
   if (estadoSolicitud === "Pendiente") {
     return "Solicitud Pendiente";
   }
   
-  // Si la solicitud está en espera
   if (estadoSolicitud === "Enespera") {
     return "Solicitud en Espera";
   }
   
-  // Solo evaluar prevuelo y postvuelo si la solicitud está aprobada
   if (estadoSolicitud === "Aprobado") {
     if (estadoPrevuelo === "Aprobado" && estadoPostVuelo === "Aprobado") {
       return "Completado";
@@ -580,7 +300,6 @@ const determinarEstadoGeneral = (estadoSolicitud, estadoPrevuelo, estadoPostVuel
     return "Sin Postvuelo";
   }
   
-  // Estado por defecto
   return "Estado Desconocido";
 };
 
@@ -631,7 +350,6 @@ const getSolicitudesConEstadosGeneralesSolicitante = async () => {
           const estadoPrevuelo = mapaPrevuelo[consecutivo] || "No iniciado";
           const estadoPostVuelo = mapaPostVuelo[consecutivo] || "No iniciado";
 
-          // Formatear fecha si es necesario
           let fechaFormateada = fecha;
           if (fecha instanceof Date) {
             fechaFormateada = fecha.toISOString().split('T')[0];
@@ -654,7 +372,6 @@ const getSolicitudesConEstadosGeneralesSolicitante = async () => {
       }
     }
 
-    // Ordenar por consecutivo (más reciente primero)
     return resultados.sort((a, b) => {
       const numA = parseInt(a.consecutivo.replace(/\D/g, ''), 10);
       const numB = parseInt(b.consecutivo.replace(/\D/g, ''), 10);
@@ -667,7 +384,6 @@ const getSolicitudesConEstadosGeneralesSolicitante = async () => {
   }
 };
 
-// Función para obtener resumen por email (equivalente a getResumenSolicitudes)
 const getResumenSolicitudesPorEmail = async (email) => {
   try {
     const todasLasSolicitudes = await getSolicitudesConEstadosGenerales();
@@ -913,8 +629,6 @@ const getResumenSolicitudesGeneral = async () => {
   }
 };
 
-
-// Función para obtener solicitud específica por consecutivo y email
 const getSolicitudPorConsecutivo = async (consecutivo, email = null) => {
   try {
     const todasLasSolicitudes = await getSolicitudesConEstadosGenerales();
@@ -932,7 +646,6 @@ const getSolicitudPorConsecutivo = async (consecutivo, email = null) => {
   }
 };
 
-// Función para obtener solicitudes por estado general
 const getSolicitudesPorEstadoGeneral = async (estadoGeneral, email = null) => {
   try {
     const todasLasSolicitudes = await getSolicitudesConEstadosGenerales();
@@ -948,30 +661,6 @@ const getSolicitudesPorEstadoGeneral = async (estadoGeneral, email = null) => {
     throw error;
   }
 };
-
-// Función de utilidad para obtener todos los estados únicos
-const getEstadosDisponibles = async () => {
-  try {
-    const todasLasSolicitudes = await getSolicitudesConEstadosGenerales();
-    
-    const estadosGenerales = [...new Set(todasLasSolicitudes.map(s => s.estadoGeneral))];
-    const estadosSolicitud = [...new Set(todasLasSolicitudes.map(s => s.estadoSolicitud))];
-    const estadosPrevuelo = [...new Set(todasLasSolicitudes.map(s => s.estadoPrevuelo))];
-    const estadosPostVuelo = [...new Set(todasLasSolicitudes.map(s => s.estadoPostVuelo))];
-    
-    return {
-      estadosGenerales,
-      estadosSolicitud,
-      estadosPrevuelo,
-      estadosPostVuelo
-    };
-  } catch (error) {
-    console.error('Error al obtener estados disponibles:', error);
-    throw error;
-  }
-};
-
-
 
 const editarSolicitudPorConsecutivo = async (consecutivo, nuevosDatos) => {
   const sheets = await getSheetsClient();
@@ -1429,8 +1118,6 @@ if (piloto) {
       }
     }
     
-    // Actualizar estado del dron
-// ✅ MODIFICADO: Solo actualizar dron si está aprobado
 if (estado === 'Aprobado') {
   // Actualizar estado del dron
   const dronesResponse = await sheets.spreadsheets.values.get({
@@ -1497,7 +1184,6 @@ if (estado === 'Aprobado') {
     const emailUsuarioSolicitante = 'apinto@sevicol.com.co';
     const emailUsuarioquerecibe = emailPiloto;
     
-// ✅ MODIFICADO: Notificaciones según el estado
 if (estado === 'Aprobado') {
   await firebaseHelper.enviarNotificacion(
     emailUsuarioSolicitante,
@@ -1824,32 +1510,15 @@ const generarCancelacionPrevuelo = async (consecutivo, notas = '') => {
 export const solicitudHelper = {
   getSolicitudesVuelo,
   guardarSolicitud,
-
-  getSolicitudesByStatus,
-  getSolicitudesByCliente,
-  getEssolicitudPendiente,
-  getSolicitudesByEmail,
-  getSolicitudesByLastEmail,
-  getSolicitudesByEmailAndStatus,
-  getSolicitudesEnProceso,
-  getSolicitudesEnProcesoPorEmail,
-  getAllSolicitudesConEtapas,
-  getAllSolicitudesConEtapasEmail,
-  determinarEstadoProceso,
-  getSolicitudConEtapas,
-  getSiguienteConsecutivo,
-
-  getSolicitudesByConsecutivo,
-
+  getSiguienteConsecutivo,  
   obtenerTodasLasHojas,
+  getSolicitudesByConsecutivo,
   getSolicitudesConEstadosGenerales,
-  getResumenSolicitudesPorEmail,
-  getResumenSolicitudesGeneral,
-  getResumenSolicitudesPorSolicitante,
-  getSolicitudPorConsecutivo,
   getSolicitudesPorEstadoGeneral,
-  getEstadosDisponibles,
-
+  getSolicitudPorConsecutivo,
+  getResumenSolicitudesGeneral,
+  getResumenSolicitudesPorEmail,
+  getResumenSolicitudesPorSolicitante,
   editarSolicitudPorConsecutivo,
   procesarArchivos,
   putSolicitudByStatus,

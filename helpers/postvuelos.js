@@ -270,32 +270,6 @@ const enviarNotificacionPostvuelo  = async (datos) => {
   }
 };
 
-
-  const getPostvuelosByStatus = async (status) => {
-    const postvuelos = await getPostvuelos();
-    return postvuelos.filter(postvuelo => 
-      postvuelo["estado del postvuelo"] && postvuelo["estado del postvuelo"].toLowerCase() === status.toLowerCase()
-    );
-  };
-  const getEsPostvueloPendiente = async (consecutivo) => {
-    const postvuelo = await getPostvueloByConsecutivo(consecutivo);
-    return postvuelo && postvuelo["estado del postvuelo"] && postvuelo["estado del postvuelo"].toLowerCase() === 'pendiente';
-  };
-  const getPostvuelosByEmail = async (email) => {
-    const postvuelos = await getPostvuelos();
-    return postvuelos.filter(postvuelo => 
-      postvuelo.usuario && postvuelo.usuario.toLowerCase() === email.toLowerCase()
-    );
-  };
-  const getPostvuelosByEmailAndStatus = async (email, status) => {
-    const postvuelos = await getPostvuelos();
-    return postvuelos.filter(postvuelo => 
-      postvuelo["correo de usuario"] && 
-      postvuelo["correo de usuario"].toLowerCase() === email.toLowerCase() &&
-      postvuelo["estado del postvuelo"] && 
-      postvuelo["estado del postvuelo"].toLowerCase() === status.toLowerCase()
-    );
-  };
   const getPostvueloByConsecutivo = async (consecutivo) => {
     const postvuelos = await getPostvuelos();
     return postvuelos.find(postvuelo => 
@@ -303,71 +277,6 @@ const enviarNotificacionPostvuelo  = async (datos) => {
     );
   };
 
-const getPostvuelosConEtapas = async () => {
-  try {
-    const postvuelos = await getPostvuelos();
-    
-    return postvuelos.map(postvuelo => {
-      return {
-        ...postvuelo,
-        solicitudExiste: true, // Si hay postvuelo, la solicitud debe existir
-        solicitudAprobada: true, // Si hay postvuelo, la solicitud debe estar aprobada
-        prevueloExiste: true, // Si hay postvuelo, el prevuelo debe existir
-        prevueloAprobado: true, // Si hay postvuelo, el prevuelo debe estar aprobado
-        postvueloExiste: true, // El postvuelo obviamente existe
-        postvueloAprobado: postvuelo["estado del postvuelo"] === "Aprobado",
-        estadoProceso: postvuelo["estado del postvuelo"] === "Aprobado" 
-          ? 'Proceso Completado' 
-          : 'Postvuelo pendiente de aprobación'
-      };
-    });
-  } catch (error) {
-    console.error('Error al obtener postvuelos con etapas:', error);
-    throw error;
-  }
-};
-
-const getPostvuelosConEtapasEmail = async (email) => {
-  try {
-    const postvuelosconetapasemail = await getPostvuelosConEtapas();
- 
-        // Filtrar por el email del usuario
-        return postvuelosconetapasemail.filter(prevuelo => 
-          prevuelo["correo de usuario"] && prevuelo["correo de usuario"].toLowerCase() === email.toLowerCase()
-        );
-      } catch (error) {
-        console.error('Error al obtener postvuelos con etapas por email:', error);
-        throw error;
-      }
-
-};
-
-const getPostvueloConEtapas = async (consecutivo) => {
-  try {
-    const postvuelos = await getPostvuelos();
-    const postvuelo = postvuelos.find(p => p['consecutivo-solicitud'] === consecutivo);
-    
-    if (!postvuelo) {
-      return null;
-    }
-    
-    return {
-      ...postvuelo,
-      solicitudExiste: true,
-      solicitudAprobada: true,
-      prevueloExiste: true,
-      prevueloAprobado: true,
-      postvueloExiste: true,
-      postvueloAprobado: postvuelo["estado del postvuelo"] === "Aprobado",
-      estadoProceso: postvuelo["estado del postvuelo"] === "Aprobado" 
-        ? 'Proceso Completado' 
-        : 'Postvuelo pendiente de aprobación'
-    };
-  } catch (error) {
-    console.error('Error al obtener postvuelo con etapas:', error);
-    throw error;
-  }
-};
 
   const editarPostvueloPorConsecutivo = async (consecutivo, nuevosDatos) => {
     const sheets = await getSheetsClient();
@@ -582,24 +491,6 @@ const subirArchivosACarpetaExistente = async (archivos, carpetaId) => {
   
   return carpeta.data.webViewLink;
 };
-
-// const buscarCarpetaPorNombre = async (nombreCarpeta, parentFolderId) => {
-//   const drive = await getDriveClient();
-  
-//   // Crear consulta para buscar por nombre exacto dentro de la carpeta padre
-//   let query = `name = '${nombreCarpeta}' and mimeType = 'application/vnd.google-apps.folder'`;
-//   if (parentFolderId) {
-//     query += ` and '${parentFolderId}' in parents`;
-//   }
-  
-//   const response = await drive.files.list({
-//     q: query,
-//     fields: 'files(id, name, webViewLink)',
-//     spaces: 'drive'
-//   });
-  
-//   return response.data.files.length > 0 ? response.data.files[0] : null;
-// };
 
 const buscarCarpetaPorNombre = async (nombreCarpeta, parentFolderId) => {
   const drive = await getDriveClient();
@@ -1015,14 +906,7 @@ export const postvueloHelper = {
   getPostvuelos,
   calcularDuracion,
   guardarPostvuelo,
-  getPostvuelosByStatus,
-  getEsPostvueloPendiente,
-  getPostvuelosByEmail,
-  getPostvuelosByEmailAndStatus,
   getPostvueloByConsecutivo,
-  getPostvuelosConEtapas,
-  getPostvuelosConEtapasEmail,
-  getPostvueloConEtapas,
   editarPostvueloPorConsecutivo,
   procesarArchivos,
   getSiguienteConsecutivo,
