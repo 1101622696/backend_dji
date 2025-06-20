@@ -113,7 +113,7 @@ crearSolicitud: async (req, res) => {
 
 
 
-
+// nuevo
 obtenerSolicitudes: async (req, res) => {
   try {
     const data = await solicitudHelper.getSolicitudesVuelo();
