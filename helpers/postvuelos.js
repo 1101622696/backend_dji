@@ -133,21 +133,30 @@ const obtenerDatosPrevuelo = async (consecutivo) => {
 };
 
 const calcularDuracion = (horaInicio, horaFin) => {
-  const [horaInicioHoras, horaInicioMinutos] = horaInicio.split(':').map(Number);
-  const [horaFinHoras, horaFinMinutos] = horaFin.split(':').map(Number);
-  
-  let minutosInicio = horaInicioHoras * 60 + horaInicioMinutos;
-  let minutosFin = horaFinHoras * 60 + horaFinMinutos;
-  
-  if (minutosFin < minutosInicio) {
-    minutosFin += 24 * 60; 
+  if (!horaInicio || !horaFin || horaInicio.trim() === '' || horaFin.trim() === '') {
+    console.warn('calcularDuracion: horaInicio o horaFin están vacíos o undefined');
+    return 0;
   }
-  
-  return minutosFin - minutosInicio;
-  
+
+  try {
+    const [horaInicioHoras, horaInicioMinutos] = horaInicio.split(':').map(Number);
+    const [horaFinHoras, horaFinMinutos] = horaFin.split(':').map(Number);
+    
+    let minutosInicio = horaInicioHoras * 60 + horaInicioMinutos;
+    let minutosFin = horaFinHoras * 60 + horaFinMinutos;
+    
+    if (minutosFin < minutosInicio) {
+      minutosFin += 24 * 60; 
+    }
+    
+    return minutosFin - minutosInicio;
+  } catch (error) {
+    console.error('Error al calcular duración:', error);
+    return 0;
+  }
 };
 
-// const guardarPostvuelo = async ({ consecutivo, username, horaInicio, horaFin, duracion, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail, estado }) => {
+// const guardarPostvuelo = async ({ consecutivo, username, horaInicio, horaFin, duracion , distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail, estado }) => {
 //   const sheets = await getSheetsClient();
   
 //   const datosPrevuelo = await obtenerDatosPrevuelo(consecutivo);
@@ -175,10 +184,29 @@ const calcularDuracion = (horaInicio, horaFin) => {
 //     requestBody: { values: [nuevaFila] },
 //   });
 
+//     try {
+//     const destinatario = "apinto@sevicol.com.co";
+    
+//     await enviarNotificacionPostvuelo({
+//       destinatario,
+//       consecutivo: consecutivo,
+//       piloto: username,
+//       fecha,
+//       estado,
+//       empresa,
+//       observaciones: observacionesVuelo
+//     });
+    
+//     console.log(`Notificación enviada para el postvuelo ${idPostvuelo}`);
+//   } catch (error) {
+//     console.error('Error al enviar notificación:', error);
+//   }
+
 //   return { idPostvuelo };
 // };
 
-const guardarPostvuelo = async ({ consecutivo, username, horaInicio, horaFin, duracion, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail, estado }) => {
+
+const guardarPostvuelo = async ({ consecutivo, username, horaInicio, horaFin, duracion , distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo, fechadeCreacion, Link, useremail, estado }) => {
   const sheets = await getSheetsClient();
   
   const datosPrevuelo = await obtenerDatosPrevuelo(consecutivo);
@@ -205,24 +233,6 @@ const guardarPostvuelo = async ({ consecutivo, username, horaInicio, horaFin, du
     insertDataOption: 'INSERT_ROWS',
     requestBody: { values: [nuevaFila] },
   });
-
-    try {
-    const destinatario = "apinto@sevicol.com.co";
-    
-    await enviarNotificacionPostvuelo({
-      destinatario,
-      consecutivo: consecutivo,
-      piloto: username,
-      fecha,
-      estado,
-      empresa,
-      observaciones: observacionesVuelo
-    });
-    
-    console.log(`Notificación enviada para el postvuelo ${idPostvuelo}`);
-  } catch (error) {
-    console.error('Error al enviar notificación:', error);
-  }
 
   return { idPostvuelo };
 };
@@ -573,6 +583,24 @@ const subirArchivosACarpetaExistente = async (archivos, carpetaId) => {
   return carpeta.data.webViewLink;
 };
 
+// const buscarCarpetaPorNombre = async (nombreCarpeta, parentFolderId) => {
+//   const drive = await getDriveClient();
+  
+//   // Crear consulta para buscar por nombre exacto dentro de la carpeta padre
+//   let query = `name = '${nombreCarpeta}' and mimeType = 'application/vnd.google-apps.folder'`;
+//   if (parentFolderId) {
+//     query += ` and '${parentFolderId}' in parents`;
+//   }
+  
+//   const response = await drive.files.list({
+//     q: query,
+//     fields: 'files(id, name, webViewLink)',
+//     spaces: 'drive'
+//   });
+  
+//   return response.data.files.length > 0 ? response.data.files[0] : null;
+// };
+
 const buscarCarpetaPorNombre = async (nombreCarpeta, parentFolderId) => {
   const drive = await getDriveClient();
   
@@ -582,15 +610,23 @@ const buscarCarpetaPorNombre = async (nombreCarpeta, parentFolderId) => {
     query += ` and '${parentFolderId}' in parents`;
   }
   
-  const response = await drive.files.list({
-    q: query,
-    fields: 'files(id, name, webViewLink)',
-    spaces: 'drive'
-  });
-  
-  return response.data.files.length > 0 ? response.data.files[0] : null;
+  try {
+    const response = await drive.files.list({
+      q: query,
+      fields: 'files(id, name, webViewLink)',
+      spaces: 'drive'
+    });
+    
+    if (response.data.files && response.data.files.length > 0) {
+      return response.data.files[0]; // Retorna la primera carpeta encontrada
+    }
+    
+    return null; // No se encontró la carpeta
+  } catch (error) {
+    console.error('Error al buscar carpeta:', error);
+    return null;
+  }
 };
-
 
 const generarValidacionPostvuelo = async (consecutivo, piloto, numeroserie, notas = '') => {
   try {
@@ -612,7 +648,7 @@ const generarValidacionPostvuelo = async (consecutivo, piloto, numeroserie, nota
     const consecutivoIndex = headersPostvuelo.findIndex(header => 
       header.toLowerCase() === 'consecutivo-solicitud');
     
-    const PilotoIndex = headersPostvuelo.findIndex(header => 
+    const pilotoIndex = headersPostvuelo.findIndex(header => 
       header.toLowerCase() === 'piloto-postvuelo');
     const duracionIndex = headersPostvuelo.findIndex(header => 
       header.toLowerCase() === 'duración') || 7;  // Columna H (índice 7)
@@ -649,6 +685,7 @@ const generarValidacionPostvuelo = async (consecutivo, piloto, numeroserie, nota
     const distancia = rowPostvuelo[distanciaIndex] ? parseFloat(rowPostvuelo[distanciaIndex]) || 0 : 0;
     const emailPiloto = correoPilotoIndex !== -1 ? rowPostvuelo[correoPilotoIndex] : '';
     const dronUsado = dronUsadoIndex !== -1 ? rowPostvuelo[dronUsadoIndex] : '';
+    const pilotoseleccionado = pilotoIndex !== -1 ? rowPostvuelo[pilotoIndex] : '';
     
     // Verificar que se obtuvieron correctamente los valores necesarios
     if (!emailPiloto) {
@@ -897,7 +934,7 @@ const generarValidacionPostvuelo = async (consecutivo, piloto, numeroserie, nota
       nuevoCodigo,              // Código consecutivo
       consecutivo,              // ID del registro de SolicitudVuelo
       "Aprobado",               // Estado
-      PilotoIndex,              // Email del piloto 
+      pilotoseleccionado,              // Email del piloto 
       dronUsado,                // Dron usado
       fechaActual,              // Fecha actual
       notas,                    // Notas
@@ -914,23 +951,23 @@ const generarValidacionPostvuelo = async (consecutivo, piloto, numeroserie, nota
       }
     });
     
-   try {
-    const destinatario = correoPilotoIndex;
+  //  try {
+  //   const destinatario = correoPilotoIndex;
     
-    await enviaAprobacionPostvuelo({
-      destinatario,
-      consecutivo: consecutivo,
-      piloto: PilotoIndex,
-      fecha:fechaPostIndex,
-      estado: "Aprobado",
-      empresa:empresaPostIndex,
-      notas
-    });
+  //   await enviaAprobacionPostvuelo({
+  //     destinatario,
+  //     consecutivo: consecutivo,
+  //     piloto: pilotoseleccionado,
+  //     fecha:fechaPostIndex,
+  //     estado: "Aprobado",
+  //     empresa:empresaPostIndex,
+  //     notas
+  //   });
     
-    console.log(`Notificación enviada para el postvuelo ${consecutivo}`);
-  } catch (error) {
-    console.error('Error al enviar notificación:', error);
-  }
+  //   console.log(`Notificación enviada para el postvuelo ${consecutivo}`);
+  // } catch (error) {
+  //   console.error('Error al enviar notificación:', error);
+  // }
 
     return {
       codigo: nuevoCodigo,
@@ -942,37 +979,37 @@ const generarValidacionPostvuelo = async (consecutivo, piloto, numeroserie, nota
   }
 };
 
-const enviaAprobacionPostvuelo  = async (datos) => {
-  try {
-    const transporter = createTransporter();
+// const enviaAprobacionPostvuelo  = async (datos) => {
+//   try {
+//     const transporter = createTransporter();
     
-    const info = await transporter.sendMail({
-      from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
-      to: datos.destinatario,
-      subject: `Nuevo Postvuelo Registrado - Consecutivo: ${datos.consecutivo}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-          <h2 style="color: #333;">Aprobación de Postvuelo</h2>
-          <p>Su postvuelo fue aprobdo</p>
-          <ul style="list-style-type: none; padding: 0;">
-            <li><strong>Consecutivo:</strong> ${datos.consecutivo}</li>
-            <li><strong>Fecha:</strong> ${datos.fecha}</li>
-            <li><strong>Estado:</strong> ${datos.estado}</li>
-            <li><strong>Empresa:</strong> ${datos.empresa}</li>
-          </ul>
-          <p>Saludos cordiales,<br>Sistema de Gestión de Vuelos</p>
-        </div>
-      `
-    });
+//     const info = await transporter.sendMail({
+//       from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
+//       to: datos.destinatario,
+//       subject: `Nuevo Postvuelo Registrado - Consecutivo: ${datos.consecutivo}`,
+//       html: `
+//         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+//           <h2 style="color: #333;">Aprobación de Postvuelo</h2>
+//           <p>Su postvuelo fue aprobdo</p>
+//           <ul style="list-style-type: none; padding: 0;">
+//             <li><strong>Consecutivo:</strong> ${datos.consecutivo}</li>
+//             <li><strong>Fecha:</strong> ${datos.fecha}</li>
+//             <li><strong>Estado:</strong> ${datos.estado}</li>
+//             <li><strong>Empresa:</strong> ${datos.empresa}</li>
+//           </ul>
+//           <p>Saludos cordiales,<br>Sistema de Gestión de Vuelos</p>
+//         </div>
+//       `
+//     });
     
-    console.log('Correo enviado:', info.messageId);
-    console.log('Correo enviado al piloto:', datos.piloto);
-    return info;
-  } catch (error) {
-    console.error('Error al enviar correo de notificación:', error);
-    throw error;
-  }
-};
+//     console.log('Correo enviado:', info.messageId);
+//     console.log('Correo enviado al piloto:', datos.piloto);
+//     return info;
+//   } catch (error) {
+//     console.error('Error al enviar correo de notificación:', error);
+//     throw error;
+//   }
+// };
 
 export const postvueloHelper = {
   getPostvuelos,

@@ -7,9 +7,7 @@ const httpPostvuelos = {
     const { email, nombre } = req.usuariobdtoken;
 
     const { consecutivo, horaInicio, horaFin, distanciaRecorrida, alturaMaxima, incidentes, propositoAlcanzado, observacionesVuelo } = req.body;
-    
-    const duracion = postvueloHelper.calcularDuracion(horaInicio, horaFin);
-   
+       
     const estado = req.body.estado || "Pendiente";
     const fechadeCreacion = new Date().toISOString().split('T')[0];
   
@@ -23,7 +21,6 @@ const httpPostvuelos = {
       username: nombre, 
       horaInicio, 
       horaFin, 
-      duracion, 
       distanciaRecorrida, 
       alturaMaxima, 
       incidentes, 
@@ -45,7 +42,6 @@ const httpPostvuelos = {
           username: nombre, 
           horaInicio, 
           horaFin, 
-          duracion, 
           distanciaRecorrida, 
           alturaMaxima, 
           incidentes, 
@@ -343,7 +339,9 @@ editarPostvuelo: async (req, res) => {
     const nuevosDatos = req.body;
     const { email, nombre } = req.usuariobdtoken;
 
-    // Calcular duración automáticamente si se modifican las horas
+    // console.log('Editando postvuelo:', consecutivo);
+    // console.log('Archivos recibidos:', req.files ? req.files.length : 0);
+
     if (nuevosDatos.horaInicio && nuevosDatos.horaFin) {
       nuevosDatos.duracion = postvueloHelper.calcularDuracion(nuevosDatos.horaInicio, nuevosDatos.horaFin);
     } else if (nuevosDatos.horaInicio || nuevosDatos.horaFin) {
@@ -353,14 +351,24 @@ editarPostvuelo: async (req, res) => {
       if (datosActuales) {
         const horaInicio = nuevosDatos.horaInicio || datosActuales.horaInicio;
         const horaFin = nuevosDatos.horaFin || datosActuales.horaFin;
-        nuevosDatos.duracion = postvueloHelper.calcularDuracion(horaInicio, horaFin);
+        if (horaInicio && horaFin) {
+          nuevosDatos.duracion = postvueloHelper.calcularDuracion(horaInicio, horaFin);
+        }
       }
     }
 
+    // Procesar archivos si existen
     if (req.files && req.files.length > 0) {
-      // Procesará los archivos reutilizando la carpeta si existe
-      const Link = await postvueloHelper.procesarArchivos(req.files, consecutivo);
-      nuevosDatos.Link = Link;
+      // console.log('Procesando archivos para consecutivo:', consecutivo);
+      try {
+        // Usar el consecutivo del parámetro de la URL para crear/buscar la carpeta
+        const Link = await postvueloHelper.procesarArchivos(req.files, consecutivo);
+        // console.log('Link de carpeta generado:', Link);
+        nuevosDatos.Link = Link;
+      } catch (error) {
+        console.error('Error al procesar archivos:', error);
+        // No fallar la actualización si hay error con archivos
+      }
     }
     
     // Añadir datos del usuario token si no están en los datos nuevos

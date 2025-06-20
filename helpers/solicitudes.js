@@ -48,7 +48,7 @@ const getDriveClient = async () => {
   return google.drive({ version: 'v3', auth: client });
 };
 
-const obtenerDatosSolicitud = async (nombreHoja, rango = 'A1:AY1000') => {
+const obtenerDatosSolicitud = async (nombreHoja, rango = 'A1:BF1000') => {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
@@ -93,11 +93,37 @@ const getSiguienteConsecutivo = async () => {
   return `SAV-${siguiente}`;
 };
 
-const guardarSolicitud = async ({ useremail, username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final, useremail_final }) => {
+const calcularDuracionSolicitud = (hora_inicio, hora_fin) => {
+  if (!hora_inicio || !hora_fin || hora_inicio.trim() === '' || hora_fin.trim() === '') {
+    console.warn('calcularDuracion: hora_inicio o hora_fin están vacíos o undefined');
+    return 0; 
+  }
+
+  try {
+    const [horaInicioHoras, horaInicioMinutos] = hora_inicio.split(':').map(Number);
+    const [horaFinHoras, horaFinMinutos] = hora_fin.split(':').map(Number);
+    
+    let minutosInicio = horaInicioHoras * 60 + horaInicioMinutos;
+    let minutosFin = horaFinHoras * 60 + horaFinMinutos;
+    
+    if (minutosFin < minutosInicio) {
+      minutosFin += 24 * 60; 
+    }
+    
+    return minutosFin - minutosInicio;
+  } catch (error) {
+    console.error('Error al calcular duración:', error);
+    return 0;
+  }
+};
+
+const guardarSolicitud = async ({ useremail, username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final, useremail_final, duracion }) => {
   const sheets = await getSheetsClient();
   const consecutivo = await getSiguienteConsecutivo();
  
-  const nuevaFila = [consecutivo, useremail === null ? '' : useremail, username === null ? '' : username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final, useremail_final];
+  const duracionestimada = duracion || calcularDuracionSolicitud(hora_inicio, hora_fin);
+
+  const nuevaFila = [consecutivo, useremail === null ? '' : useremail, username === null ? '' : username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final, useremail_final, "", "", "", "", "", duracionestimada];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
@@ -388,7 +414,7 @@ const obtenerTodasLasHojas = async () => {
   const batchRequest = {
     spreadsheetId,
     ranges: [
-      'SolicitudVuelo!A1:AY1000',
+      'SolicitudVuelo!A1:BF1000',
       'Prevuelo!A1:AK1000', 
       'PostVuelo!A1:S1000'
     ],
@@ -405,28 +431,7 @@ const obtenerTodasLasHojas = async () => {
   };
 };
 
-// Función para determinar el estado general
-const determinarEstadoGeneral = (estadoPrevuelo, estadoPostVuelo) => {
-  if (estadoPrevuelo === "Aprobado" && estadoPostVuelo === "Aprobado") {
-    return "Completado";
-  }
-  if (estadoPostVuelo === "Pendiente") {
-    return "Postvuelo Pendiente";
-  }
-  if (estadoPrevuelo === "Pendiente") {
-    return "Prevuelo Pendiente";
-  }
-  if (estadoPrevuelo === "No iniciado") {
-    return "Prevuelo no iniciado";
-  }
-  if (estadoPrevuelo === "Cancelado") {
-    return "Cancelado";
-  }
-  
-  return "Sin Postvuelo";
-};
-
-// Función principal que obtiene todas las solicitudes con sus estados (equivalente a getSolicitudesConEstadosGenerales)
+// Función principal que obtiene todas las solicitudes con sus estados
 const getSolicitudesConEstadosGenerales = async () => {
   try {
     const { solicitudVuelo, prevuelo, postVuelo } = await obtenerTodasLasHojas();
@@ -466,7 +471,7 @@ const getSolicitudesConEstadosGenerales = async () => {
 
     const resultados = [];
 
-    // Procesar solicitudes
+    // Procesar solicitudes - CAMBIO PRINCIPAL: Solo requiere consecutivo
     for (let i = 1; i < solicitudVuelo.length; i++) {
       if (solicitudVuelo[i].length > 46) {
         const fila = solicitudVuelo[i];
@@ -477,10 +482,29 @@ const getSolicitudesConEstadosGenerales = async () => {
         const fecha = fila[5];
         const estadoSolicitud = fila[46];
 
-        if (consecutivo && email) {
-          const clave = `${consecutivo}-${email}`;
-          const estadoPrevuelo = mapaPrevuelo[clave] || "No iniciado";
-          const estadoPostVuelo = mapaPostVuelo[consecutivo] || "No iniciado";
+        // CAMBIO: Solo requiere consecutivo, no email
+        if (consecutivo) {
+          // Buscar estados de prevuelo y postvuelo
+          let estadoPrevuelo = "No iniciado";
+          let estadoPostVuelo = "No iniciado";
+
+          // Si hay email, buscar en mapas
+          if (email) {
+            const clave = `${consecutivo}-${email}`;
+            estadoPrevuelo = mapaPrevuelo[clave] || "No iniciado";
+            estadoPostVuelo = mapaPostVuelo[consecutivo] || "No iniciado";
+          } else {
+            // Si no hay email, buscar solo por consecutivo en postvuelo
+            estadoPostVuelo = mapaPostVuelo[consecutivo] || "No iniciado";
+            
+            // Para prevuelo sin email, buscar cualquier entrada con ese consecutivo
+            for (const [clave, estado] of Object.entries(mapaPrevuelo)) {
+              if (clave.startsWith(`${consecutivo}-`)) {
+                estadoPrevuelo = estado;
+                break;
+              }
+            }
+          }
 
           // Formatear fecha si es necesario
           let fechaFormateada = fecha;
@@ -492,14 +516,14 @@ const getSolicitudesConEstadosGenerales = async () => {
 
           resultados.push({
             consecutivo,
-            email,
+            email: email || '',
             cliente: cliente || '',
             fecha: fechaFormateada || '',
             piloto: piloto || '',
             estadoSolicitud: estadoSolicitud || 'Pendiente',
             estadoPrevuelo,
             estadoPostVuelo,
-            estadoGeneral: determinarEstadoGeneral(estadoPrevuelo, estadoPostVuelo)
+            estadoGeneral: determinarEstadoGeneral(estadoSolicitud, estadoPrevuelo, estadoPostVuelo)
           });
         }
       }
@@ -516,6 +540,48 @@ const getSolicitudesConEstadosGenerales = async () => {
     console.error('Error al obtener solicitudes con estados generales:', error);
     throw error;
   }
+};
+
+// FUNCIÓN CORREGIDA: Determinar estado general incluyendo estado de solicitud
+const determinarEstadoGeneral = (estadoSolicitud, estadoPrevuelo, estadoPostVuelo) => {
+  // Si la solicitud está cancelada, siempre devolver cancelado
+  if (estadoSolicitud === "Cancelado") {
+    return "Cancelado";
+  }
+  
+  // Si la solicitud está pendiente, devolver solicitud pendiente
+  if (estadoSolicitud === "Pendiente") {
+    return "Solicitud Pendiente";
+  }
+  
+  // Si la solicitud está en espera
+  if (estadoSolicitud === "Enespera") {
+    return "Solicitud en Espera";
+  }
+  
+  // Solo evaluar prevuelo y postvuelo si la solicitud está aprobada
+  if (estadoSolicitud === "Aprobado") {
+    if (estadoPrevuelo === "Aprobado" && estadoPostVuelo === "Aprobado") {
+      return "Completado";
+    }
+    if (estadoPostVuelo === "Pendiente") {
+      return "Postvuelo Pendiente";
+    }
+    if (estadoPrevuelo === "Pendiente") {
+      return "Prevuelo Pendiente";
+    }
+    if (estadoPrevuelo === "No iniciado") {
+      return "Prevuelo no iniciado";
+    }
+    if (estadoPrevuelo === "Cancelado") {
+      return "Prevuelo Cancelado";
+    }
+    
+    return "Sin Postvuelo";
+  }
+  
+  // Estado por defecto
+  return "Estado Desconocido";
 };
 
 const getSolicitudesConEstadosGeneralesSolicitante = async () => {
@@ -582,7 +648,7 @@ const getSolicitudesConEstadosGeneralesSolicitante = async () => {
             estadoSolicitud: estadoSolicitud || 'Pendiente',
             estadoPrevuelo,
             estadoPostVuelo,
-            estadoGeneral: determinarEstadoGeneral(estadoPrevuelo, estadoPostVuelo)
+            estadoGeneral: determinarEstadoGeneral(estadoSolicitud, estadoPrevuelo, estadoPostVuelo)
           });
         }
       }
@@ -854,8 +920,10 @@ const getSolicitudPorConsecutivo = async (consecutivo, email = null) => {
     const todasLasSolicitudes = await getSolicitudesConEstadosGenerales();
     
     if (email) {
+      // Si se proporciona email, buscar coincidencia exacta
       return todasLasSolicitudes.find(s => s.consecutivo === consecutivo && s.email === email);
     } else {
+      // Si no se proporciona email, buscar solo por consecutivo
       return todasLasSolicitudes.find(s => s.consecutivo === consecutivo);
     }
   } catch (error) {
@@ -924,8 +992,8 @@ const editarSolicitudPorConsecutivo = async (consecutivo, nuevosDatos) => {
   
   const filaEditada = [
     filaActual[0], 
-    nuevosDatos.useremail || filaActual[1],
-    nuevosDatos.username || filaActual[2], 
+    nuevosDatos.pilotoemail !== undefined ? nuevosDatos.pilotoemail : filaActual[1],
+    nuevosDatos.pilotonombre !== undefined ? nuevosDatos.pilotonombre : filaActual[2],
     nuevosDatos.tipodeoperacionaerea || filaActual[3], 
     nuevosDatos.empresa || filaActual[4],
     nuevosDatos.fecha_inicio || filaActual[5], 
@@ -972,8 +1040,8 @@ const editarSolicitudPorConsecutivo = async (consecutivo, nuevosDatos) => {
     filaActual[46], 
     filaActual[47], 
     nuevosDatos.realizado || filaActual[48], 
-    nuevosDatos.username || filaActual[49], 
-    nuevosDatos.useremail || filaActual[50], 
+    filaActual[49], 
+    filaActual[50],  
   ];
 
   const filaEnHoja = filaIndex + 2; 
@@ -1158,7 +1226,7 @@ const buscarCarpetaPorNombre = async (nombreCarpeta, parentFolderId) => {
   return response.data.files.length > 0 ? response.data.files[0] : null;
 };
 
-const generarValidacionPrevuelo = async (consecutivo, numeroserie, piloto, notas = '') => {
+const generarValidacionPrevuelo = async (consecutivo, numeroserie, piloto, notas = '', estado = 'Aprobado') => {
   try {
     const sheets = await getSheetsClient();
     
@@ -1202,7 +1270,20 @@ const generarValidacionPrevuelo = async (consecutivo, numeroserie, piloto, notas
     if (!rowSolicitud) {
       throw new Error(`No se encontró el consecutivo ${consecutivo}`);
     }
-    
+
+    const estadoIndex = headersSolicitud.findIndex(header => 
+  header.toLowerCase() === 'estado');
+
+if (estadoIndex !== -1 && rowIndex !== -1) {
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `SolicitudVuelo!${String.fromCharCode(65 + estadoIndex)}${rowIndex + 1}`,
+    valueInputOption: 'RAW',
+    resource: {
+      values: [[estado]]
+    }
+  });
+}
     // Obtener empresa y fecha de la solicitud
     const empresa = empresaIndex !== -1 ? rowSolicitud[empresaIndex] : '';
     const fechaSolicitud = fechaIndex !== -1 ? rowSolicitud[fechaIndex] : '';
@@ -1212,19 +1293,23 @@ const generarValidacionPrevuelo = async (consecutivo, numeroserie, piloto, notas
     const usuarioAsignado = usuarioIndex !== -1 ? rowSolicitud[usuarioIndex] || '' : '';
     
     // Si no se recibió piloto y existe un usuario asignado, usamos el nombre_completo
-    let pilotoValor;
-    let usarNombreCompleto = false;
-    
-    if (!piloto && usuarioAsignado.trim() !== '') {
-      pilotoValor = nombreCompletoPiloto.trim();
-      usarNombreCompleto = true;
-      // console.log(`Usando nombre_completo como piloto: ${pilotoValor}`);
-    } else {
-      // Extraer valor del piloto si es un objeto
-      pilotoValor = typeof piloto === 'object' && piloto !== null
-        ? piloto.valor || piloto.label || JSON.stringify(piloto)
-        : (piloto || '');  // Si piloto es null/undefined, usar cadena vacía
-    }
+// Si viene piloto del frontend, usar ese; si no, usar el existente en la solicitud
+let pilotoValor;
+let usarNombreCompleto = false;
+
+if (piloto) {
+  // Priorizar el piloto que viene del frontend
+  pilotoValor = typeof piloto === 'object' && piloto !== null
+    ? piloto.valor || piloto.label || JSON.stringify(piloto)
+    : piloto;
+  usarNombreCompleto = false;
+} else if (usuarioAsignado.trim() !== '') {
+  // Si no viene piloto del frontend, usar el existente
+  pilotoValor = nombreCompletoPiloto.trim();
+  usarNombreCompleto = true;
+} else {
+  pilotoValor = '';
+}
     
     // Calcular fecha un día antes (si existe fecha en el registro)
     let fechaAnterior = '';
@@ -1345,47 +1430,51 @@ const generarValidacionPrevuelo = async (consecutivo, numeroserie, piloto, notas
     }
     
     // Actualizar estado del dron
-    const dronesResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: '3.Drones',
-    });
+// ✅ MODIFICADO: Solo actualizar dron si está aprobado
+if (estado === 'Aprobado') {
+  // Actualizar estado del dron
+  const dronesResponse = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: '3.Drones',
+  });
+  
+  const droneRows = dronesResponse.data.values || [];
+  if (droneRows.length > 1) {
+    // Buscar el dron por número de serie en la columna 2 (B - índice 1)
+    const numeroSerieIndex = 1; // Columna B (índice 1)
+    const disponibilidadCol = 'V'; // Columna V para disponibilidad
     
-    const droneRows = dronesResponse.data.values || [];
-    if (droneRows.length > 1) {
-      // Buscar el dron por número de serie en la columna 2 (B - índice 1)
-      const numeroSerieIndex = 1; // Columna B (índice 1)
-      const disponibilidadCol = 'V'; // Columna V para disponibilidad
-      
-      let droneRowIndex = -1;
-      for (let i = 1; i < droneRows.length; i++) {
-        if (droneRows[i][numeroSerieIndex] && 
-            droneRows[i][numeroSerieIndex].toString().toLowerCase() === numeroSerieValor.toString().toLowerCase()) {
-          droneRowIndex = i;
-          break;
-        }
+    let droneRowIndex = -1;
+    for (let i = 1; i < droneRows.length; i++) {
+      if (droneRows[i][numeroSerieIndex] && 
+          droneRows[i][numeroSerieIndex].toString().toLowerCase() === numeroSerieValor.toString().toLowerCase()) {
+        droneRowIndex = i;
+        break;
       }
-      
-      // Si encontramos el dron, actualizamos la columna V a "si"
-      if (droneRowIndex !== -1) {
-        await sheets.spreadsheets.values.update({
-          spreadsheetId,
-          range: `3.Drones!${disponibilidadCol}${droneRowIndex + 1}`,
-          valueInputOption: 'RAW',
-          resource: {
-            values: [["si"]]
-          }
-        });
-      } else {
-        console.warn(`No se encontró un dron con el número de serie: ${numeroSerieValor}`);
-      }
-    } else {
-      console.warn('No hay datos de drones disponibles');
     }
+    
+    // Si encontramos el dron, actualizamos la columna V a "si" (ocupado)
+    if (droneRowIndex !== -1) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `3.Drones!${disponibilidadCol}${droneRowIndex + 1}`,
+        valueInputOption: 'RAW',
+        resource: {
+          values: [["si"]]
+        }
+      });
+    } else {
+      console.warn(`No se encontró un dron con el número de serie: ${numeroSerieValor}`);
+    }
+  } else {
+    console.warn('No hay datos de drones disponibles');
+  }
+}
     
     const nuevoRegistro = [
       nuevoCodigo,              // Código consecutivo
       consecutivo,              // ID del registro de SolicitudVuelo
-      "Aprobado",               // Estado
+      estado,               // Estado
       numeroSerieValor,         // Valor extraído del objeto número serie del dron
       pilotoValor,              // Valor del piloto (puede ser el ID o el nombre_completo)
       empresa,                  // Empresa
@@ -1408,15 +1497,50 @@ const generarValidacionPrevuelo = async (consecutivo, numeroserie, piloto, notas
     const emailUsuarioSolicitante = 'apinto@sevicol.com.co';
     const emailUsuarioquerecibe = emailPiloto;
     
-await firebaseHelper.enviarNotificacion(
-  emailUsuarioSolicitante,
-  'Solicitud de vuelo aprobada',
-  `La solicitud #${consecutivo} ha sido aprobada`,
-  { 
-    tipo: "aprobacion_solicitud", 
-    consecutivo: consecutivo 
+// ✅ MODIFICADO: Notificaciones según el estado
+if (estado === 'Aprobado') {
+  await firebaseHelper.enviarNotificacion(
+    emailUsuarioSolicitante,
+    'Solicitud de vuelo aprobada',
+    `La solicitud #${consecutivo} ha sido aprobada`,
+    { 
+      tipo: "aprobacion_solicitud", 
+      consecutivo: consecutivo 
+    }
+  );
+
+  if (emailUsuarioquerecibe) {
+    await firebaseHelper.enviarNotificacion(
+      emailUsuarioquerecibe,
+      'Tienes una nueva asignación de vuelo',
+      `Has sido asignado al vuelo #${consecutivo}`,
+      { 
+        tipo: "asignacion_piloto", 
+        consecutivo: consecutivo 
+      }
+    );
   }
-);
+} else if (estado === 'Denegado') {
+  await firebaseHelper.enviarNotificacion(
+    emailUsuarioSolicitante,
+    'Solicitud de vuelo denegada',
+    `La solicitud #${consecutivo} ha sido denegada`,
+    { 
+      tipo: "denegacion_solicitud", 
+      consecutivo: consecutivo 
+    }
+  );
+} else if (estado === 'Enespera') {
+  await firebaseHelper.enviarNotificacion(
+    emailUsuarioSolicitante,
+    'Solicitud de vuelo en espera',
+    `La solicitud #${consecutivo} está en espera`,
+    { 
+      tipo: "espera_solicitud", 
+      consecutivo: consecutivo 
+    }
+  );
+}
 
 if (emailUsuarioquerecibe) {
   await firebaseHelper.enviarNotificacion(
@@ -1707,7 +1831,6 @@ export const solicitudHelper = {
   getSolicitudesByEmail,
   getSolicitudesByLastEmail,
   getSolicitudesByEmailAndStatus,
-  getSolicitudesByConsecutivo,
   getSolicitudesEnProceso,
   getSolicitudesEnProcesoPorEmail,
   getAllSolicitudesConEtapas,
@@ -1715,6 +1838,8 @@ export const solicitudHelper = {
   determinarEstadoProceso,
   getSolicitudConEtapas,
   getSiguienteConsecutivo,
+
+  getSolicitudesByConsecutivo,
 
   obtenerTodasLasHojas,
   getSolicitudesConEstadosGenerales,

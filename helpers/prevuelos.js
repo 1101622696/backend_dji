@@ -113,7 +113,35 @@ const getSiguienteConsecutivoPrevuelo = async () => {
     };
   };
   
-  const obtenerPermiso = async (consecutivo) => {
+  // const obtenerPermiso = async (consecutivo) => {
+  //   const sheets = await getSheetsClient();
+  //   const response = await sheets.spreadsheets.values.get({
+  //     spreadsheetId,
+  //     range: '2.ValidacionPrevuelo!A:I',
+  //   });
+  
+  //   const rows = response.data.values || [];
+  //   if (rows.length <= 1) return null;
+    
+  //   const headers = rows[0];
+  //   const permisoIndex = headers.findIndex(h => h === 'ID');
+  //   const consecutivoIndex = headers.findIndex(h => h === 'Consecutivo SAV');
+  //   const dronIndex = headers.findIndex(h => h === 'Dron');
+    
+  //   const validacionRow = rows.find(row => 
+  //     row[consecutivoIndex] && row[consecutivoIndex].toString() === consecutivo.toString()
+  //   );
+    
+  //   if (!validacionRow) return null;
+  //   console.log('permiso', permisoIndex);
+    
+  //   return{
+  //     permiso: validacionRow[permisoIndex],
+  //     modelodron: validacionRow[dronIndex]
+  //   };
+  // };
+
+    const obtenerPermiso = async (consecutivo) => {
     const sheets = await getSheetsClient();
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
@@ -124,15 +152,21 @@ const getSiguienteConsecutivoPrevuelo = async () => {
     if (rows.length <= 1) return null;
     
     const headers = rows[0];
-    const permisoIndex = headers.findIndex(h => h === 'ID');
+const permisoIndex = headers.findIndex(h => 
+  h && h.toString().trim().toLowerCase() === 'id'
+);
     const consecutivoIndex = headers.findIndex(h => h === 'Consecutivo SAV');
     const dronIndex = headers.findIndex(h => h === 'Dron');
     
     const validacionRow = rows.find(row => 
       row[consecutivoIndex] && row[consecutivoIndex].toString() === consecutivo.toString()
     );
-    
+    if (permisoIndex === -1) {
+  console.error('Columna ID no encontrada. Headers disponibles:', headers);
+  return null;
+}
     if (!validacionRow) return null;
+    // console.log('permiso', permisoIndex);
     
     return{
       permiso: validacionRow[permisoIndex],
@@ -513,9 +547,9 @@ const generarValidarPrevuelo = async (consecutivo, piloto, permiso, notas = '') 
       header.toLowerCase() === 'solicitudesaprobadas');
     const fechaIndex = headersPrevuelo.findIndex(header => 
       header.toLowerCase() === 'fecha');
-    const PermisoIndex = headersPrevuelo.findIndex(header => 
+    const permisoIndex = headersPrevuelo.findIndex(header => 
       header.toLowerCase() === 'permiso');
-    const PilotoIndex = headersPrevuelo.findIndex(header => 
+    const pilotoIndex = headersPrevuelo.findIndex(header => 
       header.toLowerCase() === 'piloto');
 
     if (consecutivoIndex === -1) {
@@ -537,6 +571,8 @@ const generarValidarPrevuelo = async (consecutivo, piloto, permiso, notas = '') 
     
     // Obtener fecha de la solicitud
     const fechaPrevuelo = fechaIndex !== -1 ? rowPrevuelo[fechaIndex] : '';
+    const pilotoseleccionado = pilotoIndex !== -1 ? rowPrevuelo[pilotoIndex] : '';
+    const permisoseleccionado = permisoIndex !== -1 ? rowPrevuelo[permisoIndex] : '';
     
     // Calcular fecha un día despues (si existe fecha en el registro)
     let fechaPosterior = '';
@@ -585,8 +621,8 @@ const generarValidarPrevuelo = async (consecutivo, piloto, permiso, notas = '') 
       nuevoCodigo,              // Código 
       consecutivo,              // ID del registro de Prevuelo
       "Aprobado",               // Estado
-      PilotoIndex,                   // Piloto
-      PermisoIndex,                   // permiso
+      pilotoseleccionado,                   // Piloto
+      permisoseleccionado,                   // permiso
       fechaActual,              // Fecha actual
       notas,                    // Notas
       fechaPosterior             // Fecha un día antes

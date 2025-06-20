@@ -111,386 +111,6 @@ crearSolicitud: async (req, res) => {
 } 
 },
 
-
-
-// nuevo
-obtenerSolicitudes: async (req, res) => {
-  try {
-    const data = await solicitudHelper.getSolicitudesVuelo();
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes' });
-  }
-},
-obtenerSolicitudesCantidad: async (req, res) => {
-  try {
-    const data = await solicitudHelper.getSolicitudesVuelo();
-    res.json({ 
-      cantidad: data.length,
-    });
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes' });
-  }
-},
-obtenerSolicitudesPorCliente: async (req, res) => {
-  try {
-    const { cliente } = req.params;
-    const data = await solicitudHelper.getSolicitudesByCliente(cliente);
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes por cliente' });
-  }
-},
-obtenerSolicitudesPendientes: async (req, res) => {
-  try {
-    const data = await solicitudHelper.getSolicitudesByStatus('Pendiente');
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes pendientes' });
-  }
-},
-obtenerSolicitudesPendientesCantidad: async (req, res) => {
-  try {
-    const data = await solicitudHelper.getSolicitudesByStatus('Pendiente');
-    res.json({ 
-      cantidad: data.length,
-    });
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes pendientes' });
-  }
-},
-verificarSolicitudPendiente: async (req, res) => {
-  try {
-    const { consecutivo } = req.params;
-    const EsPendiente = await solicitudHelper.getEssolicitudPendiente(consecutivo);
-    res.json({ EsPendiente });
-  } catch (error) {
-    console.error('Error al verificar estado de solicitud:', error);
-    res.status(500).json({ mensaje: 'Error al verificar estado de solicitud' });
-  }
-},
-obtenerSolicitudesAprobadas: async (req, res) => {
-  try {
-    const data = await solicitudHelper.getSolicitudesByStatus('aprobado');
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes aprobadas' });
-  }
-},
-obtenerSolicitudesAprobadasCantidad: async (req, res) => {
-  try {
-    const data = await solicitudHelper.getSolicitudesByStatus('aprobado');
-    res.json({ 
-      cantidad: data.length,
-    });
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes aprobadas' });
-  }
-},
-
-obtenerSolicitudesCanceladas: async (req, res) => {
-  try {
-    const data = await solicitudHelper.getSolicitudesByStatus('Cancelado');
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes canceladas' });
-  }
-},
-
-obtenerSolicitudesPorEmail: async (req, res) => {
-  try {
-    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
-    
-    if (!email) {
-      return res.status(400).json({ mensaje: 'El email es requerido' });
-    }
-    
-    const data = await solicitudHelper.getSolicitudesByEmail(email);
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener datos por email:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes por email' });
-  }
-},
-
-obtenerSolicitudesPorUltimoEmail: async (req, res) => {
-  try {
-    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
-    
-    if (!email) {
-      return res.status(400).json({ mensaje: 'El email es requerido' });
-    }
-    
-    const data = await solicitudHelper.getSolicitudesByLastEmail(email);
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener datos por email:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes por email' });
-  }
-},
-
-obtenerSolicitudesPorEmailYEstado: async (req, res) => {
-  try {
-    const { email, estado } = req.query;
-    
-    if (!email || !estado) {
-      return res.status(400).json({ 
-        mensaje: 'El email y el estado son requeridos' 
-      });
-    }
-    
-    const data = await solicitudHelper.getSolicitudesByEmailAndStatus(email, estado);
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener datos filtrados:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes filtradas' });
-  }
-},
-obtenerSolicitudesPendientesPorEmail: async (req, res) => {
-  try {
-    const { email } = req.params; 
-    
-    if (!email) {
-      return res.status(400).json({ mensaje: 'El email es requerido' });
-    }
-    
-    const data = await solicitudHelper.getSolicitudesByEmailAndStatus(email, 'Pendiente');
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener solicitudes pendientes por email:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes pendientes por email' });
-  }
-},
-
-obtenerSolicitudesPendientesPorEmailCantidad: async (req, res) => {
-  try {
-    const { email } = req.params; 
-    
-    if (!email) {
-      return res.status(400).json({ mensaje: 'El email es requerido' });
-    }
-    
-    const data = await solicitudHelper.getSolicitudesByEmailAndStatus(email, 'Pendiente');
-    res.json({ 
-      cantidad: data.length,
-    });
-  } catch (error) {
-    console.error('Error al obtener solicitudes pendientes por email:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes pendientes por email' });
-  }
-},
-
-obtenerSolicitudesAprobadasPorEmail: async (req, res) => {
-  try {
-    const { email } = req.params; 
-    
-    if (!email) {
-      return res.status(400).json({ mensaje: 'El email es requerido' });
-    }
-    
-    const data = await solicitudHelper.getSolicitudesByEmailAndStatus(email, 'Aprobado');
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener solicitudes aprobadas por email:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes aprobadas por email' });
-  }
-},
-
-obtenerSolicitudesAprobadasPorEmailCantidad: async (req, res) => {
-  try {
-    const { email } = req.params; 
-    
-    if (!email) {
-      return res.status(400).json({ mensaje: 'El email es requerido' });
-    }
-    
-    const data = await solicitudHelper.getSolicitudesByEmailAndStatus(email, 'Aprobado');
-    res.json({ 
-      cantidad: data.length,
-    });
-  } catch (error) {
-    console.error('Error al obtener solicitudes aprobadas por email:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes aprobadas por email' });
-  }
-},
-
-obtenerSolicitudesEnProceso: async (req, res) => {
-  try {
-    const data = await solicitudHelper.getSolicitudesEnProceso();
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes en proceso' });
-  }
-},
-
-obtenerSolicitudesEnProcesoCantidad: async (req, res) => {
-  try {
-    const data = await solicitudHelper.getSolicitudesEnProceso();
-    res.json({ 
-      cantidad: data.length,
-    });
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes en proceso' });
-  }
-},
-
-obtenerSolicitudesEnProcesoPorEmail: async (req, res) => {
-  try {
-    const { email } = req.params; 
-    
-    if (!email) {
-      return res.status(400).json({ mensaje: 'El email es requerido' });
-    }
-    
-    const data = await solicitudHelper.getSolicitudesEnProcesoPorEmail(email);
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener solicitudes en proceso por email:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes en proceso por email' });
-  }
-},
-
-obtenerSolicitudesCanceladasPorEmail: async (req, res) => {
-  try {
-    const { email } = req.params; // Obtiene el email desde los parámetros de la URL
-    
-    if (!email) {
-      return res.status(400).json({ mensaje: 'El email es requerido' });
-    }
-    
-    const data = await solicitudHelper.getSolicitudesByEmailAndStatus(email, 'Cancelado');
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener solicitudes canceladas por email:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes canceladas por email' });
-  }
-},
-
-obtenerSolicitudesEnProcesoPorEmailCantidad: async (req, res) => {
-  try {
-    const { email } = req.params; 
-    
-    if (!email) {
-      return res.status(400).json({ mensaje: 'El email es requerido' });
-    }
-    
-    const data = await solicitudHelper.getSolicitudesEnProcesoPorEmail(email);
-    res.json({ 
-      cantidad: data.length,
-    });
-  } catch (error) {
-    console.error('Error al obtener solicitudes en proceso por email:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes en proceso por email' });
-  }
-},
-
-obtenerSolicitudPorConsecutivo: async (req, res) => {
-  try {
-    const { consecutivo } = req.params;
-    const solicitud = await solicitudHelper.getSolicitudesByConsecutivo(consecutivo);
-
-    if (!solicitud) {
-      return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
-    }
-
-    res.json(solicitud);
-  } catch (error) {
-    console.error('Error al obtener solicitud:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitud' });
-  }
-},
-
-obtenerSolicitudConEtapas: async (req, res) => {
-  try {
-    const { consecutivo } = req.params;
-    const data = await solicitudHelper.getSolicitudConEtapas(consecutivo);
-    
-    if (!data) {
-      return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
-    }
-    
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitud con etapas' });
-  }
-},
-
-obtenerTodasSolicitudesConEtapas: async (req, res) => {
-  try {
-    const data = await solicitudHelper.getAllSolicitudesConEtapas();
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener todas las solicitudes con etapas' });
-  }
-},
-
-obtenerTodasSolicitudesConEtapasEmail: async (req, res) => {
-  try {
-    const email = req.params.email || req.query.email || req.body.email;
-    
-    if (!email) {
-      return res.status(400).json({ mensaje: 'Email no proporcionado' });
-    }
-    
-    const data = await solicitudHelper.getAllSolicitudesConEtapasEmail(email);
-    res.json(data);
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener todas las solicitudes con etapas email' });
-  }
-},
-
-obtenerSolicitudesPorEstadoProceso: async (req, res) => {
-  try {
-    const { estado } = req.params;
-    const todasSolicitudes = await solicitudHelper.getAllSolicitudesConEtapas();
-    
-    const solicitudesFiltradas = todasSolicitudes.filter(
-      solicitud => solicitud.estadoProceso === estado
-    );
-    
-    res.json(solicitudesFiltradas);
-  } catch (error) {
-    console.error('Error al obtener datos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener solicitudes por estado de proceso' });
-  }
-},
-
-
-// fase mejorara para obtener los consecutivos con su estado en cada proceso 
-
-obtenerTodasLasSolicitudesConEstados: async (req, res) => {
-  try {
-    const solicitudes = await solicitudHelper.getSolicitudesConEstadosGenerales();
-    
-    res.json({
-      ok: true,
-      solicitudes,
-      total: solicitudes.length,
-      mensaje: 'Solicitudes obtenidas exitosamente'
-    });
-  } catch (error) {
-    console.error('Error al obtener todas las solicitudes:', error);
-    res.status(500).json({
-      ok: false,
-      mensaje: 'Error interno del servidor',
-      error: error.message
-    });
-  }
-},
-
 obtenerResumenPorEmail: async (req, res) => {
   try {
     const { email } = req.params;
@@ -569,36 +189,6 @@ obtenerResumenJefe: async (req, res) => {
   }
 },
 
-obtenerSolicitudesPorEmailConEstados: async (req, res) => {
-  try {
-    const { email } = req.params;
-    
-    if (!email) {
-      return res.status(400).json({
-        ok: false,
-        mensaje: 'Email es requerido'
-      });
-    }
-
-    const todasLasSolicitudes = await solicitudHelper.getSolicitudesConEstadosGenerales();
-    const solicitudesFiltradas = todasLasSolicitudes.filter(s => s.email === email);
-    
-    res.json({
-      ok: true,
-      solicitudes: solicitudesFiltradas,
-      total: solicitudesFiltradas.length,
-      email,
-      mensaje: 'Solicitudes por email obtenidas exitosamente'
-    });
-  } catch (error) {
-    console.error('Error al obtener solicitudes por email:', error);
-    res.status(500).json({
-      ok: false,
-      mensaje: 'Error interno del servidor',
-      error: error.message
-    });
-  }
-},
 
 obtenerSolicitudPorConsecutivoConEstados: async (req, res) => {
   try {
@@ -668,44 +258,6 @@ obtenerSolicitudesPorEstadoGeneral: async (req, res) => {
   }
 },
 
-obtenerEstadisticasGenerales: async (req, res) => {
-  try {
-    const { email } = req.query; 
-    
-    const todasLasSolicitudes = await solicitudHelper.getSolicitudesConEstadosGenerales();
-    let solicitudesFiltradas = todasLasSolicitudes;
-    
-    if (email) {
-      solicitudesFiltradas = todasLasSolicitudes.filter(s => s.email === email);
-    }
-
-    // Contar por estado general
-    const estadisticas = {
-      total: solicitudesFiltradas.length,
-      completados: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Completado').length,
-      enespera: solicitudesFiltradas.filter(s => s.estadoSolicitud === 'Enespera' ).length,
-      aprobados: solicitudesFiltradas.filter(s =>  s.estadoGeneral === 'Aprobado'|| s.estadoPrevuelo === "Aprobado" || s.estadoPostVuelo === "Aprobado").length,
-      pendientes: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Pendiente'|| s.estadoPrevuelo === "Pendiente" || s.estadoPostVuelo === "Pendiente").length,
-      sinPostvuelo: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Sin Postvuelo').length,
-      sinPrevuelos: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Sin Prevuelo').length,
-      cancelados: solicitudesFiltradas.filter(s => s.estadoGeneral === 'Cancelado').length,
-    };
-
-    res.json({
-      ok: true,
-      estadisticas,
-      email: email || 'todos',
-      mensaje: 'Estadísticas obtenidas exitosamente'
-    });
-  } catch (error) {
-    console.error('Error al obtener estadísticas:', error);
-    res.status(500).json({
-      ok: false,
-      mensaje: 'Error interno del servidor',
-      error: error.message
-    });
-  }
-},
 
 buscarSolicitudesAvanzado: async (req, res) => {
   try {
@@ -811,6 +363,22 @@ buscarSolicitudesAvanzado: async (req, res) => {
   }
 },
 
+obtenerSolicitudPorConsecutivo: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const solicitud = await solicitudHelper.getSolicitudesByConsecutivo(consecutivo);
+
+    if (!solicitud) {
+      return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
+    }
+
+    res.json(solicitud);
+  } catch (error) {
+    console.error('Error al obtener solicitud:', error);
+    res.status(500).json({ mensaje: 'Error al obtener solicitud' });
+  }
+},
+
 editarSolicitud: async (req, res) => {
   try {
     const { consecutivo } = req.params;
@@ -824,10 +392,15 @@ editarSolicitud: async (req, res) => {
       nuevosDatos.Link = Link;
     }
 
-    // Añadir datos del usuario token si no están en los datos nuevos
-    if (!nuevosDatos.useremail) nuevosDatos.useremail = email;
-    if (!nuevosDatos.username) nuevosDatos.username = nombre;
-    
+// Solo añadir datos del usuario si va a ser piloto
+if (nuevosDatos.pilotoarealizarvuelo === 'Si') {
+  nuevosDatos.pilotoemail = email;
+  nuevosDatos.pilotonombre = nombre;
+} else if (nuevosDatos.pilotoarealizarvuelo === 'No') {
+  nuevosDatos.pilotoemail = '';
+  nuevosDatos.pilotonombre = '';
+}
+
     const resultado = await solicitudHelper.editarSolicitudPorConsecutivo(consecutivo, nuevosDatos);
 
     if (!resultado) {
@@ -874,13 +447,14 @@ denegarestadoSolicitud: async (req, res) => {
     const { consecutivo } = req.params;
     const { estado = "Denegado", numeroserie, piloto, notas  } = req.body; 
     
-     await solicitudHelper.putSolicitudByStatus(consecutivo, estado || "Denegado");
+     await solicitudHelper.putSolicitudByStatus(consecutivo, estado);
 
      const resultado = await solicitudHelper.generarValidacionPrevuelo(
       consecutivo,
       numeroserie,
       piloto,
-      notas
+      notas,
+      estado
      )
 
     res.status(200).json({ 
@@ -895,6 +469,35 @@ denegarestadoSolicitud: async (req, res) => {
     });
   }
 },
+
+enEsperaSolicitud: async (req, res) => {
+  try {
+    const { consecutivo } = req.params;
+    const { estado = "Enespera", numeroserie, piloto, notas  } = req.body; 
+    
+     await solicitudHelper.putSolicitudByStatus(consecutivo, estado);
+
+     const resultado = await solicitudHelper.generarValidacionPrevuelo(
+      consecutivo,
+      numeroserie,
+      piloto,
+      notas,
+      estado
+     )
+
+    res.status(200).json({ 
+      mensaje: 'Estado actualizado correctamente',
+      codigo: resultado.codigo,
+    });
+  } catch (error) {
+    console.error('Error al editar estado de solicitud:', error);
+    res.status(500).json({ 
+      mensaje: 'Error al actualizar estado', 
+      error: error.message 
+    });
+  }
+},
+
 
 cancelarEstadoSolicitud: async (req, res) => {
   try {
@@ -918,7 +521,6 @@ cancelarEstadoSolicitud: async (req, res) => {
     });
   }
 },
-
 
 }
 
