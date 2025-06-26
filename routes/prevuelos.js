@@ -4,7 +4,6 @@ import {validarJWT} from '../middlewares/validar-jwt.js'
 
 const router=Router()
 
-
 router.get('/obtenerdatosprevuelo/:consecutivo',[validarJWT], httpPrevuelos.obtenerPrevueloPorConsecutivo);
 
 router.post("/crear",[validarJWT],httpPrevuelos.crearPrevuelo)

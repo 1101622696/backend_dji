@@ -51,13 +51,14 @@ aprobarestadoPrevuelo: async (req, res) => {
     const { consecutivo } = req.params;
     const { estado = "Aprobado", piloto, permiso, notas  } = req.body; 
     
-    await prevueloHelper.actualizarEstadoEnSheets(consecutivo, estado || "Aprobado");
+    await prevueloHelper.actualizarEstadoEnSheets(consecutivo, estado);
 
     const resultado = await prevueloHelper.generarValidarPrevuelo(
     consecutivo,
      piloto,
      permiso,
-     notas
+     notas,
+     estado
     );
 
     res.status(200).json({ 
@@ -79,16 +80,20 @@ denegarestadoPrevuelo: async (req, res) => {
     const { consecutivo } = req.params;
     const { estado = "Denegado", piloto, permiso, notas } = req.body; 
     
- await prevueloHelper.actualizarEstadoEnSheets(consecutivo, estado || "Denegado");
+ await prevueloHelper.actualizarEstadoEnSheets(consecutivo, estado);
    
  const resultado = await prevueloHelper.generarValidarPrevuelo(
   consecutivo,
   piloto,
   permiso,
-  notas
+  notas,
+  estado
  )
 
-    res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
+    res.status(200).json({ 
+      mensaje: 'Estado actualizado correctamente',
+      codigo: resultado.codigo
+     });
   } catch (error) {
     console.error('Error al editar estado de Prevuelo:', error);
     res.status(500).json({ 

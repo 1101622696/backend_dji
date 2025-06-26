@@ -4,6 +4,7 @@ import stream from 'stream';
 import { prevueloHelper } from '../helpers/prevuelos.js';
 import {postvueloHelper} from '../helpers/postvuelos.js';
 import { firebaseHelper } from '../helpers/firebase.js';
+import nodemailer from 'nodemailer';
 
 const spreadsheetId = '1sJwTVoeFelYt5QE2Pk8KSYFZ8_3wRQjWr5HlDkhhrso';
 
@@ -33,6 +34,16 @@ const getAuth = () => {
       ],
     });
   }
+};
+
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    service: 'gmail',  
+    auth: {
+      user: process.env.EMAIL_USER,       
+      pass: process.env.EMAIL_APP_PASSWORD 
+    }
+  });
 };
 
 // Cliente Sheets
@@ -115,13 +126,34 @@ const calcularDuracionSolicitud = (hora_inicio, hora_fin) => {
   }
 };
 
-const guardarSolicitud = async ({ useremail, username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final, useremail_final, duracion }) => {
+// funciona pero sin el envío de correos
+
+// const guardarSolicitud = async ({ useremail, username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final, useremail_final, duracion }) => {
+//   const sheets = await getSheetsClient();
+//   const consecutivo = await getSiguienteConsecutivo();
+ 
+//   const duracionestimada = duracion || calcularDuracionSolicitud(hora_inicio, hora_fin);
+
+//   const nuevaFila = [consecutivo, useremail === null ? '' : useremail, username === null ? '' : username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final, useremail_final, "", "", "", "", "", duracionestimada];
+
+//   await sheets.spreadsheets.values.append({
+//     spreadsheetId,
+//     range: 'SolicitudVuelo!A1',
+//     valueInputOption: 'RAW',
+//     insertDataOption: 'INSERT_ROWS',
+//     requestBody: { values: [nuevaFila] },
+//   });
+
+//   return { consecutivo };
+// };
+
+const guardarSolicitud = async ({ useremail, username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final, useremail_final, sucursal, duracion }) => {
   const sheets = await getSheetsClient();
   const consecutivo = await getSiguienteConsecutivo();
  
   const duracionestimada = duracion || calcularDuracionSolicitud(hora_inicio, hora_fin);
 
-  const nuevaFila = [consecutivo, useremail === null ? '' : useremail, username === null ? '' : username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final, useremail_final, "", "", "", "", "", duracionestimada];
+  const nuevaFila = [consecutivo, useremail === null ? '' : useremail, username === null ? '' : username, tipodeoperacionaerea, empresa, fecha_inicio, hora_inicio, fecha_fin, hora_fin, detalles_cronograma, peso_maximo, municipio, departamento, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final, useremail_final, sucursal, "", "", "", "", duracionestimada];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
@@ -131,7 +163,95 @@ const guardarSolicitud = async ({ useremail, username, tipodeoperacionaerea, emp
     requestBody: { values: [nuevaFila] },
   });
 
+      try {
+    const destinatario = "apinto@sevicol.com.co";
+    // const destinatario = "cardenasdiegom6@gmail.com";
+    
+    await enviarNotificacionSolicitud({
+      destinatario,
+      consecutivo: consecutivo,
+      solicitante: username_final,
+      fecha: fecha_inicio,
+      empresa,
+    });
+    
+    console.log(`Notificación enviada para la solicitud ${consecutivo}`);
+  } catch (error) {
+    console.error('Error al enviar notificación:', error);
+  }
+
   return { consecutivo };
+};
+
+const enviarNotificacionSolicitud = async (datos) => {
+  try {
+    const transporter = createTransporter();
+
+    const urlBase = "https://script.google.com/macros/s/AKfycbzoGLCKAxvDny6qhIMze-cGaaitGPt9yIhByUKYY1aI41gwysmisEIvn0UEP6qg7SH6/exec";
+    const linkFormulario = `${urlBase}?solicitud=${datos.consecutivo}`;
+
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #ffffff; color: white; padding: 10px; text-align: center;">
+          <div style="display: flex; align-items: center; justify-content: center;">
+            <img src="https://docs.google.com/drawings/d/e/2PACX-1vQw98R1ZTlOAY_mVURreLAh0eGVKAodHN9VVuOk8wBHQ_WZmveIAn6e9588ix1u-NqmnH6rrYjPEzes/pub?w=480&h=360" 
+                 alt="Logo SVA" 
+                 style="width: 150px; height: auto; margin-right: 10px;">
+            <div>
+              <h2 style="color: black; font-size: 24px; font-weight: bold; margin: 0;">Nueva Solicitud Registrada</h2>
+              <p style="margin: 5px 0;">SVA SEVICOL LTDA</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="padding: 20px; background-color: #f9f9f9;">
+          <p>Se ha registrado una nueva solicitud con la siguiente información:</p>
+          
+          <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Consecutivo:</strong> ${datos.consecutivo}</p>
+            <p style="margin: 5px 0;"><strong>Solicitante:</strong> ${datos.solicitante}</p>
+            <p style="margin: 5px 0;"><strong>Fecha:</strong> ${datos.fecha}</p>
+            <p style="margin: 5px 0;"><strong>Empresa:</strong> ${datos.empresa}</p>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${linkFormulario}"
+                style="background-color: #28a745;
+                       color: white;
+                       padding: 12px 25px;
+                       text-decoration: none;
+                       border-radius: 5px;
+                       display: inline-block;
+                       font-weight: bold;">
+              Aprobar Solicitud
+            </a>
+          </div>
+          
+          <p style="color: #666; font-size: 0.9em;">Si el botón no funciona, copie y pegue el siguiente enlace en su navegador:</p>
+          <p style="color: #666; font-size: 0.9em;">${linkFormulario}</p>
+        </div>
+        
+        <div style="padding: 20px; text-align: center; color: #666;">
+          <p>Saludos cordiales,<br>
+          Sistema de Gestión de Vuelos<br>
+          SVA SEVICOL LTDA</p>
+        </div>
+      </div>
+    `;
+
+    const info = await transporter.sendMail({
+      from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
+      to: datos.destinatario,
+      subject: `Nueva Solicitud Registrada - Consecutivo: ${datos.consecutivo}`,
+      html: htmlBody
+    });
+
+    console.log('Correo enviado:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Error al enviar correo de notificación:', error);
+    throw error;
+  }
 };
 
 const getSolicitudesByConsecutivo = async (consecutivo) => {
@@ -231,6 +351,11 @@ const getSolicitudesConEstadosGenerales = async () => {
             }
           }
 
+          if (estadoSolicitud === "Cancelado") {
+            estadoPrevuelo = "Cancelado";
+            estadoPostVuelo = "Cancelado";
+          }
+
           // Formatear fecha si es necesario
           let fechaFormateada = fecha;
           if (fecha instanceof Date) {
@@ -278,6 +403,10 @@ const determinarEstadoGeneral = (estadoSolicitud, estadoPrevuelo, estadoPostVuel
   
   if (estadoSolicitud === "Enespera") {
     return "Solicitud en Espera";
+  }
+  
+  if (estadoSolicitud === "Denegado" || estadoPrevuelo === "Denegado" || estadoPostVuelo === "Denegado") {
+    return "Denegado";
   }
   
   if (estadoSolicitud === "Aprobado") {
@@ -915,6 +1044,341 @@ const buscarCarpetaPorNombre = async (nombreCarpeta, parentFolderId) => {
   return response.data.files.length > 0 ? response.data.files[0] : null;
 };
 
+// const generarValidacionPrevuelo = async (consecutivo, numeroserie, piloto, notas = '', estado = 'Aprobado') => {
+//   try {
+//     const sheets = await getSheetsClient();
+    
+//     const solicitudResponse = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: 'SolicitudVuelo',
+//     });
+    
+//     const rowsSolicitud = solicitudResponse.data.values;
+//     if (!rowsSolicitud || rowsSolicitud.length === 0) {
+//       throw new Error('No se encontraron datos en la hoja SolicitudVuelo');
+//     }
+    
+//     const headersSolicitud = rowsSolicitud[0];
+//     const consecutivoIndex = headersSolicitud.findIndex(header => 
+//       header.toLowerCase() === 'consecutivo');
+//     const empresaIndex = headersSolicitud.findIndex(header => 
+//       header.toLowerCase() === 'empresa');
+//     const fechaIndex = headersSolicitud.findIndex(header => 
+//       header.toLowerCase() === 'fecha_inicio');
+//     const nombreCompletoIndex = headersSolicitud.findIndex(header => 
+//       header.toLowerCase() === 'nombre_completo');
+//     const usuarioIndex = headersSolicitud.findIndex(header => 
+//       header.toLowerCase() === 'usuario');
+      
+//     if (consecutivoIndex === -1) {
+//       throw new Error('No se encontró la columna consecutivo');
+//     }
+    
+//     let rowSolicitud = null;
+//     let rowIndex = -1;
+//     for (let i = 1; i < rowsSolicitud.length; i++) {
+//       if (rowsSolicitud[i][consecutivoIndex] && 
+//           rowsSolicitud[i][consecutivoIndex].toLowerCase() === consecutivo.toLowerCase()) {
+//         rowSolicitud = rowsSolicitud[i];
+//         rowIndex = i;
+//         break;
+//       }
+//     }
+    
+//     if (!rowSolicitud) {
+//       throw new Error(`No se encontró el consecutivo ${consecutivo}`);
+//     }
+
+//     const estadoIndex = headersSolicitud.findIndex(header => 
+//   header.toLowerCase() === 'estado');
+
+// if (estadoIndex !== -1 && rowIndex !== -1) {
+//   await sheets.spreadsheets.values.update({
+//     spreadsheetId,
+//     range: `SolicitudVuelo!${String.fromCharCode(65 + estadoIndex)}${rowIndex + 1}`,
+//     valueInputOption: 'RAW',
+//     resource: {
+//       values: [[estado]]
+//     }
+//   });
+// }
+//     // Obtener empresa y fecha de la solicitud
+//     const empresa = empresaIndex !== -1 ? rowSolicitud[empresaIndex] : '';
+//     const fechaSolicitud = fechaIndex !== -1 ? rowSolicitud[fechaIndex] : '';
+    
+//     // Verificar si ya existe un piloto asignado (nombre_completo) cuando no se recibe piloto
+//     const nombreCompletoPiloto = nombreCompletoIndex !== -1 ? rowSolicitud[nombreCompletoIndex] || '' : '';
+//     const usuarioAsignado = usuarioIndex !== -1 ? rowSolicitud[usuarioIndex] || '' : '';
+    
+//     // Si no se recibió piloto y existe un usuario asignado, usamos el nombre_completo
+// // Si viene piloto del frontend, usar ese; si no, usar el existente en la solicitud
+// let pilotoValor;
+// let usarNombreCompleto = false;
+
+// if (piloto) {
+//   // Priorizar el piloto que viene del frontend
+//   pilotoValor = typeof piloto === 'object' && piloto !== null
+//     ? piloto.valor || piloto.label || JSON.stringify(piloto)
+//     : piloto;
+//   usarNombreCompleto = false;
+// } else if (usuarioAsignado.trim() !== '') {
+//   // Si no viene piloto del frontend, usar el existente
+//   pilotoValor = nombreCompletoPiloto.trim();
+//   usarNombreCompleto = true;
+// } else {
+//   pilotoValor = '';
+// }
+    
+//     // Calcular fecha un día antes (si existe fecha en el registro)
+//     let fechaAnterior = '';
+//     if (fechaSolicitud) {
+//       try {
+//         const fecha = new Date(fechaSolicitud);
+//         fecha.setDate(fecha.getDate() - 1);
+//         fechaAnterior = fecha.toLocaleDateString('es-ES');
+//       } catch (e) {
+//         console.error('Error al calcular fecha anterior:', e);
+//       }
+//     }
+    
+//     // Obtener el último código consecutivo de la hoja 2.ValidacionPrevuelo
+//     const validacionResponse = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: '2.ValidacionPrevuelo',
+//     });
+    
+//     const rowsValidacion = validacionResponse.data.values || [];
+    
+//     // Generar nuevo código consecutivo (AV-X)
+//     let ultimoNumero = 0;
+//     if (rowsValidacion.length > 1) {  // Si hay al menos un registro (además de la cabecera)
+//       const codigoColumna = 0; // Asumimos que el código está en la primera columna
+      
+//       // Buscar todos los códigos y obtener el número más alto
+//       for (let i = 1; i < rowsValidacion.length; i++) {
+//         if (rowsValidacion[i] && rowsValidacion[i][codigoColumna]) {
+//           const codigo = rowsValidacion[i][codigoColumna];
+//           const match = codigo.match(/AV-(\d+)/);
+//           if (match && match[1]) {
+//             const num = parseInt(match[1], 10);
+//             if (num > ultimoNumero) {
+//               ultimoNumero = num;
+//             }
+//           }
+//         }
+//       }
+//     }
+    
+//     const nuevoCodigo = `AV-${ultimoNumero + 1}`;
+//     const fechaActual = new Date().toLocaleDateString('es-ES');
+    
+//     // Extraer valores simples de los objetos si son objetos
+//     const numeroSerieValor = typeof numeroserie === 'object' && numeroserie !== null 
+//       ? numeroserie.valor || numeroserie.label || JSON.stringify(numeroserie) 
+//       : numeroserie;
+    
+//     let emailPiloto = '';
+//     let nombrePiloto = '';
+    
+//     // Solo buscar en la hoja de pilotos si no estamos usando el nombre_completo
+//     if (!usarNombreCompleto && pilotoValor) {
+//       // Obtener datos de la hoja de pilotos
+//       const pilotosResponse = await sheets.spreadsheets.values.get({
+//         spreadsheetId,
+//         range: '3.Pilotos',
+//       });
+      
+//       const pilotosRows = pilotosResponse.data.values || [];
+//       if (pilotosRows.length <= 1) {
+//         console.warn('No hay datos de pilotos disponibles');
+//       } else {
+//         // Encontrar los índices de las columnas que necesitamos
+//         const identidadIndex = 5; // Columna F (índice 5 - basado en 0)
+//         const nombresIndex = 1;   // Columna B (índice 1)
+//         const apellidosIndex = 2; // Columna C (índice 2)
+//         const emailIndex = 20;    // Columna U (índice 20)
+        
+//         // Buscar el piloto por identificación
+//         let pilotoEncontrado = null;
+        
+//         for (let i = 1; i < pilotosRows.length; i++) {
+//           const row = pilotosRows[i];
+//           if (row[identidadIndex] && 
+//               row[identidadIndex].toString().toLowerCase() === pilotoValor.toString().toLowerCase()) {
+//             pilotoEncontrado = row;
+//             break;
+//           }
+//         }
+        
+//         if (pilotoEncontrado) {
+//           // Obtener el email del piloto (columna U)
+//           emailPiloto = pilotoEncontrado[emailIndex] || '';
+          
+//           // Combinar nombres y apellidos (columnas B y C)
+//           const nombres = pilotoEncontrado[nombresIndex] || '';
+//           const apellidos = pilotoEncontrado[apellidosIndex] || '';
+//           nombrePiloto = `${nombres} ${apellidos}`.trim();
+          
+//           // ACTUALIZAR la solicitud en la hoja SolicitudVuelo
+//           if (rowIndex !== -1) {
+//             // Actualizar email en la columna 2 (B)
+//             await sheets.spreadsheets.values.update({
+//               spreadsheetId,
+//               range: `SolicitudVuelo!B${rowIndex + 1}`,
+//               valueInputOption: 'RAW',
+//               resource: {
+//                 values: [[emailPiloto]]
+//               }
+//             });
+            
+//             // Actualizar nombre en la columna 3 (C)
+//             await sheets.spreadsheets.values.update({
+//               spreadsheetId,
+//               range: `SolicitudVuelo!C${rowIndex + 1}`,
+//               valueInputOption: 'RAW',
+//               resource: {
+//                 values: [[nombrePiloto]]
+//               }
+//             });
+//           }
+//         } else {
+//           console.warn(`No se encontró un piloto con la identificación: ${pilotoValor}`);
+//         }
+//       }
+//     }
+    
+// if (estado === 'Aprobado') {
+//   // Actualizar estado del dron
+//   const dronesResponse = await sheets.spreadsheets.values.get({
+//     spreadsheetId,
+//     range: '3.Drones',
+//   });
+  
+//   const droneRows = dronesResponse.data.values || [];
+//   if (droneRows.length > 1) {
+//     // Buscar el dron por número de serie en la columna 2 (B - índice 1)
+//     const numeroSerieIndex = 1; // Columna B (índice 1)
+//     const disponibilidadCol = 'V'; // Columna V para disponibilidad
+    
+//     let droneRowIndex = -1;
+//     for (let i = 1; i < droneRows.length; i++) {
+//       if (droneRows[i][numeroSerieIndex] && 
+//           droneRows[i][numeroSerieIndex].toString().toLowerCase() === numeroSerieValor.toString().toLowerCase()) {
+//         droneRowIndex = i;
+//         break;
+//       }
+//     }
+    
+//     // Si encontramos el dron, actualizamos la columna V a "si" (ocupado)
+//     if (droneRowIndex !== -1) {
+//       await sheets.spreadsheets.values.update({
+//         spreadsheetId,
+//         range: `3.Drones!${disponibilidadCol}${droneRowIndex + 1}`,
+//         valueInputOption: 'RAW',
+//         resource: {
+//           values: [["si"]]
+//         }
+//       });
+//     } else {
+//       console.warn(`No se encontró un dron con el número de serie: ${numeroSerieValor}`);
+//     }
+//   } else {
+//     console.warn('No hay datos de drones disponibles');
+//   }
+// }
+    
+//     const nuevoRegistro = [
+//       nuevoCodigo,              // Código consecutivo
+//       consecutivo,              // ID del registro de SolicitudVuelo
+//       estado,               // Estado
+//       numeroSerieValor,         // Valor extraído del objeto número serie del dron
+//       pilotoValor,              // Valor del piloto (puede ser el ID o el nombre_completo)
+//       empresa,                  // Empresa
+//       fechaActual,              // Fecha actual
+//       notas,                    // Notas
+//       fechaAnterior             // Fecha un día antes
+//     ];
+    
+//     // Anexar el nuevo registro a la hoja 2.ValidacionPrevuelo
+//     await sheets.spreadsheets.values.append({
+//       spreadsheetId,
+//       range: '2.ValidacionPrevuelo',
+//       valueInputOption: 'USER_ENTERED',
+//       insertDataOption: 'INSERT_ROWS',
+//       resource: {
+//         values: [nuevoRegistro]
+//       }
+//     });
+    
+//     const emailUsuarioSolicitante = 'apinto@sevicol.com.co';
+//     const emailUsuarioquerecibe = emailPiloto;
+    
+// if (estado === 'Aprobado') {
+//   await firebaseHelper.enviarNotificacion(
+//     emailUsuarioSolicitante,
+//     'Solicitud de vuelo aprobada',
+//     `La solicitud #${consecutivo} ha sido aprobada`,
+//     { 
+//       tipo: "aprobacion_solicitud", 
+//       consecutivo: consecutivo 
+//     }
+//   );
+
+//   if (emailUsuarioquerecibe) {
+//     await firebaseHelper.enviarNotificacion(
+//       emailUsuarioquerecibe,
+//       'Tienes una nueva asignación de vuelo',
+//       `Has sido asignado al vuelo #${consecutivo}`,
+//       { 
+//         tipo: "asignacion_piloto", 
+//         consecutivo: consecutivo 
+//       }
+//     );
+//   }
+// } else if (estado === 'Denegado') {
+//   await firebaseHelper.enviarNotificacion(
+//     emailUsuarioSolicitante,
+//     'Solicitud de vuelo denegada',
+//     `La solicitud #${consecutivo} ha sido denegada`,
+//     { 
+//       tipo: "denegacion_solicitud", 
+//       consecutivo: consecutivo 
+//     }
+//   );
+// } else if (estado === 'Enespera') {
+//   await firebaseHelper.enviarNotificacion(
+//     emailUsuarioSolicitante,
+//     'Solicitud de vuelo en espera',
+//     `La solicitud #${consecutivo} está en espera`,
+//     { 
+//       tipo: "espera_solicitud", 
+//       consecutivo: consecutivo 
+//     }
+//   );
+// }
+
+// if (emailUsuarioquerecibe) {
+//   await firebaseHelper.enviarNotificacion(
+//     emailUsuarioquerecibe,
+//     'Tienes una nueva asignación de vuelo',
+//     `Has sido asignado al vuelo #${consecutivo}`,
+//     { 
+//       tipo: "asignacion_piloto", 
+//       consecutivo: consecutivo 
+//     }
+//   );
+// }
+
+//     return {
+//       codigo: nuevoCodigo,
+//       fechaValidacion: fechaActual,
+//     };
+//   } catch (error) {
+//     console.error('Error al generar validación de prevuelo:', error);
+//     throw error;
+//   }
+// };
+
 const generarValidacionPrevuelo = async (consecutivo, numeroserie, piloto, notas = '', estado = 'Aprobado') => {
   try {
     const sheets = await getSheetsClient();
@@ -960,19 +1424,19 @@ const generarValidacionPrevuelo = async (consecutivo, numeroserie, piloto, notas
       throw new Error(`No se encontró el consecutivo ${consecutivo}`);
     }
 
-    const estadoIndex = headersSolicitud.findIndex(header => 
-  header.toLowerCase() === 'estado');
+//     const estadoIndex = headersSolicitud.findIndex(header => 
+//   header.toLowerCase() === 'estado');
 
-if (estadoIndex !== -1 && rowIndex !== -1) {
-  await sheets.spreadsheets.values.update({
-    spreadsheetId,
-    range: `SolicitudVuelo!${String.fromCharCode(65 + estadoIndex)}${rowIndex + 1}`,
-    valueInputOption: 'RAW',
-    resource: {
-      values: [[estado]]
-    }
-  });
-}
+// if (estadoIndex !== -1 && rowIndex !== -1) {
+//   await sheets.spreadsheets.values.update({
+//     spreadsheetId,
+//     range: `SolicitudVuelo!${String.fromCharCode(65 + estadoIndex)}${rowIndex + 1}`,
+//     valueInputOption: 'RAW',
+//     resource: {
+//       values: [[estado]]
+//     }
+//   });
+// }
     // Obtener empresa y fecha de la solicitud
     const empresa = empresaIndex !== -1 ? rowSolicitud[empresaIndex] : '';
     const fechaSolicitud = fechaIndex !== -1 ? rowSolicitud[fechaIndex] : '';
@@ -1129,13 +1593,17 @@ if (estado === 'Aprobado') {
   if (droneRows.length > 1) {
     // Buscar el dron por número de serie en la columna 2 (B - índice 1)
     const numeroSerieIndex = 1; // Columna B (índice 1)
+    const pesodronIndex = 4; //peso del dron
     const disponibilidadCol = 'V'; // Columna V para disponibilidad
     
     let droneRowIndex = -1;
+    let pesoDron = "";
+
     for (let i = 1; i < droneRows.length; i++) {
       if (droneRows[i][numeroSerieIndex] && 
           droneRows[i][numeroSerieIndex].toString().toLowerCase() === numeroSerieValor.toString().toLowerCase()) {
         droneRowIndex = i;
+        pesoDron = droneRows[i][pesodronIndex] || '';
         break;
       }
     }
@@ -1150,6 +1618,18 @@ if (estado === 'Aprobado') {
           values: [["si"]]
         }
       });
+
+           if (pesoDron && rowIndex !== -1) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `SolicitudVuelo!K${rowIndex + 1}`, // Columna K (índice 10)
+          valueInputOption: 'RAW',
+          resource: {
+            values: [[pesoDron]]
+          }
+        });
+      }
+
     } else {
       console.warn(`No se encontró un dron con el número de serie: ${numeroSerieValor}`);
     }
@@ -1158,17 +1638,32 @@ if (estado === 'Aprobado') {
   }
 }
     
-    const nuevoRegistro = [
-      nuevoCodigo,              // Código consecutivo
-      consecutivo,              // ID del registro de SolicitudVuelo
-      estado,               // Estado
-      numeroSerieValor,         // Valor extraído del objeto número serie del dron
-      pilotoValor,              // Valor del piloto (puede ser el ID o el nombre_completo)
-      empresa,                  // Empresa
-      fechaActual,              // Fecha actual
-      notas,                    // Notas
-      fechaAnterior             // Fecha un día antes
-    ];
+    // const nuevoRegistro = [
+    //   nuevoCodigo,              // Código consecutivo
+    //   consecutivo,              // ID del registro de SolicitudVuelo
+    //   estado,               // Estado
+    //   numeroSerieValor || "",         // Valor extraído del objeto número serie del dron
+    //   // pilotoValor,              // Valor del piloto (puede ser el ID o el nombre_completo)
+    //   nombrePiloto || nombreCompletoPiloto || "",              // Valor del piloto (puede ser el ID o el nombre_completo)
+    //   empresa,                  // Empresa
+    //   fechaActual,              // Fecha actual
+    //   notas,                    // Notas
+    //   fechaAnterior             // Fecha un día antes
+    // ];
+
+    // Cambia esta línea (alrededor de la línea donde defines nuevoRegistro):
+const nuevoRegistro = [
+  nuevoCodigo,              // Código consecutivo (columna A)
+  consecutivo,              // ID del registro de SolicitudVuelo (columna B)
+  estado,                   // Estado (columna C)
+  numeroSerieValor || "",   // Valor extraído del objeto número serie del dron (columna D)
+  nombrePiloto || nombreCompletoPiloto || "", // Piloto (columna E)
+  empresa,                  // Empresa (columna F)
+  fechaActual,              // Fecha actual (columna G)
+  estado === 'Denegado' ? notas : "", // Notas en columna H solo si es denegado
+  estado === 'Denegado' ? "" : notas, // Notas en columna I si no es denegado
+  fechaAnterior             // Fecha un día antes (columna J)
+];
     
     // Anexar el nuevo registro a la hoja 2.ValidacionPrevuelo
     await sheets.spreadsheets.values.append({
@@ -1185,6 +1680,22 @@ if (estado === 'Aprobado') {
     const emailUsuarioquerecibe = emailPiloto;
     
 if (estado === 'Aprobado') {
+        try {
+    // const destinatario = "cardenasdiegom6@gmail.com";
+    
+    await enviarNotificacionAprobacion({
+      destinatario: emailPiloto || usuarioAsignado,
+      consecutivo: consecutivo,
+      notas: notas,
+      fecha: fechaSolicitud,
+      cliente: empresa 
+    });
+    
+    console.log(`Notificación enviada para la solicitud ${consecutivo}`);
+  } catch (error) {
+    console.error('Error al enviar notificación de aprobación:', error);
+  }
+  
   await firebaseHelper.enviarNotificacion(
     emailUsuarioSolicitante,
     'Solicitud de vuelo aprobada',
@@ -1207,6 +1718,22 @@ if (estado === 'Aprobado') {
     );
   }
 } else if (estado === 'Denegado') {
+
+  try {
+    
+    await enviarNotificacionDenegado({
+      destinatario: emailPiloto,
+      consecutivo: consecutivo,
+      notas: notas,
+      fecha: fechaSolicitud,
+      cliente: empresa 
+    });
+    
+    console.log(`Notificación enviada para la solicitud ${consecutivo}`);
+  } catch (error) {
+    console.error('Error al enviar notificación de denegacion:', error);
+  }
+
   await firebaseHelper.enviarNotificacion(
     emailUsuarioSolicitante,
     'Solicitud de vuelo denegada',
@@ -1217,6 +1744,18 @@ if (estado === 'Aprobado') {
     }
   );
 } else if (estado === 'Enespera') {
+    try {
+    
+    await enviarNotificacionEnespera({
+      destinatario: emailPiloto,
+      consecutivo: consecutivo,
+    });
+    
+    console.log(`Notificación enviada para la solicitud ${consecutivo}`);
+  } catch (error) {
+    console.error('Error al enviar notificación de espera:', error);
+  }
+
   await firebaseHelper.enviarNotificacion(
     emailUsuarioSolicitante,
     'Solicitud de vuelo en espera',
@@ -1273,6 +1812,7 @@ const generarCancelacionPrevuelo = async (consecutivo, notas = '') => {
     const fecha = solicitud.fecha_inicio || '';
     const useremail = solicitud.usuario || '';
     const username = solicitud.nombre_completo || '';
+    const usernamesolicitante = solicitud.nombredelcoordinador || '';
     
     const validacionResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
@@ -1497,6 +2037,23 @@ const generarCancelacionPrevuelo = async (consecutivo, notas = '') => {
       });
     }
     
+        try {
+    const destinatario = "apinto@sevicol.com.co";
+    
+const pilotoParaNotificacion = username || usernamesolicitante;
+
+await enviarNotificacionCancelacion({
+  destinatario,
+  piloto: pilotoParaNotificacion,
+  consecutivo: consecutivo,
+  notas: notas,
+});
+    
+    console.log(`Notificación enviada para la solicitud ${consecutivo}`);
+  } catch (error) {
+    console.error('Error al enviar notificación de cancelacion:', error);
+  }
+
     return {
       codigo: nuevoCodigo,
       fechaValidacion: fechaActual
@@ -1506,6 +2063,233 @@ const generarCancelacionPrevuelo = async (consecutivo, notas = '') => {
     throw error;
   }
 };
+
+const enviarNotificacionAprobacion = async (datos) => {
+try {
+    const transporter = createTransporter();
+
+    const urlBase = "https://script.google.com/macros/s/AKfycbzoGLCKAxvDny6qhIMze-cGaaitGPt9yIhByUKYY1aI41gwysmisEIvn0UEP6qg7SH6/exec";
+    const linkFormulario = `${urlBase}?solicitud=${datos.consecutivo}`;
+
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #ffffff; color: white; padding: 10px; text-align: center;">
+          <div style="display: flex; align-items: center; justify-content: center;">
+            <img src="https://docs.google.com/drawings/d/e/2PACX-1vQw98R1ZTlOAY_mVURreLAh0eGVKAodHN9VVuOk8wBHQ_WZmveIAn6e9588ix1u-NqmnH6rrYjPEzes/pub?w=480&h=360" 
+                 alt="Logo SVA" 
+                 style="width: 150px; height: auto; margin-right: 10px;">
+            <div>
+              <h2 style="color: black; font-size: 24px; font-weight: bold; margin: 0;">Solicitud de vuelo Aprobada</h2>
+              <p style="margin: 5px 0;">SVA SEVICOL LTDA</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="padding: 20px; background-color: #f9f9f9;">
+          <p>Su solicitud de vuelo ha sido Aprobada</p>
+          
+          <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Consecutivo:</strong> ${datos.consecutivo}</p>
+            <p style="margin: 5px 0;"><strong>Notas:</strong> ${datos.notas}</p>
+            <p style="margin: 5px 0;"><strong>Fecha:</strong> ${datos.fecha}</p>
+            <p style="margin: 5px 0;"><strong>Cliente:</strong> ${datos.cliente}</p>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${linkFormulario}"
+                style="background-color: #28a745;
+                       color: white;
+                       padding: 12px 25px;
+                       text-decoration: none;
+                       border-radius: 5px;
+                       display: inline-block;
+                       font-weight: bold;">
+              Realizar Pre-vuelo
+            </a>
+          </div>
+          
+          <p style="color: #666; font-size: 0.9em;">Si el botón no funciona, copie y pegue el siguiente enlace en su navegador:</p>
+          <p style="color: #666; font-size: 0.9em;">${linkFormulario}</p>
+        </div>
+        
+        <div style="padding: 20px; text-align: center; color: #666;">
+          <p>Saludos cordiales,<br>
+          Sistema de Gestión de Vuelos<br>
+          SVA SEVICOL LTDA</p>
+        </div>
+      </div>
+    `;
+
+    const info = await transporter.sendMail({
+      from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
+      to: datos.destinatario,
+      subject: `Solicitud de Vuelo Aprobada - Consecutivo: ${datos.consecutivo}`,
+      html: htmlBody
+    });
+
+    console.log('Correo enviado:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Error al enviar correo de notificación:', error);
+    throw error;
+  }
+};
+
+const enviarNotificacionDenegado = async (datos) => {
+try {
+    const transporter = createTransporter();
+
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #ffffff; color: white; padding: 10px; text-align: center;">
+          <div style="display: flex; align-items: center; justify-content: center;">
+            <img src="https://docs.google.com/drawings/d/e/2PACX-1vQw98R1ZTlOAY_mVURreLAh0eGVKAodHN9VVuOk8wBHQ_WZmveIAn6e9588ix1u-NqmnH6rrYjPEzes/pub?w=480&h=360" 
+                 alt="Logo SVA" 
+                 style="width: 150px; height: auto; margin-right: 10px;">
+            <div>
+              <h2 style="color: black; font-size: 24px; font-weight: bold; margin: 0;">Solicitud de vuelo Denegada</h2>
+              <p style="margin: 5px 0;">SVA SEVICOL LTDA</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="padding: 20px; background-color: #f9f9f9;">
+          <p>Su solicitud de vuelo ha sido denegada por parte del jefe de pilotos</p>
+          
+          <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Consecutivo:</strong> ${datos.consecutivo}</p>
+            <p style="margin: 5px 0;"><strong>Notas:</strong> ${datos.notas}</p>
+            <p style="margin: 5px 0;"><strong>Fecha:</strong> ${datos.fecha}</p>
+            <p style="margin: 5px 0;"><strong>cliente:</strong> ${datos.cliente}</p>
+          </div>
+          
+        </div>
+        
+        <div style="padding: 20px; text-align: center; color: #666;">
+          <p>Saludos cordiales,<br>
+          Sistema de Gestión de Vuelos<br>
+          SVA SEVICOL LTDA</p>
+        </div>
+      </div>
+    `;
+
+    const info = await transporter.sendMail({
+      from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
+      to: datos.destinatario,
+      subject: `Solicitud de Vuelo Denegada - Consecutivo: ${datos.consecutivo}`,
+      html: htmlBody
+    });
+
+    console.log('Correo enviado:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Error al enviar correo de notificación:', error);
+    throw error;
+  }
+};
+
+const enviarNotificacionEnespera = async (datos) => {
+try {
+    const transporter = createTransporter();
+
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #ffffff; color: white; padding: 10px; text-align: center;">
+          <div style="display: flex; align-items: center; justify-content: center;">
+            <img src="https://docs.google.com/drawings/d/e/2PACX-1vQw98R1ZTlOAY_mVURreLAh0eGVKAodHN9VVuOk8wBHQ_WZmveIAn6e9588ix1u-NqmnH6rrYjPEzes/pub?w=480&h=360" 
+                 alt="Logo SVA" 
+                 style="width: 150px; height: auto; margin-right: 10px;">
+            <div>
+              <h2 style="color: black; font-size: 24px; font-weight: bold; margin: 0;">Solicitud de vuelo En espera</h2>
+              <p style="margin: 5px 0;">SVA SEVICOL LTDA</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="padding: 20px; background-color: #f9f9f9;">
+          <p>Su solicitud de vuelo ha sido puesta en espera por parte del jefe de pilotos</p>
+          
+          <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Consecutivo:</strong> ${datos.consecutivo}</p>
+          </div>
+          
+        </div>
+        
+        <div style="padding: 20px; text-align: center; color: #666;">
+          <p>Saludos cordiales,<br>
+          Sistema de Gestión de Vuelos<br>
+          SVA SEVICOL LTDA</p>
+        </div>
+      </div>
+    `;
+
+    const info = await transporter.sendMail({
+      from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
+      to: datos.destinatario,
+      subject: `Solicitud de Vuelo En espera - Consecutivo: ${datos.consecutivo}`,
+      html: htmlBody
+    });
+
+    console.log('Correo enviado:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Error al enviar correo de notificación:', error);
+    throw error;
+  }
+};
+
+
+const enviarNotificacionCancelacion = async (datos) => {
+try {
+    const transporter = createTransporter();
+
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #ffffff; color: white; padding: 10px; text-align: center;">
+          <div style="display: flex; align-items: center; justify-content: center;">
+            <img src="https://docs.google.com/drawings/d/e/2PACX-1vQw98R1ZTlOAY_mVURreLAh0eGVKAodHN9VVuOk8wBHQ_WZmveIAn6e9588ix1u-NqmnH6rrYjPEzes/pub?w=480&h=360" 
+                 alt="Logo SVA" 
+                 style="width: 150px; height: auto; margin-right: 10px;">
+            <div>
+              <h2 style="color: black; font-size: 24px; font-weight: bold; margin: 0;">Solicitud de vuelo Cancelada</h2>
+              <p style="margin: 5px 0;">SVA SEVICOL LTDA</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="padding: 20px; background-color: #f9f9f9;">
+          <p>solicitud de vuelo cancelada por ${datos.piloto}</p>
+          
+          <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Consecutivo:</strong> ${datos.consecutivo}</p>
+            <p style="margin: 5px 0;"><strong>Motivo:</strong> ${datos.notas}</p>
+          </div>
+          
+        </div>
+        
+        <div style="padding: 20px; text-align: center; color: #666;">
+          <p>Saludos cordiales,<br>
+          Sistema de Gestión de Vuelos<br>
+          SVA SEVICOL LTDA</p>
+        </div>
+      </div>
+    `;
+
+    const info = await transporter.sendMail({
+      from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
+      to: datos.destinatario,
+      subject: `Solicitud de Vuelo Cancelada - Consecutivo: ${datos.consecutivo}`,
+      html: htmlBody
+    });
+
+    console.log('Correo enviado:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Error al enviar correo de notificación:', error);
+    throw error;
+  }
+};
+
 
 export const solicitudHelper = {
   getSolicitudesVuelo,

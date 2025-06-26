@@ -1,6 +1,7 @@
 import { google } from 'googleapis';
 import {postvueloHelper} from '../helpers/postvuelos.js';
 import {solicitudHelper} from '../helpers/solicitudes.js';
+import nodemailer from 'nodemailer';
 
 const spreadsheetId = '1sJwTVoeFelYt5QE2Pk8KSYFZ8_3wRQjWr5HlDkhhrso';
 
@@ -24,6 +25,16 @@ const getAuth = () => {
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
   }
+};
+
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    service: 'gmail',  
+    auth: {
+      user: process.env.EMAIL_USER,       
+      pass: process.env.EMAIL_APP_PASSWORD 
+    }
+  });
 };
 
 // Cliente Sheets
@@ -112,34 +123,6 @@ const getSiguienteConsecutivoPrevuelo = async () => {
       fecha: solicitudRow[fechaIndex]
     };
   };
-  
-  // const obtenerPermiso = async (consecutivo) => {
-  //   const sheets = await getSheetsClient();
-  //   const response = await sheets.spreadsheets.values.get({
-  //     spreadsheetId,
-  //     range: '2.ValidacionPrevuelo!A:I',
-  //   });
-  
-  //   const rows = response.data.values || [];
-  //   if (rows.length <= 1) return null;
-    
-  //   const headers = rows[0];
-  //   const permisoIndex = headers.findIndex(h => h === 'ID');
-  //   const consecutivoIndex = headers.findIndex(h => h === 'Consecutivo SAV');
-  //   const dronIndex = headers.findIndex(h => h === 'Dron');
-    
-  //   const validacionRow = rows.find(row => 
-  //     row[consecutivoIndex] && row[consecutivoIndex].toString() === consecutivo.toString()
-  //   );
-    
-  //   if (!validacionRow) return null;
-  //   console.log('permiso', permisoIndex);
-    
-  //   return{
-  //     permiso: validacionRow[permisoIndex],
-  //     modelodron: validacionRow[dronIndex]
-  //   };
-  // };
 
     const obtenerPermiso = async (consecutivo) => {
     const sheets = await getSheetsClient();
@@ -205,14 +188,104 @@ const guardarPrevuelo = async ({  useremail, consecutivo, username, autorizadopo
     requestBody: { values: [nuevaFila] },
   });
 
+        try {
+    const destinatario = "apinto@sevicol.com.co";
+    // const destinatario = "cardenasdiegom6@gmail.com";
+    
+    await enviarNotificacionPrevuelo({
+      destinatario,
+      consecutivo: consecutivo,
+      piloto: username,
+      fecha: fecha,
+      empresa,
+    });
+    
+    console.log(`Notificación enviada para la solicitud ${consecutivo}`);
+  } catch (error) {
+    console.error('Error al enviar notificación:', error);
+  }
+
   return { consecutivoprevuelo };
 };
+
+const enviarNotificacionPrevuelo = async (datos) => {
+  try {
+    const transporter = createTransporter();
+
+    const urlBase = "https://script.google.com/macros/s/AKfycbzoGLCKAxvDny6qhIMze-cGaaitGPt9yIhByUKYY1aI41gwysmisEIvn0UEP6qg7SH6/exec";
+    const linkFormulario = `${urlBase}?prevuelo=${datos.consecutivo}`;
+
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #ffffff; color: white; padding: 10px; text-align: center;">
+          <div style="display: flex; align-items: center; justify-content: center;">
+            <img src="https://docs.google.com/drawings/d/e/2PACX-1vQw98R1ZTlOAY_mVURreLAh0eGVKAodHN9VVuOk8wBHQ_WZmveIAn6e9588ix1u-NqmnH6rrYjPEzes/pub?w=480&h=360" 
+                 alt="Logo SVA" 
+                 style="width: 150px; height: auto; margin-right: 10px;">
+            <div>
+              <h2 style="color: black; font-size: 24px; font-weight: bold; margin: 0;">Nuevo Prevuelo Registrado</h2>
+              <p style="margin: 5px 0;">SVA SEVICOL LTDA</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="padding: 20px; background-color: #f9f9f9;">
+          <p>Se ha registrado un nuevo prevuelo con la siguiente información:</p>
+          
+          <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Consecutivo:</strong> ${datos.consecutivo}</p>
+            <p style="margin: 5px 0;"><strong>Piloto:</strong> ${datos.piloto}</p>
+            <p style="margin: 5px 0;"><strong>Fecha:</strong> ${datos.fecha}</p>
+            <p style="margin: 5px 0;"><strong>Empresa:</strong> ${datos.empresa}</p>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${linkFormulario}"
+                style="background-color: #28a745;
+                       color: white;
+                       padding: 12px 25px;
+                       text-decoration: none;
+                       border-radius: 5px;
+                       display: inline-block;
+                       font-weight: bold;">
+              Aprobar Prevuelo
+            </a>
+          </div>
+          
+          <p style="color: #666; font-size: 0.9em;">Si el botón no funciona, copie y pegue el siguiente enlace en su navegador:</p>
+          <p style="color: #666; font-size: 0.9em;">${linkFormulario}</p>
+        </div>
+        
+        <div style="padding: 20px; text-align: center; color: #666;">
+          <p>Saludos cordiales,<br>
+          Sistema de Gestión de Vuelos<br>
+          SVA SEVICOL LTDA</p>
+        </div>
+      </div>
+    `;
+
+    const info = await transporter.sendMail({
+      from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
+      to: datos.destinatario,
+      subject: `Nuevo Prevuelo Registrado - Consecutivo: ${datos.consecutivo}`,
+      html: htmlBody
+    });
+
+    console.log('Correo enviado:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Error al enviar correo de notificación:', error);
+    throw error;
+  }
+};
+
 const getPrevueloByConsecutivo = async (consecutivo) => {
   const prevuelos = await getPrevuelos();
   return prevuelos.find(prevuelo => 
     prevuelo.solicitudesaprobadas && prevuelo.solicitudesaprobadas.toLowerCase() === consecutivo.toLowerCase()
   );
 };
+
 
 const editarPrevueloPorConsecutivo = async (consecutivo, nuevosDatos) => {
   const sheets = await getSheetsClient();
@@ -353,55 +426,40 @@ function getColumnLetter(columnNumber) {
   return columnLetter;
 }
 
-const generarValidarPrevuelo = async (consecutivo, piloto, permiso, notas = '') => {
+const generarValidarPrevuelo = async (consecutivo, piloto, permiso, notas = '', estado = 'Aprobado') => {
   try {
     const sheets = await getSheetsClient();
-    
-    // Primero obtenemos la solicitud original para extraer información necesaria
+
     const prevueloResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: 'Prevuelo',
     });
-    
+
     const rowsPrevuelo = prevueloResponse.data.values;
     if (!rowsPrevuelo || rowsPrevuelo.length === 0) {
       throw new Error('No se encontraron datos en la hoja Prevuelo');
     }
-    
-    // Buscar el prevuelo por consecutivo
-    const headersPrevuelo = rowsPrevuelo[0];
-    const consecutivoIndex = headersPrevuelo.findIndex(header => 
-      header.toLowerCase() === 'solicitudesaprobadas');
-    const fechaIndex = headersPrevuelo.findIndex(header => 
-      header.toLowerCase() === 'fecha');
-    const permisoIndex = headersPrevuelo.findIndex(header => 
-      header.toLowerCase() === 'permiso');
-    const pilotoIndex = headersPrevuelo.findIndex(header => 
-      header.toLowerCase() === 'piloto');
 
-    if (consecutivoIndex === -1) {
-      throw new Error('No se encontró la columna consecutivo');
-    }
-    
-    let rowPrevuelo = null;
-    for (let i = 1; i < rowsPrevuelo.length; i++) {
-      if (rowsPrevuelo[i][consecutivoIndex] && 
-          rowsPrevuelo[i][consecutivoIndex].toLowerCase() === consecutivo.toLowerCase()) {
-        rowPrevuelo = rowsPrevuelo[i];
-        break;
-      }
-    }
-    
-    if (!rowPrevuelo) {
-      throw new Error(`No se encontró el consecutivo ${consecutivo}`);
-    }
-    
-    // Obtener fecha de la solicitud
+    const headersPrevuelo = rowsPrevuelo[0];
+    const consecutivoIndex = headersPrevuelo.findIndex(header => header.toLowerCase() === 'solicitudesaprobadas');
+    const fechaIndex = headersPrevuelo.findIndex(header => header.toLowerCase() === 'fecha');
+    const permisoIndex = headersPrevuelo.findIndex(header => header.toLowerCase() === 'permiso');
+    const pilotoIndex = headersPrevuelo.findIndex(header => header.toLowerCase() === 'piloto');
+    const emailIndex = headersPrevuelo.findIndex(header => header.toLowerCase() === 'useremail');
+
+    if (consecutivoIndex === -1) throw new Error('No se encontró la columna consecutivo');
+
+    const rowPrevuelo = rowsPrevuelo.find(row => 
+      row[consecutivoIndex]?.toLowerCase() === consecutivo.toLowerCase()
+    );
+
+    if (!rowPrevuelo) throw new Error(`No se encontró el consecutivo ${consecutivo}`);
+
     const fechaPrevuelo = fechaIndex !== -1 ? rowPrevuelo[fechaIndex] : '';
-    const pilotoseleccionado = pilotoIndex !== -1 ? rowPrevuelo[pilotoIndex] : '';
-    const permisoseleccionado = permisoIndex !== -1 ? rowPrevuelo[permisoIndex] : '';
-    
-    // Calcular fecha un día despues (si existe fecha en el registro)
+    const pilotoseleccionado = pilotoIndex !== -1 ? rowPrevuelo[pilotoIndex] : piloto;
+    const permisoseleccionado = permisoIndex !== -1 ? rowPrevuelo[permisoIndex] : permiso;
+    const emailprevuelo = emailIndex !== -1 ? rowPrevuelo[emailIndex] : useremail;
+
     let fechaPosterior = '';
     if (fechaPrevuelo) {
       try {
@@ -412,50 +470,38 @@ const generarValidarPrevuelo = async (consecutivo, piloto, permiso, notas = '') 
         console.error('Error al calcular fecha posterior:', e);
       }
     }
-    
-    // Obtener el último código consecutivo de la hoja 3.ValidarPrevuelo
+
     const validacionResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: '3.ValidarPrevuelo',
     });
-    
+
     const rowsValidacion = validacionResponse.data.values || [];
-    
-    // Generar nuevo código consecutivo (VP-X)
     let ultimoNumero = 0;
-    if (rowsValidacion.length > 1) {  
-      const codigoColumna = 0; 
-      
-      // Buscar todos los códigos y obtener el número más alto
-      for (let i = 1; i < rowsValidacion.length; i++) {
-        if (rowsValidacion[i] && rowsValidacion[i][codigoColumna]) {
-          const codigo = rowsValidacion[i][codigoColumna];
-          const match = codigo.match(/VP-(\d+)/);
-          if (match && match[1]) {
-            const num = parseInt(match[1], 10);
-            if (num > ultimoNumero) {
-              ultimoNumero = num;
-            }
-          }
-        }
+
+    for (let i = 1; i < rowsValidacion.length; i++) {
+      const codigo = rowsValidacion[i]?.[0];
+      const match = codigo?.match(/VP-(\d+)/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > ultimoNumero) ultimoNumero = num;
       }
     }
-    
+
     const nuevoCodigo = `VP-${ultimoNumero + 1}`;
     const fechaActual = new Date().toLocaleDateString('es-ES');
-    
+
     const nuevoRegistro = [
-      nuevoCodigo,              // Código 
-      consecutivo,              // ID del registro de Prevuelo
-      "Aprobado",               // Estado
-      pilotoseleccionado,                   // Piloto
-      permisoseleccionado,                   // permiso
-      fechaActual,              // Fecha actual
-      notas,                    // Notas
-      fechaPosterior             // Fecha un día antes
+      nuevoCodigo,
+      consecutivo,
+      estado,
+      pilotoseleccionado,
+      permisoseleccionado,
+      fechaActual,
+      notas,
+      fechaPosterior
     ];
-    
-    // Anexar el nuevo registro a la hoja 3.ValidarPrevuelo
+
     await sheets.spreadsheets.values.append({
       spreadsheetId,
       range: '3.ValidarPrevuelo',
@@ -465,13 +511,148 @@ const generarValidarPrevuelo = async (consecutivo, piloto, permiso, notas = '') 
         values: [nuevoRegistro]
       }
     });
-    
+
+    try {
+      const destinatario = emailprevuelo;
+      if (estado === 'Aprobado') {
+        await enviaAprobacionPrevuelo({ destinatario, consecutivo: consecutivo, fecha: fechaPrevuelo });
+      } else {
+        await enviaDenegoPrevuelo({ destinatario, consecutivo: consecutivo, fecha: fechaPrevuelo });
+      }
+      console.log(`Notificación enviada para el prevuelo ${consecutivo}`);
+    } catch (error) {
+      console.error('Error al enviar notificación:', error);
+    }
+
     return {
       codigo: nuevoCodigo,
       fechaValidacion: fechaActual
     };
   } catch (error) {
     console.error('Error al generar validar de prevuelo:', error);
+    throw error;
+  }
+};
+
+const enviaAprobacionPrevuelo = async (datos) => {
+try {
+    const transporter = createTransporter();
+
+        const urlBase = "https://script.google.com/macros/s/AKfycbzoGLCKAxvDny6qhIMze-cGaaitGPt9yIhByUKYY1aI41gwysmisEIvn0UEP6qg7SH6/exec";
+        const linkFormulario = `${urlBase}?postvuelo=${datos.consecutivo}`;
+
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #ffffff; color: white; padding: 10px; text-align: center;">
+          <div style="display: flex; align-items: center; justify-content: center;">
+            <img src="https://docs.google.com/drawings/d/e/2PACX-1vQw98R1ZTlOAY_mVURreLAh0eGVKAodHN9VVuOk8wBHQ_WZmveIAn6e9588ix1u-NqmnH6rrYjPEzes/pub?w=480&h=360" 
+                 alt="Logo SVA" 
+                 style="width: 150px; height: auto; margin-right: 10px;">
+            <div>
+              <h2 style="color: black; font-size: 24px; font-weight: bold; margin: 0;">Prevuelo Aprobado</h2>
+              <p style="margin: 5px 0;">SVA SEVICOL LTDA</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="padding: 20px; background-color: #f9f9f9;">
+          <p>Su prevuelo ha sido aprobado por parte del jefe de pilotos</p>
+          
+          <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Consecutivo:</strong> ${datos.consecutivo}</p>
+            <p style="margin: 5px 0;"><strong>Fecha:</strong> ${datos.fecha}</p>
+          </div>
+
+                    <div style="text-align: center; margin: 30px 0;">
+            <a href="${linkFormulario}" 
+               style="background-color: #28a745; 
+                      color: white; 
+                      padding: 12px 25px; 
+                      text-decoration: none; 
+                      border-radius: 5px;
+                      display: inline-block;
+                      font-weight: bold;">
+              Realizar Post-vuelo
+            </a>
+          </div>
+          
+          <p><strong>Importante:</strong> Por favor, asegúrese de seguir todos los procedimientos de seguridad establecidos antes de realizar el vuelo.</p>
+          
+          <p style="color: #666; font-size: 0.9em;">Si el botón no funciona, copie y pegue el siguiente enlace en su navegador:</p>
+          <p style="color: #666; font-size: 0.9em;">${linkFormulario}</p>
+          
+        </div>
+        
+        <div style="padding: 20px; text-align: center; color: #666;">
+          <p>Saludos cordiales,<br>
+          Sistema de Gestión de Vuelos<br>
+          SVA SEVICOL LTDA</p>
+        </div>
+      </div>
+    `;
+
+    const info = await transporter.sendMail({
+      from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
+      to: datos.destinatario,
+      subject: `Prevuelo Aprobado - Consecutivo: ${datos.consecutivo}`,
+      html: htmlBody
+    });
+
+    console.log('Correo enviado:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Error al enviar correo de notificación:', error);
+    throw error;
+  }
+};
+
+const enviaDenegoPrevuelo = async (datos) => {
+try {
+    const transporter = createTransporter();
+
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #ffffff; color: white; padding: 10px; text-align: center;">
+          <div style="display: flex; align-items: center; justify-content: center;">
+            <img src="https://docs.google.com/drawings/d/e/2PACX-1vQw98R1ZTlOAY_mVURreLAh0eGVKAodHN9VVuOk8wBHQ_WZmveIAn6e9588ix1u-NqmnH6rrYjPEzes/pub?w=480&h=360" 
+                 alt="Logo SVA" 
+                 style="width: 150px; height: auto; margin-right: 10px;">
+            <div>
+              <h2 style="color: black; font-size: 24px; font-weight: bold; margin: 0;">Prevuelo Denegado</h2>
+              <p style="margin: 5px 0;">SVA SEVICOL LTDA</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="padding: 20px; background-color: #f9f9f9;">
+          <p>Su prevuelo ha sido denegado por parte del jefe de pilotos</p>
+          
+          <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Consecutivo:</strong> ${datos.consecutivo}</p>
+            <p style="margin: 5px 0;"><strong>Fecha:</strong> ${datos.fecha}</p>
+          </div>
+          
+        </div>
+        
+        <div style="padding: 20px; text-align: center; color: #666;">
+          <p>Saludos cordiales,<br>
+          Sistema de Gestión de Vuelos<br>
+          SVA SEVICOL LTDA</p>
+        </div>
+      </div>
+    `;
+
+    const info = await transporter.sendMail({
+      from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
+      to: datos.destinatario,
+      subject: `Prevuelo Denegado - Consecutivo: ${datos.consecutivo}`,
+      html: htmlBody
+    });
+
+    console.log('Correo enviado:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Error al enviar correo de notificación:', error);
     throw error;
   }
 };

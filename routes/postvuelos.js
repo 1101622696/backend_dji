@@ -9,6 +9,9 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 router.get('/obtenerdatospostvuelo/:consecutivo',[validarJWT], httpPostvuelos.obtenerPostvueloPorConsecutivo);
 
+router.get("/aprobados",[validarJWT],httpPostvuelos.obtenerPostvuelosAprobados)
+router.get("/ordenados", [validarJWT], httpPostvuelos.obtenerPostvuelosOrdenados);
+
 router.post("/crear", [validarJWT, upload.array('archivos')], httpPostvuelos.crearPostvuelo);
 
 router.put("/editar/:consecutivo",[validarJWT, upload.array('archivos')], httpPostvuelos.editarPostvuelo)

@@ -282,7 +282,7 @@ const procesarArchivos = async (archivos, numeroSerie) => {
   const carpetaPadreId = '1LPVkbgDSu3lfv0visAqh_kVrile_Twbl';
   
   // Crear una carpeta con el nombre del numeroSerie
-  const carpeta = await buscarCarpetaPorNombre(numeroSerie, carpetaPadreId);
+  let carpeta = await buscarCarpetaPorNombre(numeroSerie, carpetaPadreId);
   
   if (!carpeta) {
     carpeta = await crearCarpeta(numeroSerie, carpetaPadreId);

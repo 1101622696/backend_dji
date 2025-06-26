@@ -105,9 +105,9 @@ const getPilotoById = async (identificacion) => {
   );
 };
 
-const filtrarPilotosPorCampoTexto = (drones, campo, valor) => {
-  return drones.filter(dron => 
-    dron[campo] && dron[campo].toLowerCase() === valor.toLowerCase()
+const filtrarPilotosPorCampoTexto = (pilotos, campo, valor) => {
+  return pilotos.filter(piloto => 
+    piloto[campo] && piloto[campo].toLowerCase() === valor.toLowerCase()
   );
 };
 

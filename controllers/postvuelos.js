@@ -1,5 +1,14 @@
 import {postvueloHelper} from '../helpers/postvuelos.js';
 
+const ORDENAMIENTO_HANDLERS = {
+  fecha: postvueloHelper.getPostvueloOrdenadosPorFechaVuelo,
+  tiempo: postvueloHelper.getPostvueloOrdenadosPorTiempo,
+  distancia: postvueloHelper.getPostvueloOrdenadosPorDistancia,
+  altura: postvueloHelper.getPostvueloOrdenadosPorAltura,
+};
+
+const TIPOS_ORDENAMIENTO = Object.keys(ORDENAMIENTO_HANDLERS);
+
 const httpPostvuelos = {
 
  crearPostvuelo: async (req, res) => {
@@ -124,16 +133,21 @@ aprobarestadoPostvuelo: async (req, res) => {
     const { consecutivo } = req.params;
     const { estado = "Aprobado", piloto, numeroserie, notas  } = req.body; 
     
-    await postvueloHelper.actualizarEstadoEnSheets(consecutivo, estado || "Aprobado");
+    await postvueloHelper.actualizarEstadoEnSheets(consecutivo, estado);
 
     const resultado = await postvueloHelper.generarValidacionPostvuelo(
       consecutivo,
       piloto,
       numeroserie,
-      notas
-    )
+      notas,
+      estado
+    );
 
-    res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
+    res.status(200).json({ 
+      mensaje: 'Estado actualizado correctamente',
+      codigo: resultado.codigo,
+      
+    });
   } catch (error) {
     console.error('Error al editar estado de Postvuelo:', error);
     res.status(500).json({ 
@@ -148,16 +162,20 @@ denegarestadoPostvuelo: async (req, res) => {
     const { consecutivo } = req.params;
     const { estado = "Denegado", piloto, numeroserie, notas  } = req.body; 
     
-   await postvueloHelper.actualizarEstadoEnSheets(consecutivo, estado || "Denegado");
+   await postvueloHelper.actualizarEstadoEnSheets(consecutivo, estado);
 
    const resultado = postvueloHelper.generarValidacionPostvuelo(
     consecutivo,
     piloto,
     numeroserie,
-    notas
+    notas,
+    estado
    )
 
-    res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
+    res.status(200).json({ 
+      mensaje: 'Estado actualizado correctamente',
+      codigo: resultado.codigo,
+    });
   } catch (error) {
     console.error('Error al editar estado de Postvuelo:', error);
     res.status(500).json({ 
@@ -180,6 +198,45 @@ obtenerPostvueloPorConsecutivo: async (req, res) => {
   } catch (error) {
     console.error('Error al obtener postvuelo:', error);
     res.status(500).json({ mensaje: 'Error al obtener postvuelo' });
+  }
+},
+  obtenerPostvuelosAprobados: async (req, res) => {
+    try {
+      const data = await postvueloHelper.getPostvuelosAprobados();
+      res.json(data);
+    } catch (error) {
+      console.error('Error al obtener datos:', error);
+      res.status(500).json({ mensaje: 'Error al obtener postvuelos' });
+    }
+  },
+
+   obtenerPostvuelosOrdenados: async (req, res) => {
+  try {
+    const { tipo = "tiempo", orden = "desc" } = req.query;
+    
+    if (orden !== "asc" && orden !== "desc") {
+      return res
+        .status(400)
+        .json({ mensaje: 'El parámetro orden debe ser "asc" o "desc"' });
+    }
+    
+    const tipoLower = tipo.toLowerCase();
+    if (!TIPOS_ORDENAMIENTO.includes(tipoLower)) {
+      return res
+        .status(400)
+        .json({ 
+          mensaje: `El parámetro tipo debe ser uno de: ${TIPOS_ORDENAMIENTO.join(', ')}`,
+          tiposPermitidos: TIPOS_ORDENAMIENTO
+        });
+    }
+    
+    const handlerFn = ORDENAMIENTO_HANDLERS[tipoLower];
+    const postvuelos = await handlerFn(orden);
+    
+    res.json(postvuelos);
+  } catch (error) {
+    console.error("Error al obtener postvuelos ordenados:", error);
+    res.status(500).json({ mensaje: "Error al obtener postvuelos" });
   }
 },
 

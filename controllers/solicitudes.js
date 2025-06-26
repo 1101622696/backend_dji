@@ -8,7 +8,7 @@ crearSolicitud: async (req, res) => {
     // console.log("Usuario token:", req.usuariobdtoken);
     
     const { email, nombre } = req.usuariobdtoken;
-    const {tipodeoperacionaerea, fecha_inicio, hora_inicio, pilotoarealizarvuelo, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, realizado  } = req.body;
+    const {tipodeoperacionaerea, fecha_inicio, hora_inicio, pilotoarealizarvuelo, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, realizado, sucursal  } = req.body;
 
     const estado = req.body.estado || "Pendiente";
     const fechadeCreacion = new Date().toISOString().split('T')[0];
@@ -25,7 +25,7 @@ crearSolicitud: async (req, res) => {
       consecutivo = await solicitudHelper.getSiguienteConsecutivo();
       Link = await solicitudHelper.procesarArchivos(req.files, consecutivo);
 
-    const resultado = await solicitudHelper.guardarSolicitud({  useremail: userEmailFirst, username: usernameFirst, tipodeoperacionaerea, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final: nombre, useremail_final: email });
+    const resultado = await solicitudHelper.guardarSolicitud({  useremail: userEmailFirst, username: usernameFirst, tipodeoperacionaerea, fecha_inicio, hora_inicio, fecha_fin, hora_fin, empresa, peso_maximo, detalles_cronograma, departamento, municipio, tipodecontactovisualconlaua, vueloespecial, justificacionvueloespecial, poligononombre, altura_poligono, latitud_poligono_1, longitud_poligono_1, latitud_poligono_2, longitud_poligono_2, latitud_poligono_3, longitud_poligono_3, latitud_poligono_4, longitud_poligono_4, latitud_poligono_5, longitud_poligono_5, tramolinealnombre, altura_tramo, latitud_tramo_1, longitud_tramo_1, latitud_tramo_2, longitud_tramo_2, latitud_tramo_3, longitud_tramo_3, latitud_tramo_4, longitud_tramo_4, latitud_tramo_5, longitud_tramo_5, circuferenciaencoordenadayradionombre, altura_circunferencia, latitud_circunferencia_1, longitud_circunferencia_1, check_kmz, Link, estado, fechadeCreacion, realizado, username_final: nombre, useremail_final: email, sucursal });
   
     consecutivo = resultado.consecutivo;
 
@@ -84,7 +84,8 @@ crearSolicitud: async (req, res) => {
       fechadeCreacion,
       realizado,
       username_final: nombre, 
-      useremail_final: email 
+      useremail_final: email,
+      sucursal 
     });
     
     consecutivo = resultado.consecutivo;
@@ -446,6 +447,7 @@ denegarestadoSolicitud: async (req, res) => {
   try {
     const { consecutivo } = req.params;
     const { estado = "Denegado", numeroserie, piloto, notas  } = req.body; 
+    console.log('notas', notas);
     
      await solicitudHelper.putSolicitudByStatus(consecutivo, estado);
 
@@ -473,31 +475,32 @@ denegarestadoSolicitud: async (req, res) => {
 enEsperaSolicitud: async (req, res) => {
   try {
     const { consecutivo } = req.params;
-    const { estado = "Enespera", numeroserie, piloto, notas  } = req.body; 
+    const { estado = "Enespera", notas = "" } = req.body;
+    console.log('consecutivo:', consecutivo);
+    console.log('notas:', notas);
     
-     await solicitudHelper.putSolicitudByStatus(consecutivo, estado);
-
-     const resultado = await solicitudHelper.generarValidacionPrevuelo(
+    await solicitudHelper.putSolicitudByStatus(consecutivo, estado);
+    
+    const resultado = await solicitudHelper.generarValidacionPrevuelo(
       consecutivo,
-      numeroserie,
-      piloto,
+      "", 
+      null, 
       notas,
       estado
-     )
+    );
 
     res.status(200).json({ 
-      mensaje: 'Estado actualizado correctamente',
+      mensaje: 'Solicitud puesta en espera correctamente',
       codigo: resultado.codigo,
     });
   } catch (error) {
-    console.error('Error al editar estado de solicitud:', error);
+    console.error('Error al poner en espera la solicitud:', error);
     res.status(500).json({ 
-      mensaje: 'Error al actualizar estado', 
+      mensaje: 'Error al poner en espera la solicitud', 
       error: error.message 
     });
   }
 },
-
 
 cancelarEstadoSolicitud: async (req, res) => {
   try {
