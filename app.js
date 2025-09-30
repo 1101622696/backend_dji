@@ -15,7 +15,10 @@ import mantenimiento from "./routes/mantenimiento.js"
 import validarpostvuelo from "./routes/validarpostvuelo.js"
 import validarprevuelo from "./routes/validarprevuelo.js"
 import validacionprevuelo from "./routes/validarprevuelo.js"
+import formaA from "./routes/formaA.js"
+import formaB from "./routes/formaB.js"
 import { firebaseHelper } from "./helpers/firebase.js";
+import health from "./routes/health.js"
 
 const app = express();
 
@@ -81,6 +84,9 @@ app.use("/api/solicitudes",solicitudes)
 app.use("/api/validarpostvuelo",validarpostvuelo)
 app.use("/api/validarprevuelo",validarprevuelo)
 app.use("/api/validacionprevuelo",validacionprevuelo)
+app.use("/api/formaA",formaA)
+app.use("/api/formaB",formaB)
+app.use("/api/health", health)
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
