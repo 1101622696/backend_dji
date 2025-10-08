@@ -19,6 +19,7 @@ import formaA from "./routes/formaA.js"
 import formaB from "./routes/formaB.js"
 import { firebaseHelper } from "./helpers/firebase.js";
 import health from "./routes/health.js"
+import registros from "./routes/registro.js"
 
 const app = express();
 
@@ -87,6 +88,7 @@ app.use("/api/validacionprevuelo",validacionprevuelo)
 app.use("/api/formaA",formaA)
 app.use("/api/formaB",formaB)
 app.use("/api/health", health)
+app.use("/api/registros",registros)
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
