@@ -356,22 +356,11 @@
 // };
 
 import { google } from 'googleapis';
-// import { BrowserPDF417Reader } from '@zxing/library';
-import {
-  PDF417Reader,
-  BinaryBitmap,
-  HybridBinarizer,
-  RGBLuminanceSource
-} from "@zxing/library";
-import { readBarcodesFromImageFile } from 'zxing-wasm';
-// import { createRequire } from "module";
-// const require = createRequire(import.meta.url);
-// const Jimp = require("jimp");
-
+import { readBarcodes } from 'zxing-wasm/reader';
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const JimpPkg = require("jimp");
-const Jimp = JimpPkg.Jimp || JimpPkg; 
+const Jimp = JimpPkg.Jimp || JimpPkg;
 import { Readable } from 'stream';
 import fs from 'fs';
 import path from 'path';
@@ -423,7 +412,6 @@ const subirImagenADrive = async (buffer, nombreArchivo) => {
       parents: [FOLDER_ID_DRIVE]
     };
     
-    // Crear stream desde buffer
     const bufferStream = new Readable();
     bufferStream.push(buffer);
     bufferStream.push(null);
@@ -439,7 +427,7 @@ const subirImagenADrive = async (buffer, nombreArchivo) => {
       fields: 'id, webViewLink, webContentLink'
     });
     
-    console.log('Imagen subida a Drive:', file.data.id);
+    console.log('✅ Imagen subida a Drive:', file.data.id);
     
     return {
       fileId: file.data.id,
@@ -447,164 +435,84 @@ const subirImagenADrive = async (buffer, nombreArchivo) => {
       webContentLink: file.data.webContentLink
     };
   } catch (error) {
-    console.error('Error subiendo a Drive:', error);
+    console.error('❌ Error subiendo a Drive:', error);
     throw error;
   }
 };
 
-// const decodificarPDF417 = async (buffer) => {
-//   try {
-//     console.log('Procesando imagen desde buffer...');
-    
-//     // Jimp puede leer directamente desde buffer
-//     const image = await Jimp.read(buffer);
-    
-//     console.log('Dimensiones:', image.bitmap.width, 'x', image.bitmap.height);
-    
-//     image
-//       .greyscale()
-//       .contrast(0.3)
-//       .normalize();
-    
-//     if (image.bitmap.width > 1200) {
-//       image.resize(1200, Jimp.AUTO);
-//       console.log('Redimensionada a:', image.bitmap.width, 'x', image.bitmap.height);
-//     }
-    
-//     const luminanceSource = {
-//       getRow: (y) => {
-//         const row = [];
-//         for (let x = 0; x < image.bitmap.width; x++) {
-//           const idx = (image.bitmap.width * y + x) << 2;
-//           row.push(image.bitmap.data[idx]);
-//         }
-//         return new Uint8ClampedArray(row);
-//       },
-//       getMatrix: () => {
-//         const matrix = [];
-//         for (let y = 0; y < image.bitmap.height; y++) {
-//           for (let x = 0; x < image.bitmap.width; x++) {
-//             const idx = (image.bitmap.width * y + x) << 2;
-//             matrix.push(image.bitmap.data[idx]);
-//           }
-//         }
-//         return new Uint8ClampedArray(matrix);
-//       },
-//       getWidth: () => image.bitmap.width,
-//       getHeight: () => image.bitmap.height
-//     };
-    
-//     console.log('Decodificando PDF417...');
-    
-//     // const reader = new BrowserPDF417Reader();
-//     const reader = new PDF417Reader();
-//     const result = await reader.decode(luminanceSource);
-    
-//     console.log('PDF417 decodificado');
-//     console.log('Texto:', result.text.substring(0, 100) + '...');
-    
-//     return result.text;
-    
-//   } catch (error) {
-//     console.error('Error decodificando:', error.message);
-//     throw new Error('No se pudo leer el código de barras');
-//   }
-// };
-
-
-// const decodificarPDF417 = async (buffer) => {
-//   try {
-//     console.log("Procesando imagen desde buffer...");
-
-//     const image = await Jimp.read(buffer);
-
-//     image.greyscale().contrast(0.3).normalize();
-
-//     if (image.bitmap.width > 1200) {
-//       image.resize({ w: 1200, h: Jimp.AUTO });
-//     }
-
-//     const luminanceSource = new RGBLuminanceSource(
-//       image.bitmap.data,
-//       image.bitmap.width,
-//       image.bitmap.height
-//     );
-
-//     const binaryBitmap = new BinaryBitmap(new HybridBinarizer(luminanceSource));
-//     const reader = new PDF417Reader();
-
-//     console.log("📖 Decodificando PDF417...");
-//     const result = reader.decode(binaryBitmap);
-
-//     console.log("✅ PDF417 decodificado correctamente");
-//     console.log("Texto (inicio):", result.text.substring(0, 100) + "...");
-
-//     return result.text;
-
-//   } catch (error) {
-//     console.error("❌ Error decodificando PDF417:", error);
-//     throw new Error(`No se pudo leer el código de barras: ${error.message}`);
-//   }
-// }
-
 const decodificarPDF417 = async (buffer) => {
   try {
     console.log("🔍 Procesando imagen desde buffer...");
+    console.log("📊 Buffer size:", buffer.length, "bytes");
 
-    // Guardar temporalmente la imagen
-    const tempPath = "/tmp/temp_img.jpg";
-    fs.writeFileSync(tempPath, buffer);
-
-    // (Opcional) Ajuste previo con Jimp para mejorar contraste
-    const image = await Jimp.read(tempPath);
+    // Procesar con Jimp
+    const image = await Jimp.read(buffer);
+    
+    console.log("📐 Dimensiones originales:", image.bitmap.width, "x", image.bitmap.height);
+    
+    // Optimizar
     image
       .greyscale()
       .contrast(0.3)
-      .normalize()
-      .write(tempPath); // Sobrescribe el archivo mejorado
-
-    console.log("📖 Decodificando PDF417...");
-    const result = await readBarcodesFromImageFile(tempPath, {
-      tryHarder: true,
-      formats: ["pdf417"],
-    });
-
-    if (!result || !result.length) {
-      throw new Error("No se detectó código PDF417");
+      .normalize();
+    
+    if (image.bitmap.width > 1200) {
+      image.resize(1200, Jimp.AUTO);
+      console.log("📐 Redimensionada a:", image.bitmap.width, "x", image.bitmap.height);
     }
 
-    console.log("✅ PDF417 decodificado correctamente");
-    console.log("Texto (inicio):", result[0].text.substring(0, 120) + "...");
-    return result[0].text;
+    // Convertir a buffer optimizado
+    const optimizedBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
+
+    console.log("📖 Decodificando PDF417 con zxing-wasm...");
+
+    // Decodificar con zxing-wasm
+    const results = await readBarcodes(optimizedBuffer, {
+      formats: ['PDF417'],
+      tryHarder: true,
+      maxNumberOfSymbols: 1
+    });
+
+    if (!results || results.length === 0) {
+      throw new Error("No se detectó código PDF417 en la imagen");
+    }
+
+    console.log("✅ PDF417 decodificado exitosamente");
+    console.log("📄 Texto (preview):", results[0].text.substring(0, 150));
+    console.log("📏 Longitud total:", results[0].text.length);
+
+    return results[0].text;
+
   } catch (error) {
-    console.error("❌ Error decodificando PDF417:", error);
+    console.error("❌ Error decodificando PDF417:", error.message);
     throw new Error(`No se pudo leer el código de barras: ${error.message}`);
   }
 };
 
-
 const extraerCedulaDelTexto = (textoCompleto) => {
-  console.log('🔍 Extrayendo cédula...');
+  console.log('🔍 Extrayendo cédula del texto...');
+  console.log('📝 Texto (preview):', textoCompleto.substring(0, 200));
   
   if (!textoCompleto) {
     throw new Error('Texto vacío');
   }
   
   const patrones = [
-    /(\d{6,10})(?=[A-Z]{3,})/,
-    /DSK\??(\d{6,10})/i,
-    /\b(\d{7,10})\b/
+    /(\d{6,10})(?=[A-Z]{3,})/,  // Antes de letras mayúsculas
+    /DSK\??(\d{6,10})/i,        // Después de DSK
+    /\b(\d{7,10})\b/            // Cualquier secuencia de 7-10 dígitos
   ];
   
-  for (const patron of patrones) {
-    const match = textoCompleto.match(patron);
+  for (let i = 0; i < patrones.length; i++) {
+    const match = textoCompleto.match(patrones[i]);
     if (match && match[1]) {
-      console.log('✅ Cédula encontrada:', match[1]);
+      console.log(`✅ Cédula encontrada con patrón #${i+1}:`, match[1]);
       return match[1];
     }
   }
   
-  throw new Error('No se pudo extraer cédula');
+  console.warn('⚠️ No se encontró cédula con ningún patrón');
+  throw new Error('No se pudo extraer el número de cédula');
 };
 
 const guardarRegistro = async ({ equipo, cedula, nombre, marca, piso, observaciones, estado }) => {
