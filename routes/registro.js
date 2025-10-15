@@ -21,28 +21,11 @@
 import { Router } from 'express'
 import httpRegistros from '../controllers/registro.js'
 import multer from 'multer'
-import path from 'path'
-import { fileURLToPath } from 'url'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 const router = Router()
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, '../uploads/temp')
-    cb(null, uploadDir)
-  },
-  filename: function (req, file, cb) {
-    const timestamp = Date.now()
-    const ext = path.extname(file.originalname)
-    cb(null, `cedula_${timestamp}${ext}`)
-  }
-})
-
 const upload = multer({ 
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB
   }
