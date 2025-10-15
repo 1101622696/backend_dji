@@ -355,11 +355,10 @@
 //   extraerCedulaDelTexto
 // };
 
-
 import { google } from 'googleapis';
 import { BrowserPDF417Reader } from '@zxing/library';
 import * as Jimp from 'jimp';
-import fs from 'fs';
+import { Readable } from 'stream';
 
 const spreadsheetId = '19Dhwyql2AEhHPg14_mBuNQJZlq-ItdAr_QTFOEvkE7Q';
 const FOLDER_ID_DRIVE = '1sDxnuV-DBTkUzd8gDZRULthZ4ZJUO1WQ';
@@ -399,19 +398,24 @@ const getSheetsClient = async () => {
   return google.sheets({ version: 'v4', auth: client });
 };
 
-// ✅ Subir imagen a Drive (CORREGIDO)
-const subirImagenADrive = async (tempFilePath, nombreArchivo) => {
+// ✅ Subir imagen a Drive desde BUFFER (no archivo)
+const subirImagenADrive = async (buffer, nombreArchivo) => {
   try {
-    const drive = await getDriveClient(); // ← ESTO FALTABA
+    const drive = await getDriveClient();
     
     const fileMetadata = {
       name: nombreArchivo,
       parents: [FOLDER_ID_DRIVE]
     };
     
+    // Crear stream desde buffer
+    const bufferStream = new Readable();
+    bufferStream.push(buffer);
+    bufferStream.push(null);
+    
     const media = {
       mimeType: 'image/jpeg',
-      body: fs.createReadStream(tempFilePath)
+      body: bufferStream
     };
     
     const file = await drive.files.create({
@@ -433,14 +437,15 @@ const subirImagenADrive = async (tempFilePath, nombreArchivo) => {
   }
 };
 
-// ✅ Decodificar PDF417
-const decodificarPDF417 = async (imagePath) => {
+// ✅ Decodificar PDF417 desde BUFFER
+const decodificarPDF417 = async (buffer) => {
   try {
-    console.log('🔍 Cargando imagen:', imagePath);
+    console.log('🔍 Procesando imagen desde buffer...');
     
-    const image = await Jimp.read(imagePath);
+    // Jimp puede leer directamente desde buffer
+    const image = await Jimp.read(buffer);
     
-    console.log('📐 Dimensiones originales:', image.bitmap.width, 'x', image.bitmap.height);
+    console.log('📐 Dimensiones:', image.bitmap.width, 'x', image.bitmap.height);
     
     image
       .greyscale()
@@ -475,23 +480,22 @@ const decodificarPDF417 = async (imagePath) => {
       getHeight: () => image.bitmap.height
     };
     
-    console.log('🔍 Intentando decodificar PDF417...');
+    console.log('🔍 Decodificando PDF417...');
     
     const reader = new BrowserPDF417Reader();
     const result = await reader.decode(luminanceSource);
     
     console.log('✅ PDF417 decodificado');
-    console.log('📄 Texto:', result.text);
+    console.log('📄 Texto:', result.text.substring(0, 100) + '...');
     
     return result.text;
     
   } catch (error) {
-    console.error('❌ Error decodificando PDF417:', error.message);
+    console.error('❌ Error decodificando:', error.message);
     throw new Error('No se pudo leer el código de barras');
   }
 };
 
-// ✅ Extraer cédula
 const extraerCedulaDelTexto = (textoCompleto) => {
   console.log('🔍 Extrayendo cédula...');
   
@@ -516,7 +520,6 @@ const extraerCedulaDelTexto = (textoCompleto) => {
   throw new Error('No se pudo extraer cédula');
 };
 
-// ✅ Guardar registro
 const guardarRegistro = async ({ equipo, cedula, nombre, marca, piso, observaciones, estado }) => {
   const sheets = await getSheetsClient();
  
@@ -533,7 +536,7 @@ const guardarRegistro = async ({ equipo, cedula, nombre, marca, piso, observacio
   return { equipo };
 };
 
-// ✅ Las funciones que ya tenías
+// Resto de funciones...
 const obtenerRegistrosPC = async (nombreHoja, rango = 'A1:I1000') => {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
