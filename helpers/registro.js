@@ -373,6 +373,8 @@ const require = createRequire(import.meta.url);
 const JimpPkg = require("jimp");
 const Jimp = JimpPkg.Jimp || JimpPkg; 
 import { Readable } from 'stream';
+import fs from 'fs';
+import path from 'path';
 
 const spreadsheetId = '19Dhwyql2AEhHPg14_mBuNQJZlq-ItdAr_QTFOEvkE7Q';
 const FOLDER_ID_DRIVE = '1sDxnuV-DBTkUzd8gDZRULthZ4ZJUO1WQ';
