@@ -363,12 +363,14 @@ import {
   HybridBinarizer,
   RGBLuminanceSource
 } from "@zxing/library";
-// import * as Jimp from 'jimp';
-// import pkg from 'jimp';
-// const { Jimp } = pkg;
+// import { createRequire } from "module";
+// const require = createRequire(import.meta.url);
+// const Jimp = require("jimp");
+
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
-const Jimp = require("jimp");
+const JimpPkg = require("jimp");
+const Jimp = JimpPkg.Jimp || JimpPkg; 
 import { Readable } from 'stream';
 
 const spreadsheetId = '19Dhwyql2AEhHPg14_mBuNQJZlq-ItdAr_QTFOEvkE7Q';
