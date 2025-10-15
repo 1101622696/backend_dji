@@ -1,6 +1,13 @@
 import { google } from 'googleapis';
+import { BrowserPDF417Reader } from '@zxing/library';
+// import Jimp from 'jimp';
+import * as Jimp from 'jimp';
+import fs from 'fs';
+import path from 'path';
 
 const spreadsheetId = '19Dhwyql2AEhHPg14_mBuNQJZlq-ItdAr_QTFOEvkE7Q';
+
+const FOLDER_ID_DRIVE = '1sDxnuV-DBTkUzd8gDZRULthZ4ZJUO1WQ';
 
 const getAuth = () => {
   if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
@@ -10,23 +17,178 @@ const getAuth = () => {
         private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
       },
       scopes: [
-        'https://www.googleapis.com/auth/spreadsheets'
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'
       ],
     });
   } else {
     return new google.auth.GoogleAuth({
       keyFile: './config/credenciales-sheets.json',
       scopes: [
-        'https://www.googleapis.com/auth/spreadsheets'
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'
       ],
     });
   }
 };
 
+const getDriveClient = async () => {
+  const authClient = getAuth();
+  const client = await authClient.getClient();
+  return google.drive({ version: 'v3', auth: client });
+};
 const getSheetsClient = async () => {
   const authClient = getAuth();
   const client = await authClient.getClient();
   return google.sheets({ version: 'v4', auth: client });
+};
+
+async function subirImagenADrive(tempFilePath, nombreArchivo) {
+  const folderId = '1sDxnuV-DBTkUzd8gDZRULthZ4ZJUO1WQ';
+  const fileMetadata = {
+    name: nombreArchivo,
+    parents: [folderId],
+  };
+
+  const media = {
+    mimeType: 'image/png', // o 'image/jpeg'
+    body: fs.createReadStream(tempFilePath),
+  };
+
+  const response = await drive.files.create({
+    resource: fileMetadata,
+    media: media,
+    fields: 'id, webViewLink, webContentLink',
+  });
+
+  return response.data;
+}
+
+export async function actualizarCedulaEnFila(fila, cedula) {
+  const hoja = SpreadsheetApp.openById('19Dhwyql2AEhHPg14_mBuNQJZlq-ItdAr_QTFOEvkE7Q').getSheetByName('Registro');
+  hoja.getRange(fila, 2).setValue(cedula);
+}
+
+
+// const subirImagenADrive = async (filePath, nombreArchivo) => {
+//   try {
+//     const drive = await getDriveClient();
+    
+//     const fileMetadata = {
+//       name: nombreArchivo,
+//       parents: [FOLDER_ID_DRIVE]
+//     };
+    
+//     const media = {
+//       mimeType: 'image/jpeg',
+//       body: fs.createReadStream(filePath)
+//     };
+    
+//     const file = await drive.files.create({
+//       requestBody: fileMetadata,
+//       media: media,
+//       fields: 'id, webViewLink, webContentLink'
+//     });
+    
+//     console.log('Imagen subida a Drive:', file.data.id);
+    
+//     return {
+//       fileId: file.data.id,
+//       webViewLink: file.data.webViewLink,
+//       webContentLink: file.data.webContentLink
+//     };
+//   } catch (error) {
+//     console.error('Error subiendo a Drive:', error);
+//     throw error;
+//   }
+// };
+
+// Decodificar PDF417 de una imagen
+const decodificarPDF417 = async (imagePath) => {
+  try {
+    console.log('Cargando imagen:', imagePath);
+    
+    // Cargar imagen con Jimp
+    const image = await Jimp.read(imagePath);
+    
+    console.log('Dimensiones originales:', image.bitmap.width, 'x', image.bitmap.height);
+    
+    // Optimizar imagen: convertir a escala de grises y ajustar contraste
+    image
+      .greyscale()
+      .contrast(0.3)
+      .normalize();
+    
+    // Redimensionar si es muy grande (máximo 1200px de ancho)
+    if (image.bitmap.width > 1200) {
+      image.resize(1200, Jimp.AUTO);
+      console.log('Redimensionada a:', image.bitmap.width, 'x', image.bitmap.height);
+    }
+    
+    // Crear objeto compatible con ZXing
+    const luminanceSource = {
+      getRow: (y) => {
+        const row = [];
+        for (let x = 0; x < image.bitmap.width; x++) {
+          const idx = (image.bitmap.width * y + x) << 2;
+          row.push(image.bitmap.data[idx]); // Canal rojo (en escala de grises es igual)
+        }
+        return new Uint8ClampedArray(row);
+      },
+      getMatrix: () => {
+        const matrix = [];
+        for (let y = 0; y < image.bitmap.height; y++) {
+          for (let x = 0; x < image.bitmap.width; x++) {
+            const idx = (image.bitmap.width * y + x) << 2;
+            matrix.push(image.bitmap.data[idx]);
+          }
+        }
+        return new Uint8ClampedArray(matrix);
+      },
+      getWidth: () => image.bitmap.width,
+      getHeight: () => image.bitmap.height
+    };
+    
+    console.log('Intentando decodificar PDF417...');
+    
+    const reader = new BrowserPDF417Reader();
+    const result = await reader.decode(luminanceSource);
+    
+    console.log('PDF417 decodificado exitosamente');
+    console.log('Texto completo:', result.text);
+    console.log('Longitud:', result.text.length);
+    
+    return result.text;
+    
+  } catch (error) {
+    console.error('Error decodificando PDF417:', error.message);
+    throw new Error('No se pudo leer el código de barras de la cédula');
+  }
+};
+
+const extraerCedulaDelTexto = (textoCompleto) => {
+  console.log('🔍 Extrayendo cédula del texto...');
+  
+  if (!textoCompleto) {
+    throw new Error('Texto vacío');
+  }
+  
+  // Patrones para cédulas colombianas
+  const patrones = [
+    /(\d{6,10})(?=[A-Z]{3,})/,  // Antes de 3+ letras mayúsculas (nombres)
+    /DSK\??(\d{6,10})/i,        // Después de DSK
+    /\b(\d{7,10})\b/            // Cualquier secuencia de 7-10 dígitos
+  ];
+  
+  for (const patron of patrones) {
+    const match = textoCompleto.match(patron);
+    if (match && match[1]) {
+      console.log('Cédula encontrada:', match[1]);
+      return match[1];
+    }
+  }
+  
+  throw new Error('No se pudo extraer el número de cédula del código');
 };
 
 const obtenerRegistrosPC = async (nombreHoja, rango = 'A1:I1000') => {
@@ -187,5 +349,8 @@ export const registroHelper = {
   guardarRegistro,
   editarPorEquipo,
   actualizarEstadoEnSheets,
-  getRegistroByEquipo
+  getRegistroByEquipo,
+  subirImagenADrive,
+  decodificarPDF417,
+  extraerCedulaDelTexto
 };
