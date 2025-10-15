@@ -40,90 +40,71 @@ registrarEquipo: async (req, res) => {
     let cedula = req.body.cedula || null;
     let textoCompleto = null;
     let driveFiles = [];
-    let enlaceDrive = null;
 
-    // ✅ 1. Verificar si hay archivos subidos
+    // Procesar archivos
     if (req.files && req.files.length > 0) {
-      console.log(`${req.files.length} archivo(s) recibido(s)`);
+      console.log(`📸 ${req.files.length} archivo(s) recibido(s)`);
 
       for (const file of req.files) {
         const tempFilePath = file.path;
         tempFilePaths.push(tempFilePath);
 
-        console.log('Procesando archivo:', tempFilePath);
+        console.log('📸 Procesando:', tempFilePath);
 
         const timestamp = new Date().toISOString().replace(/:/g, '-');
         const nombreArchivo = `cedula_${equipo}_${timestamp}.jpg`;
 
-        // ✅ 2. Subir imagen a Drive
-        console.log('Subiendo imagen a Google Drive...');
-        const resultadoDrive = await registroHelper.subirImagenADrive(tempFilePath, nombreArchivo);
+        // Subir a Drive
+        console.log('☁️ Subiendo a Drive...');
+        const driveFile = await registroHelper.subirImagenADrive(tempFilePath, nombreArchivo);
+        driveFiles.push(driveFile);
+        console.log('✅ Subido:', driveFile.webViewLink);
 
-        enlaceDrive = resultadoDrive.webViewLink;
-        driveFiles.push(resultadoDrive);
-        console.log('Imagen subida:', enlaceDrive);
-
-        // ✅ 3. Decodificar PDF417 solo del primer archivo
+        // Decodificar PDF417
         if (!cedula) {
           try {
-            console.log('Decodificando PDF417...');
+            console.log('🔍 Decodificando...');
             textoCompleto = await registroHelper.decodificarPDF417(tempFilePath);
-
-            console.log('Extrayendo cédula...');
             cedula = registroHelper.extraerCedulaDelTexto(textoCompleto);
-            console.log('Cédula extraída:', cedula);
+            console.log('✅ Cédula:', cedula);
           } catch (decodeError) {
-            console.warn('No se pudo decodificar PDF417:', decodeError.message);
+            console.warn('⚠️ No se pudo decodificar:', decodeError.message);
           }
         }
       }
 
-      // ✅ 4. Eliminar archivos temporales
+      // Limpiar temporales
       for (const tempPath of tempFilePaths) {
         if (fs.existsSync(tempPath)) {
           fs.unlinkSync(tempPath);
-          console.log('Archivo temporal eliminado:', tempPath);
         }
       }
-
-    } else {
-      console.log('No se envió imagen. Se usará cédula proporcionada manualmente.');
     }
 
-    // ✅ 5. Guardar registro inicial en Sheets
-    console.log('Guardando registro en Google Sheets...');
-    const fila = await registroHelper.guardarRegistro({
+    // Guardar en Sheets
+    console.log('💾 Guardando en Sheets...');
+    const resultado = await registroHelper.guardarRegistro({
       equipo,
-      cedula: '', // se guarda vacío de momento
-      nombre,
-      marca,
-      piso,
-      observaciones,
+      cedula: cedula || req.body.cedula || '',
+      nombre: nombre || '',
+      marca: marca || '',
+      piso: piso || '',
+      observaciones: observaciones || '',
       estado,
-      fecharegistro,
-      imagen: enlaceDrive,
+      fecharegistro
     });
 
-    // ✅ 6. Si se logró extraer la cédula, actualizar esa fila
-    if (cedula) {
-      console.log(`Actualizando cédula en la fila ${fila}...`);
-      await registroHelper.actualizarCedulaEnFila(fila, cedula);
-    }
-
-    // ✅ 7. Respuesta final
     res.status(200).json({
       mensaje: 'Equipo registrado correctamente',
-      equipo,
-      fila,
+      equipo: resultado.equipo,
       cedula: cedula || req.body.cedula || 'No detectada',
-      textoCompleto: textoCompleto || 'No se procesó imagen',
-      imagenesDrive: driveFiles.map(f => f.webViewLink),
+      textoCompleto: textoCompleto || 'No procesada',
+      imagenesDrive: driveFiles.length > 0 ? driveFiles.map(f => f.webViewLink) : null
     });
 
   } catch (error) {
-    console.error('Error procesando registro:', error);
+    console.error('❌ Error:', error);
 
-    // Limpiar archivos temporales en caso de error
     for (const tempPath of tempFilePaths) {
       if (fs.existsSync(tempPath)) {
         fs.unlinkSync(tempPath);
@@ -136,7 +117,6 @@ registrarEquipo: async (req, res) => {
     });
   }
 },
-
 obtenerDatosPorequipo: async (req, res) => {
   try {
     const { equipo } = req.params;
