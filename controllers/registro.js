@@ -41,40 +41,56 @@ registrarEquipo: async (req, res) => {
     let textoCompleto = null;
     let driveFiles = [];
 
-    // ✅ Procesar archivos desde BUFFER (req.files[].buffer)
     if (req.files && req.files.length > 0) {
-      console.log(`📸 ${req.files.length} archivo(s) recibido(s)`);
+      console.log(`${req.files.length} archivo(s) recibido(s)`);
 
       for (const file of req.files) {
-        console.log('📸 Procesando archivo desde buffer...');
+        console.log('Archivo recibido:');
+        console.log('  - Nombre original:', file.originalname);
+        console.log('  - Tamaño:', file.size, 'bytes');
+        console.log('  - Tipo MIME:', file.mimetype);
+        console.log('  - Buffer length:', file.buffer?.length);
 
         const timestamp = new Date().toISOString().replace(/:/g, '-');
         const nombreArchivo = `cedula_${equipo}_${timestamp}.jpg`;
 
-        // ✅ Subir a Drive desde buffer
-        console.log('☁️ Subiendo a Drive...');
+        // Subir a Drive
+        console.log('Subiendo a Drive...');
         const driveFile = await registroHelper.subirImagenADrive(file.buffer, nombreArchivo);
         driveFiles.push(driveFile);
-        console.log('✅ Subido:', driveFile.webViewLink);
+        console.log('Subido:', driveFile.webViewLink);
 
-        // ✅ Decodificar PDF417 desde buffer
+        // Decodificar PDF417
+        console.log('Intentando decodificar PDF417...');
+        console.log('  - Cédula actual:', cedula);
+        console.log('  - ¿Debería intentar decodificar?', !cedula);
+        
         if (!cedula) {
           try {
-            console.log('🔍 Decodificando...');
+            console.log('ENTRANDO a decodificar...');
             textoCompleto = await registroHelper.decodificarPDF417(file.buffer);
+            console.log('Texto completo obtenido, longitud:', textoCompleto?.length);
+            
+            console.log('Extrayendo cédula del texto...');
             cedula = registroHelper.extraerCedulaDelTexto(textoCompleto);
-            console.log('✅ Cédula extraída:', cedula);
+            console.log('Cédula extraída:', cedula);
           } catch (decodeError) {
-            console.warn('⚠️ No se pudo decodificar:', decodeError.message);
+            console.error('ERROR AL DECODIFICAR:');
+            console.error('  - Mensaje:', decodeError.message);
+            console.error('  - Stack:', decodeError.stack);
           }
+        } else {
+          console.log('Saltando decodificación porque ya hay cédula:', cedula);
         }
       }
     } else {
-      console.log('ℹ️ No se envió imagen');
+      console.log('No se envió imagen');
     }
 
     // Guardar en Sheets
-    console.log('💾 Guardando en Sheets...');
+    console.log('Guardando en Sheets...');
+    console.log('  - Cédula final a guardar:', cedula || req.body.cedula || '');
+    
     const resultado = await registroHelper.guardarRegistro({
       equipo,
       cedula: cedula || req.body.cedula || '',
@@ -86,6 +102,8 @@ registrarEquipo: async (req, res) => {
       fecharegistro
     });
 
+    console.log('========== FIN registrarEquipo ==========');
+
     res.status(200).json({
       mensaje: 'Equipo registrado correctamente',
       equipo: resultado.equipo,
@@ -95,7 +113,8 @@ registrarEquipo: async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error procesando registro:', error);
+    console.error('ERROR GENERAL:', error);
+    console.error('Stack completo:', error.stack);
 
     res.status(500).json({
       mensaje: 'Error procesando el registro',
@@ -103,6 +122,7 @@ registrarEquipo: async (req, res) => {
     });
   }
 },
+  
 obtenerDatosPorequipo: async (req, res) => {
   try {
     const { equipo } = req.params;
