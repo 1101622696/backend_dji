@@ -26,7 +26,7 @@ const httpRegistros = {
 // },
 
 registrarEquipo: async (req, res) => {
-  let tempFilePaths = [];
+  console.log('========== INICIO registrarEquipo ==========');
 
   try {
     const { equipo, nombre, marca, piso, observaciones } = req.body;
@@ -41,44 +41,36 @@ registrarEquipo: async (req, res) => {
     let textoCompleto = null;
     let driveFiles = [];
 
-    // Procesar archivos
+    // ✅ Procesar archivos desde BUFFER (req.files[].buffer)
     if (req.files && req.files.length > 0) {
       console.log(`📸 ${req.files.length} archivo(s) recibido(s)`);
 
       for (const file of req.files) {
-        const tempFilePath = file.path;
-        tempFilePaths.push(tempFilePath);
-
-        console.log('📸 Procesando:', tempFilePath);
+        console.log('📸 Procesando archivo desde buffer...');
 
         const timestamp = new Date().toISOString().replace(/:/g, '-');
         const nombreArchivo = `cedula_${equipo}_${timestamp}.jpg`;
 
-        // Subir a Drive
+        // ✅ Subir a Drive desde buffer
         console.log('☁️ Subiendo a Drive...');
-        const driveFile = await registroHelper.subirImagenADrive(tempFilePath, nombreArchivo);
+        const driveFile = await registroHelper.subirImagenADrive(file.buffer, nombreArchivo);
         driveFiles.push(driveFile);
         console.log('✅ Subido:', driveFile.webViewLink);
 
-        // Decodificar PDF417
+        // ✅ Decodificar PDF417 desde buffer
         if (!cedula) {
           try {
             console.log('🔍 Decodificando...');
-            textoCompleto = await registroHelper.decodificarPDF417(tempFilePath);
+            textoCompleto = await registroHelper.decodificarPDF417(file.buffer);
             cedula = registroHelper.extraerCedulaDelTexto(textoCompleto);
-            console.log('✅ Cédula:', cedula);
+            console.log('✅ Cédula extraída:', cedula);
           } catch (decodeError) {
             console.warn('⚠️ No se pudo decodificar:', decodeError.message);
           }
         }
       }
-
-      // Limpiar temporales
-      for (const tempPath of tempFilePaths) {
-        if (fs.existsSync(tempPath)) {
-          fs.unlinkSync(tempPath);
-        }
-      }
+    } else {
+      console.log('ℹ️ No se envió imagen');
     }
 
     // Guardar en Sheets
@@ -98,18 +90,12 @@ registrarEquipo: async (req, res) => {
       mensaje: 'Equipo registrado correctamente',
       equipo: resultado.equipo,
       cedula: cedula || req.body.cedula || 'No detectada',
-      textoCompleto: textoCompleto || 'No procesada',
+      textoCompleto: textoCompleto ? textoCompleto.substring(0, 100) + '...' : 'No procesada',
       imagenesDrive: driveFiles.length > 0 ? driveFiles.map(f => f.webViewLink) : null
     });
 
   } catch (error) {
-    console.error('❌ Error:', error);
-
-    for (const tempPath of tempFilePaths) {
-      if (fs.existsSync(tempPath)) {
-        fs.unlinkSync(tempPath);
-      }
-    }
+    console.error('❌ Error procesando registro:', error);
 
     res.status(500).json({
       mensaje: 'Error procesando el registro',
