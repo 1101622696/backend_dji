@@ -363,6 +363,7 @@ import {
   HybridBinarizer,
   RGBLuminanceSource
 } from "@zxing/library";
+import { readBarcodesFromImageFile } from 'zxing-wasm';
 // import { createRequire } from "module";
 // const require = createRequire(import.meta.url);
 // const Jimp = require("jimp");
@@ -509,41 +510,76 @@ const subirImagenADrive = async (buffer, nombreArchivo) => {
 // };
 
 
+// const decodificarPDF417 = async (buffer) => {
+//   try {
+//     console.log("Procesando imagen desde buffer...");
+
+//     const image = await Jimp.read(buffer);
+
+//     image.greyscale().contrast(0.3).normalize();
+
+//     if (image.bitmap.width > 1200) {
+//       image.resize({ w: 1200, h: Jimp.AUTO });
+//     }
+
+//     const luminanceSource = new RGBLuminanceSource(
+//       image.bitmap.data,
+//       image.bitmap.width,
+//       image.bitmap.height
+//     );
+
+//     const binaryBitmap = new BinaryBitmap(new HybridBinarizer(luminanceSource));
+//     const reader = new PDF417Reader();
+
+//     console.log("📖 Decodificando PDF417...");
+//     const result = reader.decode(binaryBitmap);
+
+//     console.log("✅ PDF417 decodificado correctamente");
+//     console.log("Texto (inicio):", result.text.substring(0, 100) + "...");
+
+//     return result.text;
+
+//   } catch (error) {
+//     console.error("❌ Error decodificando PDF417:", error);
+//     throw new Error(`No se pudo leer el código de barras: ${error.message}`);
+//   }
+// }
+
 const decodificarPDF417 = async (buffer) => {
   try {
     console.log("🔍 Procesando imagen desde buffer...");
 
-    const image = await Jimp.read(buffer);
+    // Guardar temporalmente la imagen
+    const tempPath = "/tmp/temp_img.jpg";
+    fs.writeFileSync(tempPath, buffer);
 
-    image.greyscale().contrast(0.3).normalize();
-
-    if (image.bitmap.width > 1200) {
-      //image.resize({ w: 1200, h: Jimp.AUTO });
-      image.resize(1200, Jimp.AUTO || Jimp.AUTO);
-    }
-
-    const luminanceSource = new RGBLuminanceSource(
-      image.bitmap.data,
-      image.bitmap.width,
-      image.bitmap.height
-    );
-
-    const binaryBitmap = new BinaryBitmap(new HybridBinarizer(luminanceSource));
-    const reader = new PDF417Reader();
+    // (Opcional) Ajuste previo con Jimp para mejorar contraste
+    const image = await Jimp.read(tempPath);
+    image
+      .greyscale()
+      .contrast(0.3)
+      .normalize()
+      .write(tempPath); // Sobrescribe el archivo mejorado
 
     console.log("📖 Decodificando PDF417...");
-    const result = reader.decode(binaryBitmap);
+    const result = await readBarcodesFromImageFile(tempPath, {
+      tryHarder: true,
+      formats: ["pdf417"],
+    });
+
+    if (!result || !result.length) {
+      throw new Error("No se detectó código PDF417");
+    }
 
     console.log("✅ PDF417 decodificado correctamente");
-    console.log("Texto (inicio):", result.text.substring(0, 100) + "...");
-
-    return result.text;
-
+    console.log("Texto (inicio):", result[0].text.substring(0, 120) + "...");
+    return result[0].text;
   } catch (error) {
     console.error("❌ Error decodificando PDF417:", error);
     throw new Error(`No se pudo leer el código de barras: ${error.message}`);
   }
-}
+};
+
 
 const extraerCedulaDelTexto = (textoCompleto) => {
   console.log('🔍 Extrayendo cédula...');
