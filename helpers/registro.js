@@ -358,7 +358,7 @@
 
 import { google } from 'googleapis';
 import { BrowserPDF417Reader } from '@zxing/library';
-import Jimp from 'jimp';
+import * as Jimp from 'jimp';
 import fs from 'fs';
 
 const spreadsheetId = '19Dhwyql2AEhHPg14_mBuNQJZlq-ItdAr_QTFOEvkE7Q';
