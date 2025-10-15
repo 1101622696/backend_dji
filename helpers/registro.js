@@ -356,7 +356,13 @@
 // };
 
 import { google } from 'googleapis';
-import { BrowserPDF417Reader } from '@zxing/library';
+// import { BrowserPDF417Reader } from '@zxing/library';
+import {
+  PDF417Reader,
+  BinaryBitmap,
+  HybridBinarizer,
+  RGBLuminanceSource
+} from "@zxing/library";
 // import * as Jimp from 'jimp';
 // import pkg from 'jimp';
 // const { Jimp } = pkg;
@@ -403,7 +409,6 @@ const getSheetsClient = async () => {
   return google.sheets({ version: 'v4', auth: client });
 };
 
-// ✅ Subir imagen a Drive desde BUFFER (no archivo)
 const subirImagenADrive = async (buffer, nombreArchivo) => {
   try {
     const drive = await getDriveClient();
@@ -429,7 +434,7 @@ const subirImagenADrive = async (buffer, nombreArchivo) => {
       fields: 'id, webViewLink, webContentLink'
     });
     
-    console.log('✅ Imagen subida a Drive:', file.data.id);
+    console.log('Imagen subida a Drive:', file.data.id);
     
     return {
       fileId: file.data.id,
@@ -437,69 +442,105 @@ const subirImagenADrive = async (buffer, nombreArchivo) => {
       webContentLink: file.data.webContentLink
     };
   } catch (error) {
-    console.error('❌ Error subiendo a Drive:', error);
+    console.error('Error subiendo a Drive:', error);
     throw error;
   }
 };
 
-// ✅ Decodificar PDF417 desde BUFFER
+// const decodificarPDF417 = async (buffer) => {
+//   try {
+//     console.log('Procesando imagen desde buffer...');
+    
+//     // Jimp puede leer directamente desde buffer
+//     const image = await Jimp.read(buffer);
+    
+//     console.log('Dimensiones:', image.bitmap.width, 'x', image.bitmap.height);
+    
+//     image
+//       .greyscale()
+//       .contrast(0.3)
+//       .normalize();
+    
+//     if (image.bitmap.width > 1200) {
+//       image.resize(1200, Jimp.AUTO);
+//       console.log('Redimensionada a:', image.bitmap.width, 'x', image.bitmap.height);
+//     }
+    
+//     const luminanceSource = {
+//       getRow: (y) => {
+//         const row = [];
+//         for (let x = 0; x < image.bitmap.width; x++) {
+//           const idx = (image.bitmap.width * y + x) << 2;
+//           row.push(image.bitmap.data[idx]);
+//         }
+//         return new Uint8ClampedArray(row);
+//       },
+//       getMatrix: () => {
+//         const matrix = [];
+//         for (let y = 0; y < image.bitmap.height; y++) {
+//           for (let x = 0; x < image.bitmap.width; x++) {
+//             const idx = (image.bitmap.width * y + x) << 2;
+//             matrix.push(image.bitmap.data[idx]);
+//           }
+//         }
+//         return new Uint8ClampedArray(matrix);
+//       },
+//       getWidth: () => image.bitmap.width,
+//       getHeight: () => image.bitmap.height
+//     };
+    
+//     console.log('Decodificando PDF417...');
+    
+//     // const reader = new BrowserPDF417Reader();
+//     const reader = new PDF417Reader();
+//     const result = await reader.decode(luminanceSource);
+    
+//     console.log('PDF417 decodificado');
+//     console.log('Texto:', result.text.substring(0, 100) + '...');
+    
+//     return result.text;
+    
+//   } catch (error) {
+//     console.error('Error decodificando:', error.message);
+//     throw new Error('No se pudo leer el código de barras');
+//   }
+// };
+
+
 const decodificarPDF417 = async (buffer) => {
   try {
-    console.log('🔍 Procesando imagen desde buffer...');
-    
-    // Jimp puede leer directamente desde buffer
+    console.log("🔍 Procesando imagen desde buffer...");
+
     const image = await Jimp.read(buffer);
-    
-    console.log('📐 Dimensiones:', image.bitmap.width, 'x', image.bitmap.height);
-    
-    image
-      .greyscale()
-      .contrast(0.3)
-      .normalize();
-    
+
+    image.greyscale().contrast(0.3).normalize();
+
     if (image.bitmap.width > 1200) {
       image.resize(1200, Jimp.AUTO);
-      console.log('📐 Redimensionada a:', image.bitmap.width, 'x', image.bitmap.height);
     }
-    
-    const luminanceSource = {
-      getRow: (y) => {
-        const row = [];
-        for (let x = 0; x < image.bitmap.width; x++) {
-          const idx = (image.bitmap.width * y + x) << 2;
-          row.push(image.bitmap.data[idx]);
-        }
-        return new Uint8ClampedArray(row);
-      },
-      getMatrix: () => {
-        const matrix = [];
-        for (let y = 0; y < image.bitmap.height; y++) {
-          for (let x = 0; x < image.bitmap.width; x++) {
-            const idx = (image.bitmap.width * y + x) << 2;
-            matrix.push(image.bitmap.data[idx]);
-          }
-        }
-        return new Uint8ClampedArray(matrix);
-      },
-      getWidth: () => image.bitmap.width,
-      getHeight: () => image.bitmap.height
-    };
-    
-    console.log('🔍 Decodificando PDF417...');
-    
-    const reader = new BrowserPDF417Reader();
-    const result = await reader.decode(luminanceSource);
-    
-    console.log('✅ PDF417 decodificado');
-    console.log('📄 Texto:', result.text.substring(0, 100) + '...');
-    
+
+    const luminanceSource = new RGBLuminanceSource(
+      image.bitmap.data,
+      image.bitmap.width,
+      image.bitmap.height
+    );
+
+    const binaryBitmap = new BinaryBitmap(new HybridBinarizer(luminanceSource));
+    const reader = new PDF417Reader();
+
+    console.log("📖 Decodificando PDF417...");
+    const result = reader.decode(binaryBitmap);
+
+    console.log("✅ PDF417 decodificado correctamente");
+    console.log("Texto (inicio):", result.text.substring(0, 100) + "...");
+
     return result.text;
-    
+
   } catch (error) {
-    console.error('❌ Error decodificando:', error.message);
-    throw new Error('No se pudo leer el código de barras');
+    console.error("❌ Error decodificando PDF417:", error);
+    throw new Error(`No se pudo leer el código de barras: ${error.message}`);
   }
-};
+}
 
 const extraerCedulaDelTexto = (textoCompleto) => {
   console.log('🔍 Extrayendo cédula...');
