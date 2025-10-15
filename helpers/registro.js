@@ -518,7 +518,7 @@ const decodificarPDF417 = async (buffer) => {
     image.greyscale().contrast(0.3).normalize();
 
     if (image.bitmap.width > 1200) {
-      image.resize(1200, Jimp.AUTO);
+      image.resize({ w: 1200, h: Jimp.AUTO });
     }
 
     const luminanceSource = new RGBLuminanceSource(
