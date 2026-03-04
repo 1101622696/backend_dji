@@ -1,25 +1,17 @@
 import { google } from 'googleapis';
-import {postvueloHelper} from '../helpers/postvuelos.js';
-import {solicitudHelper} from '../helpers/solicitudes.js';
-import nodemailer from 'nodemailer';
 
 const spreadsheetId = '1sJwTVoeFelYt5QE2Pk8KSYFZ8_3wRQjWr5HlDkhhrso';
 
-// Función para crear el cliente de autenticación
 const getAuth = () => {
-  // Verificar si estamos en producción (Render)
   if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
-    // Usar variables de entorno
     return new google.auth.GoogleAuth({
       credentials: {
         client_email: process.env.GOOGLE_CLIENT_EMAIL,
         private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        // Añade otras variables según sea necesario
       },
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
   } else {
-    // Para desarrollo local, usar el archivo
     return new google.auth.GoogleAuth({
       keyFile: './config/credenciales-sheets.json',
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
@@ -27,17 +19,6 @@ const getAuth = () => {
   }
 };
 
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    service: 'gmail',  
-    auth: {
-      user: process.env.EMAIL_USER,       
-      pass: process.env.EMAIL_APP_PASSWORD 
-    }
-  });
-};
-
-// Cliente Sheets
 const getSheetsClient = async () => {
   const authClient = getAuth();
   const client = await authClient.getClient();
@@ -61,8 +42,6 @@ const obtenerDatosPrevuelos = async (nombreHoja, rango = 'A1:AK1000') => {
     Object.fromEntries(row.map((val, i) => [headers[i], val]))
   );
 };
-
-// const getPrevuelos = () => obtenerDatosPrevuelos('Prevuelo');
 
 const getPrevuelos = async () => {
   const prevuelos = await obtenerDatosPrevuelos('Prevuelo');
@@ -188,95 +167,7 @@ const guardarPrevuelo = async ({  useremail, consecutivo, username, autorizadopo
     requestBody: { values: [nuevaFila] },
   });
 
-        try {
-    const destinatario = "apinto@sevicol.com.co";
-    // const destinatario = "cardenasdiegom6@gmail.com";
-    
-    await enviarNotificacionPrevuelo({
-      destinatario,
-      consecutivo: consecutivo,
-      piloto: username,
-      fecha: fecha,
-      empresa,
-    });
-    
-    console.log(`Notificación enviada para la solicitud ${consecutivo}`);
-  } catch (error) {
-    console.error('Error al enviar notificación:', error);
-  }
-
   return { consecutivoprevuelo };
-};
-
-const enviarNotificacionPrevuelo = async (datos) => {
-  try {
-    const transporter = createTransporter();
-
-    const urlBase = "https://script.google.com/macros/s/AKfycbzoGLCKAxvDny6qhIMze-cGaaitGPt9yIhByUKYY1aI41gwysmisEIvn0UEP6qg7SH6/exec";
-    const linkFormulario = `${urlBase}?prevuelo=${datos.consecutivo}`;
-
-    const htmlBody = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background-color: #ffffff; color: white; padding: 10px; text-align: center;">
-          <div style="display: flex; align-items: center; justify-content: center;">
-            <img src="https://docs.google.com/drawings/d/e/2PACX-1vQw98R1ZTlOAY_mVURreLAh0eGVKAodHN9VVuOk8wBHQ_WZmveIAn6e9588ix1u-NqmnH6rrYjPEzes/pub?w=480&h=360" 
-                 alt="Logo SVA" 
-                 style="width: 150px; height: auto; margin-right: 10px;">
-            <div>
-              <h2 style="color: black; font-size: 24px; font-weight: bold; margin: 0;">Nuevo Prevuelo Registrado</h2>
-              <p style="margin: 5px 0;">SVA SEVICOL LTDA</p>
-            </div>
-          </div>
-        </div>
-        
-        <div style="padding: 20px; background-color: #f9f9f9;">
-          <p>Se ha registrado un nuevo prevuelo con la siguiente información:</p>
-          
-          <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p style="margin: 5px 0;"><strong>Consecutivo:</strong> ${datos.consecutivo}</p>
-            <p style="margin: 5px 0;"><strong>Piloto:</strong> ${datos.piloto}</p>
-            <p style="margin: 5px 0;"><strong>Fecha:</strong> ${datos.fecha}</p>
-            <p style="margin: 5px 0;"><strong>Empresa:</strong> ${datos.empresa}</p>
-          </div>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${linkFormulario}"
-                style="background-color: #28a745;
-                       color: white;
-                       padding: 12px 25px;
-                       text-decoration: none;
-                       border-radius: 5px;
-                       display: inline-block;
-                       font-weight: bold;">
-              Aprobar Prevuelo
-            </a>
-          </div>
-          
-          <p style="color: #666; font-size: 0.9em;">Si el botón no funciona, copie y pegue el siguiente enlace en su navegador:</p>
-          <p style="color: #666; font-size: 0.9em;">${linkFormulario}</p>
-        </div>
-        
-        <div style="padding: 20px; text-align: center; color: #666;">
-          <p>Saludos cordiales,<br>
-          Sistema de Gestión de Vuelos<br>
-          SVA SEVICOL LTDA</p>
-        </div>
-      </div>
-    `;
-
-    const info = await transporter.sendMail({
-      from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
-      to: datos.destinatario,
-      subject: `Nuevo Prevuelo Registrado - Consecutivo: ${datos.consecutivo}`,
-      html: htmlBody
-    });
-
-    console.log('Correo enviado:', info.messageId);
-    return info;
-  } catch (error) {
-    console.error('Error al enviar correo de notificación:', error);
-    throw error;
-  }
 };
 
 const getPrevueloByConsecutivo = async (consecutivo) => {
@@ -285,7 +176,6 @@ const getPrevueloByConsecutivo = async (consecutivo) => {
     prevuelo.solicitudesaprobadas && prevuelo.solicitudesaprobadas.toLowerCase() === consecutivo.toLowerCase()
   );
 };
-
 
 const editarPrevueloPorConsecutivo = async (consecutivo, nuevosDatos) => {
   const sheets = await getSheetsClient();
@@ -512,18 +402,6 @@ const generarValidarPrevuelo = async (consecutivo, piloto, permiso, notas = '', 
       }
     });
 
-    try {
-      const destinatario = emailprevuelo;
-      if (estado === 'Aprobado') {
-        await enviaAprobacionPrevuelo({ destinatario, consecutivo: consecutivo, fecha: fechaPrevuelo });
-      } else {
-        await enviaDenegoPrevuelo({ destinatario, consecutivo: consecutivo, fecha: fechaPrevuelo });
-      }
-      console.log(`Notificación enviada para el prevuelo ${consecutivo}`);
-    } catch (error) {
-      console.error('Error al enviar notificación:', error);
-    }
-
     return {
       codigo: nuevoCodigo,
       fechaValidacion: fechaActual
@@ -534,128 +412,6 @@ const generarValidarPrevuelo = async (consecutivo, piloto, permiso, notas = '', 
   }
 };
 
-const enviaAprobacionPrevuelo = async (datos) => {
-try {
-    const transporter = createTransporter();
-
-        const urlBase = "https://script.google.com/macros/s/AKfycbzoGLCKAxvDny6qhIMze-cGaaitGPt9yIhByUKYY1aI41gwysmisEIvn0UEP6qg7SH6/exec";
-        const linkFormulario = `${urlBase}?postvuelo=${datos.consecutivo}`;
-
-    const htmlBody = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background-color: #ffffff; color: white; padding: 10px; text-align: center;">
-          <div style="display: flex; align-items: center; justify-content: center;">
-            <img src="https://docs.google.com/drawings/d/e/2PACX-1vQw98R1ZTlOAY_mVURreLAh0eGVKAodHN9VVuOk8wBHQ_WZmveIAn6e9588ix1u-NqmnH6rrYjPEzes/pub?w=480&h=360" 
-                 alt="Logo SVA" 
-                 style="width: 150px; height: auto; margin-right: 10px;">
-            <div>
-              <h2 style="color: black; font-size: 24px; font-weight: bold; margin: 0;">Prevuelo Aprobado</h2>
-              <p style="margin: 5px 0;">SVA SEVICOL LTDA</p>
-            </div>
-          </div>
-        </div>
-        
-        <div style="padding: 20px; background-color: #f9f9f9;">
-          <p>Su prevuelo ha sido aprobado por parte del jefe de pilotos</p>
-          
-          <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p style="margin: 5px 0;"><strong>Consecutivo:</strong> ${datos.consecutivo}</p>
-            <p style="margin: 5px 0;"><strong>Fecha:</strong> ${datos.fecha}</p>
-          </div>
-
-                    <div style="text-align: center; margin: 30px 0;">
-            <a href="${linkFormulario}" 
-               style="background-color: #28a745; 
-                      color: white; 
-                      padding: 12px 25px; 
-                      text-decoration: none; 
-                      border-radius: 5px;
-                      display: inline-block;
-                      font-weight: bold;">
-              Realizar Post-vuelo
-            </a>
-          </div>
-          
-          <p><strong>Importante:</strong> Por favor, asegúrese de seguir todos los procedimientos de seguridad establecidos antes de realizar el vuelo.</p>
-          
-          <p style="color: #666; font-size: 0.9em;">Si el botón no funciona, copie y pegue el siguiente enlace en su navegador:</p>
-          <p style="color: #666; font-size: 0.9em;">${linkFormulario}</p>
-          
-        </div>
-        
-        <div style="padding: 20px; text-align: center; color: #666;">
-          <p>Saludos cordiales,<br>
-          Sistema de Gestión de Vuelos<br>
-          SVA SEVICOL LTDA</p>
-        </div>
-      </div>
-    `;
-
-    const info = await transporter.sendMail({
-      from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
-      to: datos.destinatario,
-      subject: `Prevuelo Aprobado - Consecutivo: ${datos.consecutivo}`,
-      html: htmlBody
-    });
-
-    console.log('Correo enviado:', info.messageId);
-    return info;
-  } catch (error) {
-    console.error('Error al enviar correo de notificación:', error);
-    throw error;
-  }
-};
-
-const enviaDenegoPrevuelo = async (datos) => {
-try {
-    const transporter = createTransporter();
-
-    const htmlBody = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background-color: #ffffff; color: white; padding: 10px; text-align: center;">
-          <div style="display: flex; align-items: center; justify-content: center;">
-            <img src="https://docs.google.com/drawings/d/e/2PACX-1vQw98R1ZTlOAY_mVURreLAh0eGVKAodHN9VVuOk8wBHQ_WZmveIAn6e9588ix1u-NqmnH6rrYjPEzes/pub?w=480&h=360" 
-                 alt="Logo SVA" 
-                 style="width: 150px; height: auto; margin-right: 10px;">
-            <div>
-              <h2 style="color: black; font-size: 24px; font-weight: bold; margin: 0;">Prevuelo Denegado</h2>
-              <p style="margin: 5px 0;">SVA SEVICOL LTDA</p>
-            </div>
-          </div>
-        </div>
-        
-        <div style="padding: 20px; background-color: #f9f9f9;">
-          <p>Su prevuelo ha sido denegado por parte del jefe de pilotos</p>
-          
-          <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p style="margin: 5px 0;"><strong>Consecutivo:</strong> ${datos.consecutivo}</p>
-            <p style="margin: 5px 0;"><strong>Fecha:</strong> ${datos.fecha}</p>
-          </div>
-          
-        </div>
-        
-        <div style="padding: 20px; text-align: center; color: #666;">
-          <p>Saludos cordiales,<br>
-          Sistema de Gestión de Vuelos<br>
-          SVA SEVICOL LTDA</p>
-        </div>
-      </div>
-    `;
-
-    const info = await transporter.sendMail({
-      from: '"Sistema de Vuelos" <dcardenas@sevicol.com.co>',
-      to: datos.destinatario,
-      subject: `Prevuelo Denegado - Consecutivo: ${datos.consecutivo}`,
-      html: htmlBody
-    });
-
-    console.log('Correo enviado:', info.messageId);
-    return info;
-  } catch (error) {
-    console.error('Error al enviar correo de notificación:', error);
-    throw error;
-  }
-};
 
 export const prevueloHelper = {
   getPrevuelos,

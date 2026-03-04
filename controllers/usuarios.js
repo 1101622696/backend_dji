@@ -1,15 +1,11 @@
-// import Usuario from "../models/usuarios.js";
-import { generarJWT } from "../helpers/generar-jwt.js";
 import { usuarioHelper } from '../helpers/usuarios.js';
 import { firebaseHelper } from '../helpers/firebase.js';
-
 
 const FILTRO_HANDLERS = {
   perfil: usuarioHelper.getUsuarioPorPerfil,
   estado: usuarioHelper.getUsuarioPorEstado
 };
 const TIPOS_FILTRO = Object.keys(FILTRO_HANDLERS);
-
 
 const httpUsuarios = {
   getUsuariosDesdeSheets: async (req, res) => {
@@ -24,11 +20,7 @@ const httpUsuarios = {
 
   login: async (req, res) => {
     const { email, password } = req.body;
-  
-    // console.log('Login desde origen:', req.headers.origin);
-    // console.log("Headers:", req.headers);
-    // console.log("Body completo:", req.body);
-    
+
     try {
       const { token, usuario } = await usuarioHelper.loginUsuario({ email, password });
   
@@ -123,9 +115,6 @@ const httpUsuarios = {
   try {
     const { tipo, valor } = req.query;
     
-    // console.log("Parámetros recibidos:", req.query);
-    // console.log(`tipo: "${tipo}", valor: "${valor}"`);
-    
     if (!tipo || !valor) {
       return res
         .status(400)
@@ -215,7 +204,11 @@ const httpUsuarios = {
         const { estado } = req.body; 
         
         const resultado = await usuarioHelper.actualizarEstadoEnSheets(email, estado || "Activo");
-    
+      
+        if (!resultado) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+          }
+      
         res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
       } catch (error) {
         console.error('Error al editar estado del usuario:', error);
@@ -232,7 +225,11 @@ const httpUsuarios = {
         const { estado } = req.body; 
         
         const resultado = await usuarioHelper.actualizarEstadoEnSheets(email, estado || "Inactivo");
-    
+           
+        if (!resultado) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+          }
+      
         res.status(200).json({ mensaje: 'Estado actualizado correctamente' });
       } catch (error) {
         console.error('Error al editar estado del usuario:', error);

@@ -23,7 +23,6 @@ const leerUsuariosDesdeSheets = async () => {
     return [];
   }
 
-  // Opcional: transformar filas en objetos con nombre de columnas
   const headers = rows[0];
   const data = rows.slice(1).map((fila) =>
     Object.fromEntries(fila.map((valor, i) => [headers[i], valor]))

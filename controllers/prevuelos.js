@@ -27,12 +27,7 @@ editarPrevuelo: async (req, res) => {
   try {
     const { consecutivo } = req.params;
     const nuevosDatos = req.body;
-    // console.log(nuevosDatos)
-    // const { email, nombre } = req.usuariobdtoken;
 
-    // if (!nuevosDatos.useremail) nuevosDatos.useremail = email;
-    // if (!nuevosDatos.username) nuevosDatos.username = nombre;
-    
     const resultado = await prevueloHelper.editarPrevueloPorConsecutivo(consecutivo, nuevosDatos);
 
     if (!resultado) {

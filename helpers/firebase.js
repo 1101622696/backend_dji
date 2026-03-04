@@ -1,5 +1,4 @@
 import admin from 'firebase-admin';
-import { google } from 'googleapis';
 import {usuarioHelper} from '../helpers/usuarios.js';
 import fs from 'fs';
 import path from 'path';
@@ -10,18 +9,18 @@ const initializeFirebaseAdmin = () => {
   if (admin.apps.length === 0) {
     try {
       // Verificar si estamos en producción (Render) o si las variables de entorno están definidas
-      console.log("Verificando credenciales de Firebase...");
-      console.log("FIREBASE_PROJECT_ID presente:", !!process.env.FIREBASE_PROJECT_ID);
-      console.log("FIREBASE_CLIENT_EMAIL presente:", !!process.env.FIREBASE_CLIENT_EMAIL);
-      console.log("FIREBASE_PRIVATE_KEY presente:", !!process.env.FIREBASE_PRIVATE_KEY);
+      // console.log("Verificando credenciales de Firebase...");
+      // console.log("FIREBASE_PROJECT_ID presente:", !!process.env.FIREBASE_PROJECT_ID);
+      // console.log("FIREBASE_CLIENT_EMAIL presente:", !!process.env.FIREBASE_CLIENT_EMAIL);
+      // console.log("FIREBASE_PRIVATE_KEY presente:", !!process.env.FIREBASE_PRIVATE_KEY);
       
       // Comprobar si estamos en Render (Render establece esta variable de entorno)
       const isRender = process.env.RENDER === 'true' || process.env.RENDER === true;
-      console.log("¿Estamos en Render?", isRender);
+      // console.log("¿Estamos en Render?", isRender);
       
       // Usar variables de entorno si estamos en Render o si están todas definidas
       if (isRender || (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY)) {
-        console.log("Inicializando Firebase con variables de entorno");
+        // console.log("Inicializando Firebase con variables de entorno");
         
         if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
           throw new Error("Faltan variables de entorno necesarias para Firebase");
@@ -36,7 +35,7 @@ const initializeFirebaseAdmin = () => {
         });
       } else {
         // Solo para desarrollo local
-        console.log("Inicializando Firebase con archivo de credenciales con local");
+        // console.log("Inicializando Firebase con archivo de credenciales con local");
         
         try {
           const __filename = fileURLToPath(import.meta.url);
@@ -59,7 +58,7 @@ const initializeFirebaseAdmin = () => {
           throw new Error("No se pudo inicializar Firebase: faltan credenciales y variables de entorno");
         }
       }
-      console.log("Firebase inicializado correctamente");
+      // console.log("Firebase inicializado correctamente");
     } catch (error) {
       console.error("Error al inicializar Firebase:", error);
       // No propagar el error, pero registrarlo

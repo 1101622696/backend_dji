@@ -3,16 +3,12 @@ import stream from 'stream';
 
 const spreadsheetId = '1sJwTVoeFelYt5QE2Pk8KSYFZ8_3wRQjWr5HlDkhhrso';
 
-// Función para crear el cliente de autenticación
 const getAuth = () => {
-  // Verificar si estamos en producción (Render)
   if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
-    // Usar variables de entorno
     return new google.auth.GoogleAuth({
       credentials: {
         client_email: process.env.GOOGLE_CLIENT_EMAIL,
         private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        // Añade otras variables según sea necesario
       },
       scopes: [
         'https://www.googleapis.com/auth/spreadsheets',
@@ -20,7 +16,6 @@ const getAuth = () => {
       ],
     });
   } else {
-    // Para desarrollo local, usar el archivo
     return new google.auth.GoogleAuth({
       keyFile: './config/credenciales-sheets.json',
       scopes: [
@@ -31,7 +26,6 @@ const getAuth = () => {
   }
 };
 
-// Cliente Sheets
 const getSheetsClient = async () => {
   const authClient = getAuth();
   const client = await authClient.getClient();

@@ -1,4 +1,3 @@
-import Usuario from '../models/usuarios.js'; // Asegúrate que exista el modelo
 import { generarJWT } from './generar-jwt.js'; // Ajusta el path si lo moviste
 
 import { google } from 'googleapis';
@@ -6,19 +5,15 @@ import { google } from 'googleapis';
 const spreadsheetId = '1fTu_oEvbL5RG0TSL5rIs2YKFtX8BXTymVkXVhBM0_ts';
 
 const getAuth = () => {
-  // Verificar si estamos en producción (Render)
   if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
-    // Usar variables de entorno
     return new google.auth.GoogleAuth({
       credentials: {
         client_email: process.env.GOOGLE_CLIENT_EMAIL,
         private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        // Añade otras variables según sea necesario
       },
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
   } else {
-    // Para desarrollo local, usar el archivo
     return new google.auth.GoogleAuth({
       keyFile: './config/credenciales-sheets.json',
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
@@ -26,11 +21,8 @@ const getAuth = () => {
   }
 };
 
-// Cliente Sheets
-// Client Sheets
 const getSheetsClient = async () => {
   const auth = getAuth();
-  // No need to get the client separately
   return google.sheets({ version: 'v4', auth });
 };
 

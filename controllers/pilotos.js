@@ -140,10 +140,7 @@ const httpPilotos = {
   obtenerPilotosFiltrados: async (req, res) => {
   try {
     const { tipo, valor } = req.query;
-    
-    // console.log("Parámetros recibidos:", req.query);
-    // console.log(`tipo: "${tipo}", valor: "${valor}"`);
-    
+
     if (!tipo || !valor) {
       return res
         .status(400)
